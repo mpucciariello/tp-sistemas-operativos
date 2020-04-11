@@ -50,3 +50,20 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Debug
+broker/Debug/
+game-card/Debug/
+team/Debug/
+game-boy/Debug/
+shared-common/Debug/
+
+# Settings
+broker/.settings/*
+game-card/.settings/*
+team/.settings/*
+game-boy/.settings/*
+shared-common/.settings/*
+
+# Files
+*.txt
