@@ -14,7 +14,7 @@ E-Mail: derekfernandez182@gmail.com
 
 Nombre y Apellido: Nicolas Taboada
 Legajo: 1439388
-E-Mail: ntaboada93@gmail.com
+E-Mail: ntaboada93@gmail.com 
 
 Nombre y Apellido: Fernando Sierra
 Legajo: 1352404
