@@ -14,15 +14,15 @@ E-Mail: derekfernandez182@gmail.com
 
 Nombre y Apellido: Nicolas Taboada
 Legajo: 1439388
-E-Mail: ntaboada93@gmail.com
+E-Mail: ntaboada93@gmail.com  
 
 Nombre y Apellido: Fernando Sierra
 Legajo: 1352404
 E-Mail: fernandosierra9@gmail.com
 
-Nombre y Apellido: Ariel Eduardo Galvan Vaquera
+Nombre y Apellido: Martin Yoo
 Legajo: 1589635
-E-Mail: galvanariel97@gmail.com
+E-Mail: mrtnyoo@gmail.com>
 
 
 # formating-style-tp-so.xml
@@ -43,7 +43,7 @@ Al ejecutar el script, se deben pasar los siguientes parametros:
 * -t | --target: Cambia el directorio donde sera ejecutado el script. Por defecto se ejecuta en el directorio actual.
 * -l | --lib: Agrega una dependencia externa para compilar e instalar. (Se especifica user y nombre del repositorio en github)
 * -d | --dependency: Agrega una dependencia interna del proyecto para compilar e instalar. (Forman parte del repositorio a deployar y se especifica una ruta dentro del repositorio a donde reside la dependencia).
-* -p | --proyect: Agrega un proyecto a compilar del repositorio. (Al igual que las dependencias se puede pasar una ruta a los proyectos)
+* -p | --proyect: Agrega un proyecto a compilar del repositorio. (Al igual que las dependencias se puede pasar una ruta a los proyectos).
 
 Para ver informacion de como usarlo, ejecutar con la opcion -h (help) `./deploy.sh -h`
 
@@ -54,7 +54,6 @@ Para ver informacion de como usarlo, ejecutar con la opcion -h (help) `./deploy.
 ### Requerimientos
 
 so-deploy requiere que los proyectos y dependencias tengan un makefile encargado de compilar correctamente a cada uno.
-
 La estructura debe ser la siguiente:
 
 ```
