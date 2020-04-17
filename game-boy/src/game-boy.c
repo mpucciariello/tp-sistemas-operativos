@@ -1,8 +1,7 @@
 #include "game-boy.h"
 
-int main(int argc, char *argv[])
-{
-	if(game_boy_load() < 0)
+int main(int argc, char *argv[]) {
+	if (game_boy_load() < 0)
 		return EXIT_FAILURE;
 	game_boy_init();
 	game_boy_exit();
@@ -10,15 +9,13 @@ int main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-int game_boy_load()
-{
+int game_boy_load() {
 	int response = game_boy_logger_create();
-	if(response < 0)
+	if (response < 0)
 		return response;
 
 	response = game_boy_config_load();
-	if(response < 0)
-	{
+	if (response < 0) {
 		game_boy_logger_destroy();
 		return response;
 	}
@@ -26,59 +23,127 @@ int game_boy_load()
 	return 0;
 }
 
-
-void connect_to_broker()
-{
-	game_boy_broker_fd = socket_connect_to_server(game_boy_config->ip_broker, game_boy_config->puerto_broker);
-	if(game_boy_broker_fd < 0)
-	{
+void connect_to_broker() {
+	game_boy_broker_fd = socket_connect_to_server(game_boy_config->ip_broker,
+			game_boy_config->puerto_broker);
+	if (game_boy_broker_fd < 0) {
 		game_boy_logger_warn("No se pudo conectar con BROKER");
 		socket_close_conection(game_boy_broker_fd);
-	}
-	else
-	{
+	} else {
 		game_boy_logger_info("Conexion con BROKER establecida correctamente!");
 	}
 }
 
-void connect_to_team()
-{
-	game_boy_team_fd = socket_connect_to_server(game_boy_config->ip_team, game_boy_config->puerto_team);
-	if(game_boy_team_fd < 0)
-	{
+void connect_to_team() {
+	game_boy_team_fd = socket_connect_to_server(game_boy_config->ip_team,
+			game_boy_config->puerto_team);
+	if (game_boy_team_fd < 0) {
 		game_boy_logger_warn("No se pudo conectar con TEAM");
 		socket_close_conection(game_boy_team_fd);
-	}
-	else
-	{
+	} else {
 		game_boy_logger_info("Conexion con TEAM establecida correctamente!");
 	}
 }
 
-void connect_to_game_card()
-{
-	game_boy_game_card_fd = socket_connect_to_server(game_boy_config->ip_gamecard, game_boy_config->puerto_gamecard);
-	if (game_boy_game_card_fd < 0)
-	{
+void connect_to_game_card() {
+	game_boy_game_card_fd = socket_connect_to_server(
+			game_boy_config->ip_gamecard, game_boy_config->puerto_gamecard);
+	if (game_boy_game_card_fd < 0) {
 		game_boy_logger_warn("No se pudo conectar con GAME CARD");
 		socket_close_conection(game_boy_game_card_fd);
+	} else {
+		game_boy_logger_info(
+				"Conexion con GAME CARD establecida correctamente!");
 	}
-	else
-	{
-		game_boy_logger_info("Conexion con GAME CARD establecida correctamente!");
+}
+void consola(){
+
+	while(1) {
+		    char * linea;
+			linea = readline("\n\n\nGameBoy>>>");
+			if(!strncmp(linea, "CLOSE", 5)) {
+
+				break;
+			}
+			/* NEW_POKEMON [POKEMON] [POSX] [POSY] [CANTIDAD] */
+
+			if(!strncmp(linea, "NEW_POKEMON ", strlen("NEW_POKEMON "))){
+				t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
+				new_snd->pokemon = string_duplicate("pikachu");
+				new_snd->id = 1;
+				new_snd->id_correlacional = 1;
+				new_snd->largo = 8;
+				new_snd->x = 1;
+				new_snd->y = 1;
+				t_protocol new_protocol = NEW_POKEMON;
+				game_boy_logger_info("Envio de New Pokemon");
+				utils_serialize_and_send(game_boy_broker_fd, new_protocol, new_snd);
+
+			}
+			/*APPEARED_POKEMON [POKEMON] [POSX] [POSY] [ID_MENSAJE]*/
+
+			if(!strncmp(linea, "APPEARED_POKEMON ", strlen("APPEARED_POKEMON"))){
+				t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
+				t_protocol appeared_protocol = APPEARED_POKEMON;
+				appeared_snd->pokemon = string_duplicate("Raichu");
+				appeared_snd->largo = 7;
+				appeared_snd->id_correlacional = 2;
+				appeared_snd->x = 1;
+				appeared_snd->y = 1;
+				appeared_snd->cantidad = 1;
+				game_boy_logger_info("Envio de APPEARED Pokemon");
+
+				utils_serialize_and_send(game_boy_broker_fd, appeared_protocol, appeared_snd);			}
+			/* GET_POKEMON [POKEMON] */
+			if (!strncmp(linea, "GET_POKEMON ", strlen("GET_POKEMON"))){
+
+			}
+			/*CATCH_POKEMON [POKEMON] [POSX] [POSY]*/
+			if (!strncmp(linea, "CATCH_POKEMON ",strlen("CATCH_POKEMON"))){
+
+			}
+			/*CAUGHT_POKEMON [ID_MENSAJE] [OK/FAIL]*/
+			if (!strncmp(linea, "CAUGHT_POKEMON ", strlen("CAUGHT_POKEMON "))){
+
+			}
+
+
 	}
 }
 
-void game_boy_init()
-{
+void game_boy_init() {
 	game_boy_logger_info("Inicando GAME BOY..");
-	connect_to_broker();
-	connect_to_team();
-	connect_to_game_card();
+
+	pthread_attr_t attrs;
+	pthread_attr_init(&attrs);
+	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
+	pthread_t tid;
+
+	game_boy_logger_info(
+				"Creando un hilo para enviar al broker %d");
+	pthread_create(&tid, NULL, (void*) connect_to_broker, NULL);
+	pthread_detach(tid);
+
+/*
+	game_boy_logger_info(
+				"Creando un hilo para enviar al team");
+	pthread_create(&tid, NULL, (void*) connect_to_team, NULL);
+	pthread_detach(tid);
+
+	game_boy_logger_info(
+				"Creando un hilo para enviar al game card");
+	pthread_create(&tid, NULL, (void*) connect_to_game_card, NULL );
+	pthread_detach(tid);
+*/
+	game_boy_logger_info(
+					"Creando un hilo para consola");
+	pthread_create(&tid, NULL, (void*) consola, NULL);
+	pthread_detach(tid);
+	for(;;);
 }
 
-void game_boy_exit()
-{
+
+void game_boy_exit() {
 	socket_close_conection(game_boy_broker_fd);
 	socket_close_conection(game_boy_team_fd);
 	socket_close_conection(game_boy_game_card_fd);

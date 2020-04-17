@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
+#include <pthread.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #include "config/game_boy_config.h"
 #include "logger/game_boy_logger.h"
