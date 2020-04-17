@@ -81,11 +81,23 @@ static void *handle_connection(void *arg)
 		}
 		switch(protocol)
 		{
-			case HANDSHAKE:
-				broker_logger_info("Recibi una nueva conexion");
+			case ACK:{
+				broker_logger_info("Recibi un ACK");
 				break;
+			}
+
+			case NEW_POKEMON:{
+				broker_logger_info("Recibi un NEW");
+				break;
+			}
+			case APPEARED_POKEMON:{
+				broker_logger_info("Recibi un APPEARED");
+				break;
+			}
+
+
 			default:
-				break;
+			break;
 		}
 	}
 }
