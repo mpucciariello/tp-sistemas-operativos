@@ -150,12 +150,14 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 				sizeof(uint32_t));
 		utils_package_add(package, &((t_new_pokemon*) package_send)->y,
 				sizeof(uint32_t));
+		utils_package_send_to(package, socket);
+		utils_package_destroy(package);
 		break;
 	}
 
 	case SUBSCRIBE: {
 		t_package* package = utils_package_create(protocol);
-		utils_package_add(package, &((t_subscribe*) package_send)->ip,
+		utils_package_add(package, ((t_subscribe*) package_send)->ip,
 				strlen(((t_subscribe*) package_send)->ip) + 1);
 		utils_package_add(package, &((t_subscribe*) package_send)->puerto,
 				sizeof(uint32_t));
@@ -171,8 +173,8 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 				&((t_catch_pokemon*) package_send)->id_correlacional,
 				sizeof(uint32_t));
 		utils_package_add(package,
-				&((t_catch_pokemon*) package_send)->nombre_pokemon,
-				strlen(((t_get_pokemon*) package_send)->nombre_pokemon) + 1);
+				((t_catch_pokemon*) package_send)->nombre_pokemon,
+				strlen(((t_catch_pokemon*) package_send)->nombre_pokemon) + 1);
 		utils_package_add(package, &((t_catch_pokemon*) package_send)->pos_x,
 				sizeof(uint32_t));
 		utils_package_add(package, &((t_catch_pokemon*) package_send)->pos_y,
@@ -225,6 +227,8 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package,
 				&((t_appeared_pokemon*) package_send)->cantidad,
 				sizeof(uint32_t));
+		utils_package_send_to(package, socket);
+		utils_package_destroy(package);
 		break;
 	}
 
@@ -234,7 +238,7 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 				&((t_get_pokemon*) package_send)->id_correlacional,
 				sizeof(uint32_t));
 		utils_package_add(package,
-				&((t_get_pokemon*) package_send)->nombre_pokemon,
+				((t_get_pokemon*) package_send)->nombre_pokemon,
 				strlen(((t_get_pokemon*) package_send)->nombre_pokemon) + 1);
 		utils_package_add(package,
 				&((t_get_pokemon*) package_send)->tamanio_nombre,
@@ -250,7 +254,7 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 				&((t_localized_pokemon*) package_send)->id_correlacional,
 				sizeof(uint32_t));
 		utils_package_add(package,
-				&((t_localized_pokemon*) package_send)->nombre_pokemon,
+				((t_localized_pokemon*) package_send)->nombre_pokemon,
 				strlen(((t_localized_pokemon*) package_send)->nombre_pokemon)
 						+ 1);
 		utils_package_add(package,

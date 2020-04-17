@@ -75,7 +75,7 @@ static void *handle_connection(void *arg) {
 		}
 		switch (protocol) {
 		case ACK: {
-			broker_logger_info("Recibi un ACK");
+			broker_logger_info("Ack received");
 			t_ack *ack_receive = utils_receive_and_deserialize(client_fd,
 					protocol);
 			broker_logger_info("ID recibido: %d", ack_receive->id);
@@ -86,62 +86,86 @@ static void *handle_connection(void *arg) {
 		}
 
 		case NEW_POKEMON: {
-			broker_logger_info("Recibi un NEW");
+			broker_logger_info("New received");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
 			broker_logger_info("ID recibido: %d", new_receive->id);
-			broker_logger_info("ID recibido: %d", new_receive->cantidad);
-			broker_logger_info("ID recibido: %d",
+			broker_logger_info("ID Correlacional: %d",
 					new_receive->id_correlacional);
-			broker_logger_info("ID recibido: %d", new_receive->largo);
-			broker_logger_info("ID recibido: %d", new_receive->x);
-			broker_logger_info("ID recibido: %d", new_receive->y);
-			broker_logger_info("ID recibido: %s", new_receive->pokemon);
+			broker_logger_info("Cantidad: %d", new_receive->cantidad);
+			broker_logger_info("Nombre Pokemon: %s", new_receive->pokemon);
+			broker_logger_info("Largo Nombre: %d", new_receive->largo);
+			broker_logger_info("Posicion X: %d", new_receive->x);
+			broker_logger_info("Posicion Y: %d", new_receive->y);
 			break;
 		}
 		case APPEARED_POKEMON: {
-			broker_logger_info("Recibi un APPEARED");
-			t_appeared_pokemon *appaared_receive =
+			broker_logger_info("Appeared received");
+			t_appeared_pokemon *appeared_rcv =
 					utils_receive_and_deserialize(client_fd, protocol);
-			broker_logger_info("ID recibido: %d", appaared_receive->cantidad);
-			broker_logger_info("ID recibido: %d",
-					appaared_receive->id_correlacional);
-			broker_logger_info("ID recibido: %d", appaared_receive->largo);
-			broker_logger_info("ID recibido: %d", appaared_receive->x);
-			broker_logger_info("ID recibido: %d", appaared_receive->y);
-			broker_logger_info("ID recibido: %s", appaared_receive->pokemon);
-
-			// From team
-			case GET_POKEMON:
-			{
-				broker_logger_info("Get received");
-				break;
-			}
-
-			// From team
-			case CATCH_POKEMON:
-			{
-				broker_logger_info("Catch received");
-				break;
-			}
-
-			// From GC
-			case LOCALIZED_POKEMON:
-			{
-				broker_logger_info("Localized received");
-				break;
-			}
-
-			// From GC
-			case CAUGHT_POKEMON:
-			{
-				broker_logger_info("Caught received");
-				break;
-			}
-
-			default:
+			broker_logger_info("ID correlacional: %d",
+					appeared_rcv->id_correlacional);
+			broker_logger_info("Cantidad: %d", appeared_rcv->cantidad);
+			broker_logger_info("Nombre Pokemon: %s", appeared_rcv->pokemon);
+			broker_logger_info("Largo nombre: %d", appeared_rcv->largo);
+			broker_logger_info("Posicion X: %d", appeared_rcv->x);
+			broker_logger_info("Posicion Y: %d", appeared_rcv->y);
 			break;
 		}
+			// From team
+		case GET_POKEMON: {
+			broker_logger_info("Get received");
+			t_get_pokemon *get_rcv =
+					utils_receive_and_deserialize(client_fd, protocol);
+			broker_logger_info("ID correlacional: %d",
+					get_rcv->id_correlacional);
+			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
+			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
+			break;
+		}
+
+			// From team
+		case CATCH_POKEMON: {
+			broker_logger_info("Catch received");
+			t_catch_pokemon *catch_rcv =
+					utils_receive_and_deserialize(client_fd, protocol);
+			broker_logger_info("ID correlacional: %d",
+					catch_rcv->id_correlacional);
+			broker_logger_info("ID Generado: %d", catch_rcv->id_gen);
+			broker_logger_info("Nombre Pokemon: %s", catch_rcv->nombre_pokemon);
+			broker_logger_info("Largo nombre: %d", catch_rcv->tamanio_nombre);
+			broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
+			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
+			break;
+		}
+
+			// From GC
+		case LOCALIZED_POKEMON: {
+			broker_logger_info("Localized received");
+			t_localized_pokemon *loc_rcv =
+					utils_receive_and_deserialize(client_fd, protocol);
+			broker_logger_info("ID correlacional: %d",
+					loc_rcv->id_correlacional);
+			broker_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
+			broker_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
+			broker_logger_info("Posicion X: %d", loc_rcv->cant_elem);
+			break;
+		}
+
+			// From GC
+		case CAUGHT_POKEMON: {
+			broker_logger_info("Caught received");
+			t_caught_pokemon *caught_rcv =
+					utils_receive_and_deserialize(client_fd, protocol);
+			broker_logger_info("ID correlacional: %d",
+					caught_rcv->id_correlacional);
+			broker_logger_info("ID mensaje: %d", caught_rcv->id_msg);
+			broker_logger_info("Resultado (0/1): %d", caught_rcv->result);
+			break;
+		}
+
+		default:
+			break;
 		}
 	}
 }

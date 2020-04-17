@@ -34,15 +34,21 @@ void team_init() {
 	} else {
 		team_logger_info("Conexion con BROKER establecida correctamente!");
 
+		t_protocol ack_protocol;
+		t_protocol new_protocol;
+		t_protocol catch_protocol;
+		t_protocol get_protocol;
+		t_protocol appeared_protocol;
+
 		// To broker
 		t_ack* ack_snd = malloc(sizeof(t_ack));
 		ack_snd->id = 1;
 		ack_snd->id_correlacional = 1;
-		t_protocol ack_protocol = ACK;
+		ack_protocol = ACK;
 		team_logger_info("Envio de ACK!");
 		utils_serialize_and_send(team_fd, ack_protocol, ack_snd);
 
-		sleep(5);
+		sleep(1);
 
 		// For testing purposes, should not be here
 		t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
@@ -52,15 +58,15 @@ void team_init() {
 		new_snd->largo = 8;
 		new_snd->x = 1;
 		new_snd->y = 1;
-		t_protocol new_protocol = NEW_POKEMON;
+		new_protocol = NEW_POKEMON;
 		team_logger_info("Envio de New Pokemon");
 		utils_serialize_and_send(team_fd, new_protocol, new_snd);
 
-		sleep(5);
+		sleep(1);
 
 		// For testing purposes, should not be here
 		t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
-		t_protocol appeared_protocol = APPEARED_POKEMON;
+		appeared_protocol = APPEARED_POKEMON;
 		appeared_snd->pokemon = string_duplicate("Raichu");
 		appeared_snd->largo = 7;
 		appeared_snd->id_correlacional = 2;
@@ -70,18 +76,7 @@ void team_init() {
 		team_logger_info("Envio de APPEARED Pokemon");
 		utils_serialize_and_send(team_fd, appeared_protocol, appeared_snd);
 
-		sleep(5);
-
-		// To broker
-		t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
-		get_send->id_correlacional = 19;
-		get_send->nombre_pokemon = string_duplicate("Aerodactyl");
-		t_protocol get_protocol = GET_POKEMON;
-		team_logger_info("Get sent");
-		utils_serialize_and_send(team_fd, get_protocol, get_send);
-
-		// Fix n remove thread sleep
-		sleep(5);
+		sleep(1);
 
 		// To broker
 		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
@@ -91,9 +86,20 @@ void team_init() {
 		catch_send->pos_y = 8;
 		catch_send->tamanio_nombre = 11;
 		catch_send->id_gen = -1;
-		t_protocol catch_protocol = CATCH_POKEMON;
+		catch_protocol = CATCH_POKEMON;
 		team_logger_info("Catch sent");
 		utils_serialize_and_send(team_fd, catch_protocol, catch_send);
+
+		// Fix n remove thread sleep
+		sleep(1);
+
+		// To broker
+		t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
+		get_send->id_correlacional = 19;
+		get_send->nombre_pokemon = string_duplicate("Aerodactyl");
+		get_protocol = GET_POKEMON;
+		team_logger_info("Get sent");
+		utils_serialize_and_send(team_fd, get_protocol, get_send);
 	}
 
 	team_logger_info("Iniciando TEAM..");

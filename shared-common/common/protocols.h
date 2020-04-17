@@ -27,7 +27,6 @@ typedef enum {
 	SUBSCRIBE
 } t_protocol;
 
-
 typedef struct {
 	t_protocol operation_code;
 	t_buffer* buffer;
@@ -101,7 +100,7 @@ typedef struct {
 	char* nombre_pokemon;
 	uint32_t tamanio_nombre;
 	uint32_t cant_elem;
-	// TODO: Lista de posiciones
+// TODO: Lista de posiciones
 } t_localized_pokemon;
 
 #endif /* COMMON_PROTOCOLS_H_ */
