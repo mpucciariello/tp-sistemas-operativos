@@ -324,7 +324,7 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 			t_list* list = utils_receive_package(socket);
 			utils_get_from_list_to(&catch_req->id_correlacional, list, 0);
 			catch_req->nombre_pokemon = malloc(utils_get_buffer_size(list, 1));
-			utils_get_from_list_to(&catch_req->nombre_pokemon, list, 1);
+			utils_get_from_list_to(catch_req->nombre_pokemon, list, 1);
 			utils_get_from_list_to(&catch_req->pos_x, list, 2);
 			utils_get_from_list_to(&catch_req->pos_y, list, 3);
 			utils_get_from_list_to(&catch_req->tamanio_nombre, list, 4);
@@ -338,7 +338,7 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 			t_list* list = utils_receive_package(socket);
 			utils_get_from_list_to(&get_req->id_correlacional, list, 0);
 			get_req->nombre_pokemon = malloc(utils_get_buffer_size(list, 1));
-			utils_get_from_list_to(&get_req->nombre_pokemon, list, 1);
+			utils_get_from_list_to(get_req->nombre_pokemon, list, 1);
 			utils_get_from_list_to(&get_req->tamanio_nombre, list, 2);
 			list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 			return get_req;
@@ -348,7 +348,7 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 			t_subscribe* subscribe_req = malloc(sizeof(t_generate));
 			t_list* list = utils_receive_package(socket);
 			subscribe_req->ip = malloc(utils_get_buffer_size(list, 0));
-			utils_get_from_list_to(&subscribe_req->ip, list, 0);
+			utils_get_from_list_to(subscribe_req->ip, list, 0);
 			utils_get_from_list_to(&subscribe_req->puerto, list, 1);
 			list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 			return subscribe_req;
@@ -369,7 +369,7 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 			utils_get_from_list_to(&localized_req->id_correlacional, list, 0);
 			localized_req->nombre_pokemon = malloc(
 					utils_get_buffer_size(list, 1));
-			utils_get_from_list_to(&localized_req->nombre_pokemon, list, 1);
+			utils_get_from_list_to(localized_req->nombre_pokemon, list, 1);
 			utils_get_from_list_to(&localized_req->tamanio_nombre, list, 2);
 			utils_get_from_list_to(&localized_req->cant_elem, list, 3);
 			// TODO: Lista de posiciones
