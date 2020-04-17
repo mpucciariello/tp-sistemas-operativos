@@ -8,7 +8,7 @@
 #include <commons/log.h>
 #include "../../../shared-common/common/logger.h"
 
-#define LOG_FILE "game_card.txt"
+#define LOG_FILE "/home/utnso/log_gamecard.txt"
 #define PROGRAM_NAME "GAME_CARD"
 
 int  game_card_logger_create();

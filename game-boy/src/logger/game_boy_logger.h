@@ -8,7 +8,7 @@
 #include <commons/log.h>
 #include "../../../shared-common/common/logger.h"
 
-#define LOG_FILE "game_boy.txt"
+#define LOG_FILE "/home/utnso/log_gameboy.txt"
 #define PROGRAM_NAME "GAME_BOY"
 
 int  game_boy_logger_create();
