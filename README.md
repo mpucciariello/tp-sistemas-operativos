@@ -20,9 +20,9 @@ Nombre y Apellido: Fernando Sierra
 Legajo: 1352404
 E-Mail: fernandosierra9@gmail.com
 
-Nombre y Apellido: Ariel Eduardo Galvan Vaquera
+Nombre y Apellido: Martin Yoo
 Legajo: 1589635
-E-Mail: galvanariel97@gmail.com
+E-Mail: mrtnyoo@gmail.com>
 
 
 # formating-style-tp-so.xml

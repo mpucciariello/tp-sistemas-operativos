@@ -67,3 +67,6 @@ shared-common/.settings/*
 
 # Files
 *.txt
+/.metadata/
+
+*.project
