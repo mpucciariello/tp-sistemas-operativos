@@ -43,7 +43,7 @@ Al ejecutar el script, se deben pasar los siguientes parametros:
 * -t | --target: Cambia el directorio donde sera ejecutado el script. Por defecto se ejecuta en el directorio actual.
 * -l | --lib: Agrega una dependencia externa para compilar e instalar. (Se especifica user y nombre del repositorio en github)
 * -d | --dependency: Agrega una dependencia interna del proyecto para compilar e instalar. (Forman parte del repositorio a deployar y se especifica una ruta dentro del repositorio a donde reside la dependencia).
-* -p | --proyect: Agrega un proyecto a compilar del repositorio. (Al igual que las dependencias se puede pasar una ruta a los proyectos)
+* -p | --proyect: Agrega un proyecto a compilar del repositorio. (Al igual que las dependencias se puede pasar una ruta a los proyectos).
 
 Para ver informacion de como usarlo, ejecutar con la opcion -h (help) `./deploy.sh -h`
 
