@@ -63,8 +63,29 @@ void team_init() {
 		team_logger_info("Envio de APPEARED Pokemon");
 		utils_serialize_and_send(team_fd, appeared_protocol, appeared_snd);
 
+		t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
+		get_send->id_correlacional = 19;
+		get_send->nombre_pokemon = string_duplicate("Aerodactyl");
+		t_protocol get_protocol = GET_POKEMON;
+		team_logger_info("Get sent");
+		utils_serialize_and_send(team_fd, get_protocol, get_send);
+
+		// Fix n remove thread sleep
+		sleep(2);
+
+		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
+		catch_send->id_correlacional = 111;
+		catch_send->nombre_pokemon = string_duplicate("Weepinbell");
+		catch_send->pos_x = 17;
+		catch_send->pos_y = 8;
+		catch_send->tamanio_nombre = 11;
+		catch_send->id_gen = -1;
+		t_protocol catch_protocol = CATCH_POKEMON;
+		team_logger_info("Catch sent");
+		utils_serialize_and_send(team_fd, catch_protocol, catch_send);
 	}
-	team_logger_info("Inicando TEAM..");
+
+	team_logger_info("Iniciando TEAM..");
 	team_server_init();
 }
 
@@ -118,9 +139,24 @@ static void *handle_connection(void *arg) {
 			return NULL;
 		}
 		switch (protocol) {
-		case HANDSHAKE:
+
+		case HANDSHAKE: {
 			team_logger_info("Recibi una nueva conexion");
 			break;
+		}
+
+			// From Broker
+		case LOCALIZED_POKEMON: {
+			team_logger_info("Localized received");
+			break;
+		}
+
+			// From Broker
+		case CAUGHT_POKEMON: {
+			team_logger_info("Caught received");
+			break;
+		}
+
 		default:
 			break;
 		}

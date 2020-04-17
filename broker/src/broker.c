@@ -63,6 +63,7 @@ static void *handle_connection(void *arg) {
 	int client_fd = *((int *) arg);
 
 	broker_logger_info("Conexion establecida con cliente: %d", client_fd);
+
 	int received_bytes;
 	int protocol;
 	while (true) {
@@ -109,6 +110,28 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("ID recibido: %d", appaared_receive->x);
 			broker_logger_info("ID recibido: %d", appaared_receive->y);
 			broker_logger_info("ID recibido: %s", appaared_receive->pokemon);
+
+		// From team
+		case GET_POKEMON: {
+			broker_logger_info("Get received");
+			break;
+		}
+
+		// From team
+		case CATCH_POKEMON: {
+			broker_logger_info("Catch received");
+			break;
+		}
+
+		// From GC
+		case LOCALIZED_POKEMON: {
+			broker_logger_info("Localized received");
+			break;
+		}
+
+		// From GC
+		case CAUGHT_POKEMON: {
+			broker_logger_info("Caught received");
 			break;
 		}
 
