@@ -56,59 +56,38 @@ void connect_to_game_card() {
 				"Conexion con GAME CARD establecida correctamente!");
 	}
 }
-void consola(){
 
-	while(1) {
-		    char * linea;
-			linea = readline("\n\n\nGameBoy>>>");
-			if(!strncmp(linea, "CLOSE", 5)) {
+void gb_create_send_broker_new_pikachu() {
+	t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
+	new_snd->pokemon = string_duplicate("pikachu");
+	new_snd->id = 1;
+	new_snd->id_correlacional = 1;
+	new_snd->largo = 8;
+	new_snd->x = 1;
+	new_snd->y = 1;
+	t_protocol new_protocol = NEW_POKEMON;
+	game_boy_logger_info("Envio de New Pokemon");
+	utils_serialize_and_send(game_boy_broker_fd, new_protocol, new_snd);
+}
 
-				break;
-			}
-			/* NEW_POKEMON [POKEMON] [POSX] [POSY] [CANTIDAD] */
+void gb_create_send_broker_appeared_raichu() {
+	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
+	t_protocol appeared_protocol = APPEARED_POKEMON;
+	appeared_snd->pokemon = string_duplicate("Raichu");
+	appeared_snd->largo = 7;
+	appeared_snd->id_correlacional = 2;
+	appeared_snd->x = 1;
+	appeared_snd->y = 1;
+	appeared_snd->cantidad = 1;
+	game_boy_logger_info("Envio de APPEARED Pokemon");
+	utils_serialize_and_send(game_boy_broker_fd, appeared_protocol,
+					appeared_snd);
+}
 
-			if(!strncmp(linea, "NEW_POKEMON ", strlen("NEW_POKEMON "))){
-				t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
-				new_snd->pokemon = string_duplicate("pikachu");
-				new_snd->id = 1;
-				new_snd->id_correlacional = 1;
-				new_snd->largo = 8;
-				new_snd->x = 1;
-				new_snd->y = 1;
-				t_protocol new_protocol = NEW_POKEMON;
-				game_boy_logger_info("Envio de New Pokemon");
-				utils_serialize_and_send(game_boy_broker_fd, new_protocol, new_snd);
-
-			}
-			/*APPEARED_POKEMON [POKEMON] [POSX] [POSY] [ID_MENSAJE]*/
-
-			if(!strncmp(linea, "APPEARED_POKEMON ", strlen("APPEARED_POKEMON"))){
-				t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
-				t_protocol appeared_protocol = APPEARED_POKEMON;
-				appeared_snd->pokemon = string_duplicate("Raichu");
-				appeared_snd->largo = 7;
-				appeared_snd->id_correlacional = 2;
-				appeared_snd->x = 1;
-				appeared_snd->y = 1;
-				appeared_snd->cantidad = 1;
-				game_boy_logger_info("Envio de APPEARED Pokemon");
-
-				utils_serialize_and_send(game_boy_broker_fd, appeared_protocol, appeared_snd);			}
-			/* GET_POKEMON [POKEMON] */
-			if (!strncmp(linea, "GET_POKEMON ", strlen("GET_POKEMON"))){
-
-			}
-			/*CATCH_POKEMON [POKEMON] [POSX] [POSY]*/
-			if (!strncmp(linea, "CATCH_POKEMON ",strlen("CATCH_POKEMON"))){
-
-			}
-			/*CAUGHT_POKEMON [ID_MENSAJE] [OK/FAIL]*/
-			if (!strncmp(linea, "CAUGHT_POKEMON ", strlen("CAUGHT_POKEMON "))){
-
-			}
-
-
-	}
+void game_boy_console(){
+	command_actions = game_boy_get_command_actions();
+	while (game_boy_console_read(command_actions) == 0)
+		;
 }
 
 void game_boy_init() {
@@ -135,9 +114,8 @@ void game_boy_init() {
 	pthread_create(&tid, NULL, (void*) connect_to_game_card, NULL );
 	pthread_detach(tid);
 */
-	game_boy_logger_info(
-					"Creando un hilo para consola");
-	pthread_create(&tid, NULL, (void*) consola, NULL);
+	game_boy_logger_info("Creando un hilo para consola");
+	pthread_create(&tid, NULL, (void*) game_boy_console, NULL);
 	pthread_detach(tid);
 	for(;;);
 }
@@ -147,6 +125,7 @@ void game_boy_exit() {
 	socket_close_conection(game_boy_broker_fd);
 	socket_close_conection(game_boy_team_fd);
 	socket_close_conection(game_boy_game_card_fd);
+	game_boy_free_command_actions(command_actions);
 	game_boy_config_free();
 	game_boy_logger_destroy();
 }
