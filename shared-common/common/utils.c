@@ -182,6 +182,8 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package,
 				&((t_catch_pokemon*) package_send)->tamanio_nombre,
 				sizeof(uint32_t));
+		utils_package_add(package, &((t_catch_pokemon*) package_send)->id_gen,
+				sizeof(uint32_t));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 		break;

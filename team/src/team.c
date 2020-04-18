@@ -84,7 +84,7 @@ void team_init() {
 		catch_send->nombre_pokemon = string_duplicate("Weepinbell");
 		catch_send->pos_x = 17;
 		catch_send->pos_y = 8;
-		catch_send->tamanio_nombre = 11;
+		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon) +1;
 		catch_send->id_gen = -1;
 		catch_protocol = CATCH_POKEMON;
 		team_logger_info("Catch sent");
@@ -97,6 +97,7 @@ void team_init() {
 		t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
 		get_send->id_correlacional = 19;
 		get_send->nombre_pokemon = string_duplicate("Aerodactyl");
+		get_send->tamanio_nombre = strlen(get_send->nombre_pokemon) +1;
 		get_protocol = GET_POKEMON;
 		team_logger_info("Get sent");
 		utils_serialize_and_send(team_fd, get_protocol, get_send);

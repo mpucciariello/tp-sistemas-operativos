@@ -66,15 +66,6 @@ typedef struct {
 } t_catch_pokemon;
 
 typedef struct {
-	uint32_t id_correlacional;
-	char* nombre_pokemon;
-	uint32_t tamanio_nombre;
-	uint32_t pos_x;
-	uint32_t pos_y;
-	uint32_t id_generado;
-} t_catch_pokemon_gc;
-
-typedef struct {
 	uint32_t id_generado;
 } t_generate;
 
