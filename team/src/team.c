@@ -39,6 +39,17 @@ void team_init() {
 		t_protocol catch_protocol;
 		t_protocol get_protocol;
 		t_protocol appeared_protocol;
+		t_protocol localized_protocol;
+		t_list* positions = list_create();
+		t_position *pos = malloc(sizeof(t_position));
+		pos->pos_x = 21;
+		pos->pos_y = 8;
+		t_position *pos2 = malloc(sizeof(t_position));
+		pos2->pos_x = 2;
+		pos2->pos_y = 8;
+		list_add(positions, pos);
+		list_add(positions, pos2);
+
 
 		// To broker
 		t_ack* ack_snd = malloc(sizeof(t_ack));
@@ -52,12 +63,12 @@ void team_init() {
 
 		// For testing purposes, should not be here
 		t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
-		new_snd->pokemon = string_duplicate("pikachu");
+		new_snd->nombre_pokemon = string_duplicate("pikachu");
 		new_snd->id = 1;
 		new_snd->id_correlacional = 1;
-		new_snd->largo = 8;
-		new_snd->x = 1;
-		new_snd->y = 1;
+		new_snd->tamanio_nombre = 8;
+		new_snd->pos_x = 1;
+		new_snd->pos_y = 1;
 		new_protocol = NEW_POKEMON;
 		team_logger_info("Envio de New Pokemon");
 		utils_serialize_and_send(team_fd, new_protocol, new_snd);
@@ -67,11 +78,11 @@ void team_init() {
 		// For testing purposes, should not be here
 		t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
 		appeared_protocol = APPEARED_POKEMON;
-		appeared_snd->pokemon = string_duplicate("Raichu");
-		appeared_snd->largo = 7;
+		appeared_snd->nombre_pokemon = string_duplicate("Raichu");
+		appeared_snd->tamanio_nombre = 7;
 		appeared_snd->id_correlacional = 2;
-		appeared_snd->x = 1;
-		appeared_snd->y = 1;
+		appeared_snd->pos_x = 1;
+		appeared_snd->pos_y = 1;
 		appeared_snd->cantidad = 1;
 		team_logger_info("Envio de APPEARED Pokemon");
 		utils_serialize_and_send(team_fd, appeared_protocol, appeared_snd);
@@ -84,7 +95,7 @@ void team_init() {
 		catch_send->nombre_pokemon = string_duplicate("Weepinbell");
 		catch_send->pos_x = 17;
 		catch_send->pos_y = 8;
-		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon) +1;
+		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon) + 1;
 		catch_send->id_gen = -1;
 		catch_protocol = CATCH_POKEMON;
 		team_logger_info("Catch sent");
@@ -97,16 +108,27 @@ void team_init() {
 		t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
 		get_send->id_correlacional = 19;
 		get_send->nombre_pokemon = string_duplicate("Aerodactyl");
-		get_send->tamanio_nombre = strlen(get_send->nombre_pokemon) +1;
+		get_send->tamanio_nombre = strlen(get_send->nombre_pokemon) + 1;
 		get_protocol = GET_POKEMON;
 		team_logger_info("Get sent");
 		utils_serialize_and_send(team_fd, get_protocol, get_send);
+
+		sleep(1);
+
+		// To broker
+		t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
+		loc_snd->id_correlacional = 77;
+		loc_snd->nombre_pokemon = string_duplicate("Celebi");
+		loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
+		loc_snd->cant_elem = list_size(positions);
+		localized_protocol = LOCALIZED_POKEMON;
+		loc_snd->posiciones = positions;
+		utils_serialize_and_send(team_fd, localized_protocol, loc_snd);
+
+		team_logger_info("Iniciando TEAM..");
+		team_server_init();
 	}
-
-	team_logger_info("Iniciando TEAM..");
-	team_server_init();
 }
-
 void team_server_init() {
 
 	team_socket = socket_create_listener(LOCAL_IP, LOCAL_PORT);

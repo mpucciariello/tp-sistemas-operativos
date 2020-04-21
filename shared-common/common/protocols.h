@@ -14,6 +14,11 @@ typedef struct {
 	void* stream;
 } t_buffer;
 
+typedef struct {
+	int pos_x;
+	int pos_y;
+} t_position;
+
 typedef enum {
 	HANDSHAKE,
 	ACK,
@@ -27,6 +32,22 @@ typedef enum {
 	SUBSCRIBE
 } t_protocol;
 
+typedef enum {
+	GAME_CARD,
+	BROKER,
+	GAME_BOY,
+	TEAM
+} t_proceso;
+
+typedef enum {
+	NEW_QUEUE,
+	APPEARED_QUEUE,
+	LOCALIZED_QUEUE,
+	GET_QUEUE,
+	CATCH_QUEUE,
+	CAUGHT_QUEUE
+} t_cola;
+
 typedef struct {
 	t_protocol operation_code;
 	t_buffer* buffer;
@@ -38,21 +59,21 @@ typedef struct {
 } t_ack;
 
 typedef struct {
-	char *pokemon;
-	uint32_t largo;
+	char *nombre_pokemon;
+	uint32_t tamanio_nombre;
 	uint32_t cantidad;
-	uint32_t x;
-	uint32_t y;
+	uint32_t pos_x;
+	uint32_t pos_y;
 	uint32_t id;
 	uint32_t id_correlacional;
 } t_new_pokemon;
 
 typedef struct {
-	char *pokemon;
-	uint32_t largo;
+	char *nombre_pokemon;
+	uint32_t tamanio_nombre;
 	uint32_t cantidad;
-	uint32_t x;
-	uint32_t y;
+	uint32_t pos_x;
+	uint32_t pos_y;
 	uint32_t id_correlacional;
 } t_appeared_pokemon;
 
@@ -84,6 +105,8 @@ typedef struct {
 typedef struct {
 	char* ip;
 	uint32_t puerto;
+	t_proceso proceso;
+	t_cola cola;
 } t_subscribe;
 
 typedef struct {
@@ -91,7 +114,7 @@ typedef struct {
 	char* nombre_pokemon;
 	uint32_t tamanio_nombre;
 	uint32_t cant_elem;
-// TODO: Lista de posiciones
+	t_list* posiciones;
 } t_localized_pokemon;
 
 #endif /* COMMON_PROTOCOLS_H_ */

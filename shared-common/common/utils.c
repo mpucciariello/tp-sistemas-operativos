@@ -135,10 +135,12 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 
 	case NEW_POKEMON: {
 		t_package* package = utils_package_create(protocol);
-		utils_package_add(package, &((t_new_pokemon*) package_send)->largo,
+		utils_package_add(package,
+				&((t_new_pokemon*) package_send)->tamanio_nombre,
 				sizeof(uint32_t));
-		utils_package_add(package, ((t_new_pokemon*) package_send)->pokemon,
-				strlen(((t_new_pokemon*) package_send)->pokemon) + 1);
+		utils_package_add(package,
+				((t_new_pokemon*) package_send)->nombre_pokemon,
+				strlen(((t_new_pokemon*) package_send)->nombre_pokemon) + 1);
 		utils_package_add(package, &((t_new_pokemon*) package_send)->id,
 				sizeof(uint32_t));
 		utils_package_add(package,
@@ -146,9 +148,9 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 				sizeof(uint32_t));
 		utils_package_add(package, &((t_new_pokemon*) package_send)->cantidad,
 				sizeof(uint32_t));
-		utils_package_add(package, &((t_new_pokemon*) package_send)->x,
+		utils_package_add(package, &((t_new_pokemon*) package_send)->pos_x,
 				sizeof(uint32_t));
-		utils_package_add(package, &((t_new_pokemon*) package_send)->y,
+		utils_package_add(package, &((t_new_pokemon*) package_send)->pos_y,
 				sizeof(uint32_t));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
@@ -214,17 +216,18 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 
 	case APPEARED_POKEMON: {
 		t_package* package = utils_package_create(protocol);
-		utils_package_add(package, &((t_appeared_pokemon*) package_send)->largo,
+		utils_package_add(package,
+				&((t_appeared_pokemon*) package_send)->tamanio_nombre,
 				sizeof(uint32_t));
 		utils_package_add(package,
-				((t_appeared_pokemon*) package_send)->pokemon,
-				strlen(((t_new_pokemon*) package_send)->pokemon) + 1);
+				((t_appeared_pokemon*) package_send)->nombre_pokemon,
+				strlen(((t_new_pokemon*) package_send)->nombre_pokemon) + 1);
 		utils_package_add(package,
 				&((t_appeared_pokemon*) package_send)->id_correlacional,
 				sizeof(uint32_t));
-		utils_package_add(package, &((t_appeared_pokemon*) package_send)->x,
+		utils_package_add(package, &((t_appeared_pokemon*) package_send)->pos_x,
 				sizeof(uint32_t));
-		utils_package_add(package, &((t_appeared_pokemon*) package_send)->y,
+		utils_package_add(package, &((t_appeared_pokemon*) package_send)->pos_y,
 				sizeof(uint32_t));
 		utils_package_add(package,
 				&((t_appeared_pokemon*) package_send)->cantidad,
@@ -265,7 +268,12 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package,
 				&((t_localized_pokemon*) package_send)->cant_elem,
 				sizeof(uint32_t));
-		// TODO: Lista de posiciones
+		for(int i = 0; i < ((t_localized_pokemon*) package_send)->cant_elem; i++) {
+			t_position *pos = malloc(sizeof(t_position));
+			pos = list_get(((t_localized_pokemon*) package_send)->posiciones, i);
+			utils_package_add(package, &pos->pos_x, sizeof(int));
+			utils_package_add(package, &pos->pos_y, sizeof(int));
+		}
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 		break;
@@ -294,14 +302,14 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 	case NEW_POKEMON: {
 		t_new_pokemon *new_request = malloc(sizeof(t_new_pokemon));
 		t_list* list = utils_receive_package(socket);
-		utils_get_from_list_to(&new_request->largo, list, 0);
-		new_request->pokemon = malloc(utils_get_buffer_size(list, 1));
-		utils_get_from_list_to(new_request->pokemon, list, 1);
+		utils_get_from_list_to(&new_request->tamanio_nombre, list, 0);
+		new_request->nombre_pokemon = malloc(utils_get_buffer_size(list, 1));
+		utils_get_from_list_to(new_request->nombre_pokemon, list, 1);
 		utils_get_from_list_to(&new_request->id, list, 2);
 		utils_get_from_list_to(&new_request->id_correlacional, list, 3);
 		utils_get_from_list_to(&new_request->cantidad, list, 4);
-		utils_get_from_list_to(&new_request->x, list, 5);
-		utils_get_from_list_to(&new_request->y, list, 6);
+		utils_get_from_list_to(&new_request->pos_x, list, 5);
+		utils_get_from_list_to(&new_request->pos_y, list, 6);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return new_request;
 	}
@@ -311,12 +319,13 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 				sizeof(t_appeared_pokemon));
 		t_list* list = utils_receive_package(socket);
 
-		utils_get_from_list_to(&appeared_request->largo, list, 0);
-		appeared_request->pokemon = malloc(utils_get_buffer_size(list, 1));
-		utils_get_from_list_to(appeared_request->pokemon, list, 1);
+		utils_get_from_list_to(&appeared_request->tamanio_nombre, list, 0);
+		appeared_request->nombre_pokemon = malloc(
+				utils_get_buffer_size(list, 1));
+		utils_get_from_list_to(appeared_request->nombre_pokemon, list, 1);
 		utils_get_from_list_to(&appeared_request->id_correlacional, list, 2);
-		utils_get_from_list_to(&appeared_request->x, list, 3);
-		utils_get_from_list_to(&appeared_request->y, list, 4);
+		utils_get_from_list_to(&appeared_request->pos_x, list, 3);
+		utils_get_from_list_to(&appeared_request->pos_y, list, 4);
 		utils_get_from_list_to(&appeared_request->cantidad, list, 5);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return appeared_request;
@@ -374,7 +383,13 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		utils_get_from_list_to(localized_req->nombre_pokemon, list, 1);
 		utils_get_from_list_to(&localized_req->tamanio_nombre, list, 2);
 		utils_get_from_list_to(&localized_req->cant_elem, list, 3);
-		// TODO: Lista de posiciones
+		localized_req->posiciones = list_create();
+		for(int i = 4; i < (localized_req->cant_elem*2) + 4; i+=2) {
+			t_position* pos = malloc(sizeof(t_position));
+			utils_get_from_list_to(&pos->pos_x, list, i);
+			utils_get_from_list_to(&pos->pos_y, list, i+1);
+			list_add(localized_req->posiciones, pos);
+		}
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return localized_req;
 	}

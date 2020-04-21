@@ -59,12 +59,12 @@ void connect_to_game_card() {
 
 void gb_create_send_broker_new_pikachu() {
 	t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
-	new_snd->pokemon = string_duplicate("pikachu");
+	new_snd->nombre_pokemon = string_duplicate("pikachu");
 	new_snd->id = 1;
 	new_snd->id_correlacional = 1;
-	new_snd->largo = 8;
-	new_snd->x = 1;
-	new_snd->y = 1;
+	new_snd->tamanio_nombre = 8;
+	new_snd->pos_x = 1;
+	new_snd->pos_y = 1;
 	t_protocol new_protocol = NEW_POKEMON;
 	game_boy_logger_info("Envio de New Pokemon");
 	utils_serialize_and_send(game_boy_broker_fd, new_protocol, new_snd);
@@ -73,11 +73,11 @@ void gb_create_send_broker_new_pikachu() {
 void gb_create_send_broker_appeared_raichu() {
 	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
 	t_protocol appeared_protocol = APPEARED_POKEMON;
-	appeared_snd->pokemon = string_duplicate("Raichu");
-	appeared_snd->largo = 7;
+	appeared_snd->nombre_pokemon = string_duplicate("Raichu");
+	appeared_snd->tamanio_nombre = 7;
 	appeared_snd->id_correlacional = 2;
-	appeared_snd->x = 1;
-	appeared_snd->y = 1;
+	appeared_snd->pos_x = 1;
+	appeared_snd->pos_y = 1;
 	appeared_snd->cantidad = 1;
 	game_boy_logger_info("Envio de APPEARED Pokemon");
 	utils_serialize_and_send(game_boy_broker_fd, appeared_protocol,

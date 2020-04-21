@@ -93,30 +93,30 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("ID Correlacional: %d",
 					new_receive->id_correlacional);
 			broker_logger_info("Cantidad: %d", new_receive->cantidad);
-			broker_logger_info("Nombre Pokemon: %s", new_receive->pokemon);
-			broker_logger_info("Largo Nombre: %d", new_receive->largo);
-			broker_logger_info("Posicion X: %d", new_receive->x);
-			broker_logger_info("Posicion Y: %d", new_receive->y);
+			broker_logger_info("Nombre Pokemon: %s", new_receive->nombre_pokemon);
+			broker_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
+			broker_logger_info("Posicion X: %d", new_receive->pos_x);
+			broker_logger_info("Posicion Y: %d", new_receive->pos_y);
 			break;
 		}
 		case APPEARED_POKEMON: {
 			broker_logger_info("Appeared received");
-			t_appeared_pokemon *appeared_rcv =
-					utils_receive_and_deserialize(client_fd, protocol);
+			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
+					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
 					appeared_rcv->id_correlacional);
 			broker_logger_info("Cantidad: %d", appeared_rcv->cantidad);
-			broker_logger_info("Nombre Pokemon: %s", appeared_rcv->pokemon);
-			broker_logger_info("Largo nombre: %d", appeared_rcv->largo);
-			broker_logger_info("Posicion X: %d", appeared_rcv->x);
-			broker_logger_info("Posicion Y: %d", appeared_rcv->y);
+			broker_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);
+			broker_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
+			broker_logger_info("Posicion X: %d", appeared_rcv->pos_x);
+			broker_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
 			break;
 		}
 			// From team
 		case GET_POKEMON: {
 			broker_logger_info("Get received");
-			t_get_pokemon *get_rcv =
-					utils_receive_and_deserialize(client_fd, protocol);
+			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd,
+					protocol);
 			broker_logger_info("ID correlacional: %d",
 					get_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
@@ -127,8 +127,8 @@ static void *handle_connection(void *arg) {
 			// From team
 		case CATCH_POKEMON: {
 			broker_logger_info("Catch received");
-			t_catch_pokemon *catch_rcv =
-					utils_receive_and_deserialize(client_fd, protocol);
+			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(
+					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
 					catch_rcv->id_correlacional);
 			broker_logger_info("ID Generado: %d", catch_rcv->id_gen);
@@ -142,21 +142,27 @@ static void *handle_connection(void *arg) {
 			// From GC
 		case LOCALIZED_POKEMON: {
 			broker_logger_info("Localized received");
-			t_localized_pokemon *loc_rcv =
-					utils_receive_and_deserialize(client_fd, protocol);
+			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
+					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
 					loc_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
-			broker_logger_info("Posicion X: %d", loc_rcv->cant_elem);
+			broker_logger_info("Cant Elementos en lista: %d", loc_rcv->cant_elem);
+			for(int el = 0; el < loc_rcv->cant_elem; el++) {
+				t_position* pos = malloc(sizeof(t_position));
+				pos = list_get(loc_rcv->posiciones, el);
+				broker_logger_info("Position is (%d, %d)", pos->pos_x, pos->pos_y);
+			}
 			break;
 		}
 
-			// From GC
-		case CAUGHT_POKEMON: {
+		// From GC
+		case CAUGHT_POKEMON:
+		{
 			broker_logger_info("Caught received");
-			t_caught_pokemon *caught_rcv =
-					utils_receive_and_deserialize(client_fd, protocol);
+			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(
+					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
 					caught_rcv->id_correlacional);
 			broker_logger_info("ID mensaje: %d", caught_rcv->id_msg);
@@ -165,13 +171,13 @@ static void *handle_connection(void *arg) {
 		}
 
 		default:
-			break;
-		}
+		break;
 	}
+}
 }
 
 void broker_exit() {
-	socket_close_conection(broker_socket);
-	broker_config_free();
-	broker_logger_destroy();
+socket_close_conection(broker_socket);
+broker_config_free();
+broker_logger_destroy();
 }

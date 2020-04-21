@@ -7,12 +7,6 @@
 #include "../config/team_config.h"
 #include "../../../shared-common/common/utils.h"
 
-typedef struct
-{
-	int x;
-	int y;
-} t_position;
-
 typedef enum
 {
 	NEW, READY, BLOCK, EXEC, EXIT
