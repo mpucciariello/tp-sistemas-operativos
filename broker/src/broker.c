@@ -208,26 +208,32 @@ void search_queue(t_subscribe *unSubscribe){
 
 	switch(unSubscribe->cola){
 	 case NEW_QUEUE:{
+		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola NEW ",unSubscribe->ip,unSubscribe->puerto);
 		 add_to(new_queue,unSubscribe->ip,unSubscribe->puerto);
 		 break;
 	 }
 	 case CATCH_QUEUE:{
+		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola CATCH ",unSubscribe->ip,unSubscribe->puerto);
 		 add_to(catch_queue,unSubscribe->ip,unSubscribe->puerto);
 		 break;
 	 }
 	 case CAUGHT_QUEUE:{
+		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola CAUGHT ",unSubscribe->ip,unSubscribe->puerto);
 		 add_to(caught_queue,unSubscribe->ip,unSubscribe->puerto);
 		 break;
 	 }
 	 case GET_QUEUE:{
+		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola GET ",unSubscribe->ip,unSubscribe->puerto);
 		 add_to(get_queue,unSubscribe->ip,unSubscribe->puerto);
 		 break;
 	 }
 	 case LOCALIZED_QUEUE:{
+		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola LOCALIZED ",unSubscribe->ip,unSubscribe->puerto);
 		 add_to(localized_queue,unSubscribe->ip,unSubscribe->puerto);
 		 break;
 	 }
 	 case APPEARED_QUEUE:{
+		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola APPEARED ",unSubscribe->ip,unSubscribe->puerto);
 		 add_to(appeared_queue,unSubscribe->ip,unSubscribe->puerto);
 		 break;
 	 }
