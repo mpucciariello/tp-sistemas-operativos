@@ -21,6 +21,7 @@ void search_queue(t_subscribe *unSubscribe);
 void initialice_queue();
 void add_to(t_list *list, char *ip, uint32_t puerto);
 
+
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
 
 typedef struct {
@@ -28,5 +29,6 @@ typedef struct {
 	uint32_t puerto;
 } t_subscribe_nodo;
 
+t_subscribe_nodo* check_already_subscribe(char *ip,uint32_t puerto,t_list *list);
 
 #endif /* BROKER_H_ */

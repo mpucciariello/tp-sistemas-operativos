@@ -115,9 +115,9 @@ void team_init() {
 		sub_snd->proceso = TEAM;
 		sub_snd->cola = GET_QUEUE;
 		utils_serialize_and_send(team_fd, subscribe_protocol, sub_snd);
-
-
-
+		sleep(1);
+		utils_serialize_and_send(team_fd, subscribe_protocol, sub_snd);
+		sleep(1);
 		// Fix n remove thread sleep
 		sleep(1);
 

@@ -168,6 +168,8 @@ static void *handle_connection(void *arg) {
 
 			//ver diccionario para el proceso
 			search_queue(sub_rcv);
+			free(sub_rcv->ip);
+			free(sub_rcv);
 
 			break;
 		}
@@ -199,12 +201,30 @@ void initialice_queue(){
 	catch_queue = list_create ();
 	localized_queue = list_create ();
 }
-void add_to(t_list *list, char *ip, uint32_t puerto){
-	t_subscribe_nodo *nodo = malloc(sizeof(t_subscribe_nodo));
-	nodo->ip = string_duplicate(ip);
-	nodo->puerto = puerto;
-	list_add(list,nodo);
+
+t_subscribe_nodo* check_already_subscribe(char *ip,uint32_t puerto,t_list *list){
+	int find_subscribe(t_subscribe_nodo *nodo){
+		return (strcmp(ip,nodo->ip)==0 && (puerto == nodo->puerto) );
+	}
+
+	return list_find(list,(void*)find_subscribe);
 }
+
+void add_to(t_list *list, char *ip, uint32_t puerto){
+	if (check_already_subscribe(ip,puerto,list) == NULL){
+		t_subscribe_nodo *nodo = malloc(sizeof(t_subscribe_nodo));
+		nodo->ip = string_duplicate(ip);
+		nodo->puerto = puerto;
+		list_add(list,nodo);
+	}
+	else {
+		broker_logger_info("Ya esta Subscripto");
+	}
+}
+
+
+
+
 
 void search_queue(t_subscribe *unSubscribe){
 
