@@ -17,5 +17,16 @@ int broker_load();
 void broker_server_init();
 static void *handle_connection(void *arg);
 void broker_exit();
+void search_queue(t_subscribe *unSubscribe);
+void initialice_queue();
+void add_to(t_list *list, char *ip, uint32_t puerto);
+
+t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
+
+typedef struct {
+	char* ip;
+	uint32_t puerto;
+} t_subscribe_nodo;
+
 
 #endif /* BROKER_H_ */

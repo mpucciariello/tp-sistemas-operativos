@@ -40,6 +40,7 @@ void team_init() {
 		t_protocol get_protocol;
 		t_protocol appeared_protocol;
 		t_protocol localized_protocol;
+		t_protocol subscribe_protocol;
 		t_list* positions = list_create();
 		t_position *pos = malloc(sizeof(t_position));
 		pos->pos_x = 21;
@@ -125,6 +126,21 @@ void team_init() {
 		loc_snd->posiciones = positions;
 		utils_serialize_and_send(team_fd, localized_protocol, loc_snd);
 
+
+		sleep(1);
+
+		// To broker
+		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
+
+		subscribe_protocol = SUBSCRIBE;
+		sub_snd->ip = string_duplicate(team_config->ip_team);
+		sub_snd->puerto = team_config->puerto_team;
+		sub_snd->proceso = TEAM;
+		sub_snd->cola = GET_QUEUE;
+
+		utils_serialize_and_send(team_fd, subscribe_protocol, loc_snd);
+
+
 		team_logger_info("Iniciando TEAM..");
 		team_server_init();
 	}
@@ -180,10 +196,6 @@ static void *handle_connection(void *arg) {
 		}
 		switch (protocol) {
 
-		case HANDSHAKE: {
-			team_logger_info("Recibi una nueva conexion");
-			break;
-		}
 
 			// From Broker
 		case LOCALIZED_POKEMON: {

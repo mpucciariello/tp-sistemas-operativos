@@ -163,6 +163,10 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 				strlen(((t_subscribe*) package_send)->ip) + 1);
 		utils_package_add(package, &((t_subscribe*) package_send)->puerto,
 				sizeof(uint32_t));
+		utils_package_add(package, &((t_subscribe*) package_send)->cola,
+						sizeof(t_cola));
+		utils_package_add(package, &((t_subscribe*) package_send)->proceso,
+						sizeof(t_proceso));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 
@@ -362,6 +366,8 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		subscribe_req->ip = malloc(utils_get_buffer_size(list, 0));
 		utils_get_from_list_to(subscribe_req->ip, list, 0);
 		utils_get_from_list_to(&subscribe_req->puerto, list, 1);
+		utils_get_from_list_to(&subscribe_req->cola, list, 2);
+		utils_get_from_list_to(&subscribe_req->proceso, list, 3);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return subscribe_req;
 	}

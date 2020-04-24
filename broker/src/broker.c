@@ -1,6 +1,7 @@
 #include "broker.h"
 
 int main(int argc, char *argv[]) {
+	initialice_queue();
 	if (broker_load() < 0)
 		return EXIT_FAILURE;
 	broker_server_init();
@@ -156,6 +157,18 @@ static void *handle_connection(void *arg) {
 			}
 			break;
 		}
+		case SUBSCRIBE: {
+			broker_logger_info("SUBSCRIBE received");
+			t_subscribe *sub_rcv = utils_receive_and_deserialize(
+								client_fd, protocol);
+			broker_logger_info("IP Recibido: %d",
+								sub_rcv->ip);
+			broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
+			//ver diccionario para el proceso
+			search_queue(sub_rcv);
+
+			break;
+		}
 
 		// From GC
 		case CAUGHT_POKEMON:
@@ -176,8 +189,54 @@ static void *handle_connection(void *arg) {
 }
 }
 
+void initialice_queue(){
+	get_queue = list_create ();
+	appeared_queue = list_create ();
+	new_queue = list_create ();
+	caught_queue = list_create ();
+	catch_queue = list_create ();
+	localized_queue = list_create ();
+}
+void add_to(t_list *list, char *ip, uint32_t puerto){
+	t_subscribe_nodo *nodo = malloc(sizeof(t_subscribe_nodo));
+	nodo->ip = string_duplicate(ip);
+	nodo->puerto = puerto;
+	list_add(list,nodo);
+}
+
+void search_queue(t_subscribe *unSubscribe){
+
+	switch(unSubscribe->cola){
+	 case NEW_QUEUE:{
+		 add_to(new_queue,unSubscribe->ip,unSubscribe->puerto);
+		 break;
+	 }
+	 case CATCH_QUEUE:{
+		 add_to(catch_queue,unSubscribe->ip,unSubscribe->puerto);
+		 break;
+	 }
+	 case CAUGHT_QUEUE:{
+		 add_to(caught_queue,unSubscribe->ip,unSubscribe->puerto);
+		 break;
+	 }
+	 case GET_QUEUE:{
+		 add_to(get_queue,unSubscribe->ip,unSubscribe->puerto);
+		 break;
+	 }
+	 case LOCALIZED_QUEUE:{
+		 add_to(localized_queue,unSubscribe->ip,unSubscribe->puerto);
+		 break;
+	 }
+	 case APPEARED_QUEUE:{
+		 add_to(appeared_queue,unSubscribe->ip,unSubscribe->puerto);
+		 break;
+	 }
+
+	}
+}
+
 void broker_exit() {
-socket_close_conection(broker_socket);
-broker_config_free();
-broker_logger_destroy();
+	socket_close_conection(broker_socket);
+	broker_config_free();
+	broker_logger_destroy();
 }
