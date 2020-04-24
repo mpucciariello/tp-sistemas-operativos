@@ -161,9 +161,11 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("SUBSCRIBE received");
 			t_subscribe *sub_rcv = utils_receive_and_deserialize(
 								client_fd, protocol);
-			broker_logger_info("IP Recibido: %d",
-								sub_rcv->ip);
+			char * ip= string_duplicate(sub_rcv->ip);
 			broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
+			broker_logger_info("IP Recibido: %s",
+								ip);
+
 			//ver diccionario para el proceso
 			search_queue(sub_rcv);
 

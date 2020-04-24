@@ -164,9 +164,9 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package, &((t_subscribe*) package_send)->puerto,
 				sizeof(uint32_t));
 		utils_package_add(package, &((t_subscribe*) package_send)->cola,
-						sizeof(t_cola));
+						sizeof(uint32_t));
 		utils_package_add(package, &((t_subscribe*) package_send)->proceso,
-						sizeof(t_proceso));
+						sizeof(uint32_t));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 

@@ -102,6 +102,22 @@ void team_init() {
 		team_logger_info("Catch sent");
 		utils_serialize_and_send(team_fd, catch_protocol, catch_send);
 
+
+
+		sleep(1);
+
+		// To broker
+		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
+
+		subscribe_protocol = SUBSCRIBE;
+		sub_snd->ip = string_duplicate(team_config->ip_team);
+		sub_snd->puerto = team_config->puerto_team;
+		sub_snd->proceso = TEAM;
+		sub_snd->cola = GET_QUEUE;
+		utils_serialize_and_send(team_fd, subscribe_protocol, sub_snd);
+
+
+
 		// Fix n remove thread sleep
 		sleep(1);
 
@@ -123,22 +139,10 @@ void team_init() {
 		loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
 		loc_snd->cant_elem = list_size(positions);
 		localized_protocol = LOCALIZED_POKEMON;
+		team_logger_info("subscribe sent");
 		loc_snd->posiciones = positions;
 		utils_serialize_and_send(team_fd, localized_protocol, loc_snd);
 
-
-		sleep(1);
-
-		// To broker
-		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
-
-		subscribe_protocol = SUBSCRIBE;
-		sub_snd->ip = string_duplicate(team_config->ip_team);
-		sub_snd->puerto = team_config->puerto_team;
-		sub_snd->proceso = TEAM;
-		sub_snd->cola = GET_QUEUE;
-
-		utils_serialize_and_send(team_fd, subscribe_protocol, loc_snd);
 
 
 		team_logger_info("Iniciando TEAM..");

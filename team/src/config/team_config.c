@@ -52,7 +52,6 @@ void read_config(t_config* config_file)
 	team_config->algoritmo_planificacion = team_algoritmo_planificacion_from_string(string_duplicate(config_get_string_value(config_file, "ALGORITMO_PLANIFICACION")));
 	team_config->quantum = config_get_int_value(config_file, "QUANTUM");
 	team_config->estimacion_inicial = config_get_int_value(config_file, "ESTIMACION_INICIAL");
-	team_config->ip_broker = malloc(sizeof(char*));
 	team_config->ip_broker = string_duplicate(config_get_string_value(config_file, "IP_BROKER"));
 	team_config->puerto_broker = config_get_int_value(config_file, "PUERTO_BROKER");
 	team_config->ip_team = string_duplicate(config_get_string_value(config_file, "IP_TEAM"));
