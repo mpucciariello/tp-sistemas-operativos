@@ -18,6 +18,8 @@ typedef struct
 	char* punto_montaje_tallgrass;
 	char* ip_broker;
 	int puerto_broker;
+	char* ip_game_card;
+	int puerto_game_card;
 } t_game_card_config;
 
 t_game_card_config* game_card_config;

@@ -361,7 +361,7 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 	}
 
 	case SUBSCRIBE: {
-		t_subscribe* subscribe_req = malloc(sizeof(t_generate));
+		t_subscribe* subscribe_req = malloc(sizeof(t_subscribe));
 		t_list* list = utils_receive_package(socket);
 		subscribe_req->ip = malloc(utils_get_buffer_size(list, 0));
 		utils_get_from_list_to(subscribe_req->ip, list, 0);
