@@ -111,6 +111,20 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
+
+			t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
+			new_snd->nombre_pokemon = string_duplicate(appeared_rcv->nombre_pokemon);
+			new_snd->id = 28;
+			new_snd->id_correlacional = appeared_rcv->id_correlacional;
+			new_snd->tamanio_nombre = strlen(new_snd->nombre_pokemon) +1;
+			new_snd->pos_x = appeared_rcv->pos_x;
+			new_snd->pos_y = appeared_rcv->pos_y;
+			t_protocol new_protocol = NEW_POKEMON;
+			broker_logger_info("Envio de New Pokemon");
+			for (int i= 0; i<list_size(new_queue); i++) {
+				t_subscribe_nodo* node = list_get(new_queue,i);
+				utils_serialize_and_send(node->f_desc, new_protocol, new_snd);
+			}
 			break;
 		}
 			// From team
@@ -202,7 +216,7 @@ void initialice_queue(){
 	localized_queue = list_create ();
 }
 
-t_subscribe_nodo* check_already_subscribe(char *ip,uint32_t puerto,t_list *list){
+t_subscribe_nodo* check_already_subscribe(char *ip,uint32_t puerto, t_list *list){
 	int find_subscribe(t_subscribe_nodo *nodo){
 		return (strcmp(ip,nodo->ip)==0 && (puerto == nodo->puerto) );
 	}
@@ -210,8 +224,10 @@ t_subscribe_nodo* check_already_subscribe(char *ip,uint32_t puerto,t_list *list)
 	return list_find(list,(void*)find_subscribe);
 }
 
-void add_to(t_list *list, char *ip, uint32_t puerto){
-	if (check_already_subscribe(ip,puerto,list) == NULL){
+void add_to(t_list *list, char *ip, uint32_t puerto, uint32_t fd){
+
+	t_subscribe_nodo* node = check_already_subscribe(ip, puerto, list);
+	if (node == NULL){
 		t_subscribe_nodo *nodo = malloc(sizeof(t_subscribe_nodo));
 		nodo->ip = string_duplicate(ip);
 		nodo->puerto = puerto;
@@ -219,44 +235,41 @@ void add_to(t_list *list, char *ip, uint32_t puerto){
 	}
 	else {
 		broker_logger_info("Ya esta Subscripto");
+		node->f_desc = fd;
 	}
 }
-
-
-
-
 
 void search_queue(t_subscribe *unSubscribe){
 
 	switch(unSubscribe->cola){
 	 case NEW_QUEUE:{
 		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola NEW ",unSubscribe->ip,unSubscribe->puerto);
-		 add_to(new_queue,unSubscribe->ip,unSubscribe->puerto);
+		 add_to(new_queue,unSubscribe->ip,unSubscribe->puerto, unSubscribe->f_desc);
 		 break;
 	 }
 	 case CATCH_QUEUE:{
 		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola CATCH ",unSubscribe->ip,unSubscribe->puerto);
-		 add_to(catch_queue,unSubscribe->ip,unSubscribe->puerto);
+		 add_to(catch_queue,unSubscribe->ip,unSubscribe->puerto, unSubscribe->f_desc);
 		 break;
 	 }
 	 case CAUGHT_QUEUE:{
 		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola CAUGHT ",unSubscribe->ip,unSubscribe->puerto);
-		 add_to(caught_queue,unSubscribe->ip,unSubscribe->puerto);
+		 add_to(caught_queue,unSubscribe->ip,unSubscribe->puerto, unSubscribe->f_desc);
 		 break;
 	 }
 	 case GET_QUEUE:{
 		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola GET ",unSubscribe->ip,unSubscribe->puerto);
-		 add_to(get_queue,unSubscribe->ip,unSubscribe->puerto);
+		 add_to(get_queue,unSubscribe->ip,unSubscribe->puerto, unSubscribe->f_desc);
 		 break;
 	 }
 	 case LOCALIZED_QUEUE:{
 		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola LOCALIZED ",unSubscribe->ip,unSubscribe->puerto);
-		 add_to(localized_queue,unSubscribe->ip,unSubscribe->puerto);
+		 add_to(localized_queue,unSubscribe->ip,unSubscribe->puerto, unSubscribe->f_desc);
 		 break;
 	 }
 	 case APPEARED_QUEUE:{
 		 broker_logger_info("Subscribido ip %s con puerto %d  a Cola APPEARED ",unSubscribe->ip,unSubscribe->puerto);
-		 add_to(appeared_queue,unSubscribe->ip,unSubscribe->puerto);
+		 add_to(appeared_queue,unSubscribe->ip,unSubscribe->puerto, unSubscribe->f_desc);
 		 break;
 	 }
 

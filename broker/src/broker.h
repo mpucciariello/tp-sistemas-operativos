@@ -19,7 +19,7 @@ static void *handle_connection(void *arg);
 void broker_exit();
 void search_queue(t_subscribe *unSubscribe);
 void initialice_queue();
-void add_to(t_list *list, char *ip, uint32_t puerto);
+void add_to(t_list *list, char *ip, uint32_t puerto, uint32_t fd);
 
 
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
@@ -27,6 +27,7 @@ t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localiz
 typedef struct {
 	char* ip;
 	uint32_t puerto;
+	uint32_t f_desc;
 } t_subscribe_nodo;
 
 t_subscribe_nodo* check_already_subscribe(char *ip,uint32_t puerto,t_list *list);

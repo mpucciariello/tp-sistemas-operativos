@@ -142,7 +142,8 @@ void send_message_test() {
 		utils_serialize_and_send(broker_fd_send, subscribe_protocol, sub_snd);
 		sleep(1);
 		utils_serialize_and_send(broker_fd_send, subscribe_protocol, sub_snd);
-		sleep(1);
+		team_logger_info(sub_snd->ip);
+		team_logger_info("%d", sub_snd->puerto);
 		// Fix n remove thread sleep
 		sleep(1);
 

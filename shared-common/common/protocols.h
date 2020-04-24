@@ -107,6 +107,7 @@ typedef struct {
 	uint32_t puerto;
 	t_proceso proceso;
 	t_cola cola;
+	uint32_t f_desc;
 } t_subscribe;
 
 typedef struct {
