@@ -24,20 +24,6 @@ int team_load() {
 	return 0;
 }
 
-void team_connect_to() {
-
-}
-
-//Esto iria en un hilo
-void team_retry_connect()
-{
-	while (true)
-	{
-		utils_delay(team_config->tiempo_reconexion);
-		team_connect_to();
-	}
-}
-
 void team_init() {
 
 	team_planner_init();
@@ -51,29 +37,26 @@ void team_init() {
 
 	team_logger_info(
 			"Creando un hilo para subscribirse a la cola APPEARED del broker %d");
-	t_cola cola = APPEARED_POKEMON;
-	pthread_create(&tid, NULL, (void*) subscribe_to, (void*) &cola);
+	t_cola cola_appeared = APPEARED_QUEUE;
+	pthread_create(&tid, NULL, (void*) team_retry_connect, (void*) &cola_appeared);
 	pthread_detach(tid);
-	usleep(500000);
 
 	team_logger_info(
 			"Creando un hilo para subscribirse a la cola LOCALIZED del broker %d");
 
-	cola = CATCH_QUEUE;
-	pthread_create(&tid2, NULL, (void*) subscribe_to, (void*) &cola);
+	t_cola cola_localized = LOCALIZED_QUEUE;
+	pthread_create(&tid2, NULL, (void*) team_retry_connect, (void*) &cola_localized);
 	pthread_detach(tid2);
-	usleep(500000);
 
 	team_logger_info(
 			"Creando un hilo para subscribirse a la cola CAUGHT del broker %d");
 
-	cola = CAUGHT_QUEUE;
-	pthread_create(&tid3, NULL, (void*) subscribe_to, (void*) &cola);
+	t_cola cola_caught = CAUGHT_QUEUE;
+	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
 	pthread_detach(tid3);
-	usleep(500000);
 
-	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
-	pthread_detach(tid4);
+//	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
+//	pthread_detach(tid4);
 	for (;;)
 		;
 
@@ -146,6 +129,35 @@ void send_message_test() {
 void subscribe_to(void *arg) {
 
 	t_cola cola = *((int *) arg);
+	team_logger_info("tipo Cola: %d ", cola);
+	switch(cola) {
+	case NEW_QUEUE: {
+		team_logger_info("Cola NEW ");
+			break;
+		}
+		case CATCH_QUEUE: {
+			team_logger_info("Cola CATCH ");
+			break;
+		}
+		case CAUGHT_QUEUE: {
+			team_logger_info("Cola CAUGHT ");
+			break;
+		}
+		case GET_QUEUE: {
+			team_logger_info("Cola GET ");
+			break;
+		}
+		case LOCALIZED_QUEUE: {
+			team_logger_info("Cola LOCALIZED ");
+			break;
+		}
+		case APPEARED_QUEUE: {
+			team_logger_info("Cola APPEARED ");
+			break;
+		}
+
+	}
+
 	int new_broker_fd = socket_connect_to_server(team_config->ip_broker,
 			team_config->puerto_broker);
 
@@ -154,20 +166,28 @@ void subscribe_to(void *arg) {
 		socket_close_conection(new_broker_fd);
 	} else {
 		team_logger_info("Conexion con BROKER establecida correctamente!");
+		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
+
+		t_protocol subscribe_protocol = SUBSCRIBE;
+		sub_snd->ip = string_duplicate(team_config->ip_team);
+		sub_snd->puerto = team_config->puerto_team;
+		sub_snd->proceso = TEAM;
+		sub_snd->cola = cola;
+		utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
+		usleep(500000);
+
+		recv_broker(new_broker_fd);
+		is_connected = true;
 	}
+}
 
-	t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
-
-	t_protocol subscribe_protocol = SUBSCRIBE;
-	sub_snd->ip = string_duplicate(team_config->ip_team);
-	sub_snd->puerto = team_config->puerto_team;
-	sub_snd->proceso = TEAM;
-	sub_snd->cola = cola;
-	utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
-	usleep(500000);
-
-	recv_broker(new_broker_fd);
-
+void team_retry_connect(void* arg) {
+	void* arg2 = arg;
+	while (true) {
+		is_connected = false;
+		utils_delay(team_config->tiempo_reconexion);
+		subscribe_to(arg2);
+	}
 }
 
 void *recv_broker(int new_broker_fd) {
