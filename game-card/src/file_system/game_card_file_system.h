@@ -19,6 +19,14 @@ typedef enum
 	METADATA, FILES, BLOCKS
 } e_paths_structure;
 
+typedef struct {
+	unsigned int tamanioBloque,
+	cantidadDeBloques;
+	char* magicNumber;
+}Metadata_LFS;
+
+Metadata_LFS lfsmetadata;
+
 t_config* config_metadata;
 t_config* config_table_metadata;
 t_bitarray* bitmap;

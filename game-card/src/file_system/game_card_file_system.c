@@ -103,6 +103,25 @@ void gcfs_create_structs()
 	free(bin_bitmap);
 }
 
+
+void creacionDeBloques(char* dirPath){
+
+	game_card_logger_error("Creacion de bloques");
+
+	for (int numeroDeBloque = 0; numeroDeBloque < lfsmetadata.cantidadDeBloques; numeroDeBloque++) {
+		char *bloque=string_itoa(numeroDeBloque);
+		char *numberBloque = malloc (strlen(dirPath)+strlen(bloque)+strlen(".bin"));
+		strcpy(numberBloque, dirPath);
+		strcat(numberBloque, bloque);
+		strcat(numberBloque,".bin");
+		FILE* particion = fopen(numberBloque,"w");
+		fclose(particion);
+	}
+	free(dirPath);
+}
+
+
+
 void gcfs_free_bitmap()
 {
 	free(bitmap->bitarray);
