@@ -15,12 +15,12 @@
 #include "../../shared-common/common/sockets.h"
 #include "../../shared-common/common/utils.h"
 
+
 int game_card_fd, game_card_socket;
 
 int game_card_load();
-void game_card_init();
-void game_card_server_init();
-static void *handle_connection(void *arg);
+void game_card_and_broker_connection_init();
+void game_card_and_gameboy_connection_init();
 void game_card_exit();
 
 #endif /* GAME_CARD_H_ */
