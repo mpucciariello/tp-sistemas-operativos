@@ -12,9 +12,6 @@
 #include "../../shared-common/common/sockets.h"
 #include "../../shared-common/common/utils.h"
 
-int game_boy_broker_fd;
-int game_boy_team_fd;
-int game_boy_game_card_fd;
 t_dictionary* command_actions;
 
 int game_boy_load();

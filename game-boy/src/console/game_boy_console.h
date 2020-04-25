@@ -7,6 +7,8 @@
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include "../logger/game_boy_logger.h"
+#include "../../../shared-common/common/protocols.h"
+#include "../../../shared-common/common/utils.h"
 
 #define BROKER_NEW "BROKER NEW_POKEMON"
 #define BROKER_APPEARED "BROKER APPEARED_POKEMON"
@@ -21,6 +23,11 @@
 #define EXIT_KEY "EXIT"
 #define SPLIT_CHAR " "
 #define INPUT_SIZE 100
+
+
+int game_boy_broker_fd;
+int game_boy_team_fd;
+int game_boy_game_card_fd;
 
 typedef struct {
 	char *key;
