@@ -30,10 +30,12 @@ void team_init() {
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 	pthread_t tid;
+	pthread_t tid2;
+	pthread_t tid3;
 
-	t_cola cola = GET_QUEUE;
+	t_cola cola = NEW_QUEUE;
 	team_logger_info(
-			"Creando un hilo para subscribirse a la cola get del broker %d");
+			"Creando un hilo para subscribirse a la cola new del broker %d");
 
 	pthread_create(&tid, NULL, (void*) subscribe_to, (void*) &cola);
 	pthread_detach(tid);
@@ -41,12 +43,14 @@ void team_init() {
 	team_logger_info(
 			"Creando un hilo para subscribirse a la cola catch del broker %d");
 
-
-	pthread_create(&tid, NULL, (void*) subscribe_to, (void*) &cola);
-	pthread_detach(tid);
-
-	pthread_create(&tid, NULL, (void*) send_message_test, NULL);
-	pthread_detach(tid);
+	/*
+	cola = CATCH_QUEUE;
+	pthread_create(&tid2, NULL, (void*) subscribe_to, (void*) &cola);
+	pthread_detach(tid2);
+	*/
+	pthread_create(&tid3, NULL, (void*) send_message_test, NULL);
+	pthread_detach(tid3);
+	for(;;);
 
 }
 
@@ -86,7 +90,7 @@ void send_message_test() {
 		team_logger_info("Envio de ACK!");
 		utils_serialize_and_send(broker_fd_send, ack_protocol, ack_snd);
 
-		sleep(1);
+		usleep(500000);
 
 		// For testing purposes, should not be here
 		t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
@@ -100,8 +104,11 @@ void send_message_test() {
 		team_logger_info("Envio de New Pokemon");
 		utils_serialize_and_send(broker_fd_send, new_protocol, new_snd);
 
-		sleep(1);
 
+
+
+
+		usleep(500000);
 		// For testing purposes, should not be here
 		t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
 		appeared_protocol = APPEARED_POKEMON;
@@ -114,8 +121,8 @@ void send_message_test() {
 		team_logger_info("Envio de APPEARED Pokemon");
 		utils_serialize_and_send(broker_fd_send, appeared_protocol,
 				appeared_snd);
-
-		sleep(1);
+		//recv_broker(broker_fd_send);
+		usleep(500000);
 
 		// To broker
 		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
@@ -129,7 +136,7 @@ void send_message_test() {
 		team_logger_info("Catch sent");
 		utils_serialize_and_send(broker_fd_send, catch_protocol, catch_send);
 
-		sleep(1);
+		usleep(500000);
 
 		// To broker
 		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
@@ -140,12 +147,12 @@ void send_message_test() {
 		sub_snd->proceso = TEAM;
 		sub_snd->cola = GET_QUEUE;
 		utils_serialize_and_send(broker_fd_send, subscribe_protocol, sub_snd);
-		sleep(1);
-		utils_serialize_and_send(broker_fd_send, subscribe_protocol, sub_snd);
+		usleep(500000);
+		//utils_serialize_and_send(broker_fd_send, subscribe_protocol, sub_snd);
 		team_logger_info(sub_snd->ip);
 		team_logger_info("%d", sub_snd->puerto);
 		// Fix n remove thread sleep
-		sleep(1);
+		usleep(500000);
 
 		// To broker
 		t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
@@ -156,7 +163,7 @@ void send_message_test() {
 		team_logger_info("Get sent");
 		utils_serialize_and_send(broker_fd_send, get_protocol, get_send);
 
-		sleep(1);
+		usleep(500000);
 
 		// To broker
 		t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
@@ -169,9 +176,9 @@ void send_message_test() {
 		loc_snd->posiciones = positions;
 		utils_serialize_and_send(broker_fd_send, localized_protocol, loc_snd);
 
-		team_logger_info("Iniciando TEAM..");
+		//team_logger_info("Iniciando TEAM..");
 
-		team_server_init();
+		//team_server_init();
 	}
 }
 
@@ -196,11 +203,11 @@ void subscribe_to(void *arg) {
 	sub_snd->proceso = TEAM;
 	sub_snd->cola = cola;
 	utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
-	sleep(1);
+	usleep(500000);
 	utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
-	sleep(1);
+	usleep(500000);
 	// Fix n remove thread sleep
-	sleep(1);
+	usleep(500000);
 
 	recv_broker(new_broker_fd);
 
@@ -208,7 +215,7 @@ void subscribe_to(void *arg) {
 
 void *recv_broker(int new_broker_fd) {
 	int protocol;
-	while (true) {
+
 		int received_bytes = recv(new_broker_fd, &protocol, sizeof(int), 0);
 
 		if (received_bytes <= 0) {
@@ -228,7 +235,7 @@ void *recv_broker(int new_broker_fd) {
 		}
 
 		case NEW_POKEMON: {
-			team_logger_info("New received");
+			team_logger_info("New received del borker");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					new_broker_fd, protocol);
 			team_logger_info("ID recibido: %d", new_receive->id);
@@ -244,7 +251,6 @@ void *recv_broker(int new_broker_fd) {
 
 		}
 
-	}
 	return NULL;
 }
 

@@ -42,19 +42,20 @@ void broker_server_init() {
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
+	int accepted_fd;
 	for (;;) {
-		int accepted_fd;
-		pthread_t tid;
 
+		pthread_t tid;
 		if ((accepted_fd = accept(broker_socket,
 				(struct sockaddr *) &client_info, &addrlen)) != -1) {
 
-			pthread_create(&tid, NULL, (void*) handle_connection,
-					(void*) &accepted_fd);
-			pthread_detach(tid);
 			broker_logger_info(
 					"Creando un hilo para atender una conexión en el socket %d",
 					accepted_fd);
+			pthread_create(&tid, NULL, (void*) handle_connection,
+					(void*) &accepted_fd);
+			pthread_detach(tid);
+			usleep(500000);
 		} else {
 			broker_logger_error("Error al conectar con un cliente");
 		}
@@ -82,7 +83,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("ID recibido: %d", ack_receive->id);
 			broker_logger_info("ID correlacional %d",
 					ack_receive->id_correlacional);
-
+			usleep(100000);
 			break;
 		}
 
@@ -98,6 +99,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", new_receive->pos_x);
 			broker_logger_info("Posicion Y: %d", new_receive->pos_y);
+			usleep(100000);
 			break;
 		}
 		case APPEARED_POKEMON: {
@@ -121,10 +123,13 @@ static void *handle_connection(void *arg) {
 			new_snd->pos_y = appeared_rcv->pos_y;
 			t_protocol new_protocol = NEW_POKEMON;
 			broker_logger_info("Envio de New Pokemon");
+			//utils_serialize_and_send(client_fd, new_protocol, new_snd);
 			for (int i= 0; i<list_size(new_queue); i++) {
 				t_subscribe_nodo* node = list_get(new_queue,i);
 				utils_serialize_and_send(node->f_desc, new_protocol, new_snd);
 			}
+
+			usleep(50000);
 			break;
 		}
 			// From team
@@ -136,6 +141,7 @@ static void *handle_connection(void *arg) {
 					get_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
+			usleep(50000);
 			break;
 		}
 
@@ -151,6 +157,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Largo nombre: %d", catch_rcv->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
+			usleep(50000);
 			break;
 		}
 
@@ -169,6 +176,7 @@ static void *handle_connection(void *arg) {
 				pos = list_get(loc_rcv->posiciones, el);
 				broker_logger_info("Position is (%d, %d)", pos->pos_x, pos->pos_y);
 			}
+			usleep(50000);
 			break;
 		}
 		case SUBSCRIBE: {
@@ -179,12 +187,12 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
 			broker_logger_info("IP Recibido: %s",
 								ip);
-
+			sub_rcv->f_desc = client_fd ;
 			//ver diccionario para el proceso
 			search_queue(sub_rcv);
 			free(sub_rcv->ip);
 			free(sub_rcv);
-
+			usleep(50000);
 			break;
 		}
 
@@ -198,6 +206,7 @@ static void *handle_connection(void *arg) {
 					caught_rcv->id_correlacional);
 			broker_logger_info("ID mensaje: %d", caught_rcv->id_msg);
 			broker_logger_info("Resultado (0/1): %d", caught_rcv->result);
+			usleep(50000);
 			break;
 		}
 
