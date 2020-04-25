@@ -63,9 +63,11 @@ void team_init() {
 	pthread_create(&tid2, NULL, (void*) subscribe_to, (void*) &cola);
 	pthread_detach(tid2);
 	usleep(500000);
+
 	pthread_create(&tid3, NULL, (void*) send_message_test, NULL);
 	pthread_detach(tid3);
-	for(;;);
+	for (;;)
+		;
 
 }
 
@@ -76,8 +78,7 @@ void send_message_test() {
 	if (broker_fd_send < 0) {
 		team_logger_warn("No se pudo conectar con BROKER");
 		socket_close_conection(broker_fd_send);
-	}
-	else {
+	} else {
 		team_logger_info("Conexion con BROKER establecida correctamente!");
 
 		t_protocol ack_protocol;
@@ -146,10 +147,6 @@ void subscribe_to(void *arg) {
 	sub_snd->cola = cola;
 	utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
 	usleep(500000);
-	utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
-	usleep(500000);
-	// Fix n remove thread sleep
-	usleep(500000);
 
 	recv_broker(new_broker_fd);
 
@@ -158,41 +155,58 @@ void subscribe_to(void *arg) {
 void *recv_broker(int new_broker_fd) {
 	int protocol;
 
-		int received_bytes = recv(new_broker_fd, &protocol, sizeof(int), 0);
+	int received_bytes = recv(new_broker_fd, &protocol, sizeof(int), 0);
 
-		if (received_bytes <= 0) {
-			team_logger_error("Error al recibir mensaje");
-			return NULL;
+	if (received_bytes <= 0) {
+		team_logger_error("Error al recibir mensaje");
+		return NULL;
+	}
+	switch (protocol) {
+	case CAUGHT_POKEMON: {
+		team_logger_info("Caught received");
+		t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(
+				new_broker_fd, protocol);
+		team_logger_info("ID correlacional: %d", caught_rcv->id_correlacional);
+		team_logger_info("ID mensaje: %d", caught_rcv->id_msg);
+		team_logger_info("Resultado (0/1): %d", caught_rcv->result);
+		usleep(50000);
+		break;
+	}
+
+	case LOCALIZED_POKEMON: {
+		team_logger_info("Localized received");
+		t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
+				new_broker_fd, protocol);
+		broker_logger_info("ID correlacional: %d",
+
+		loc_rcv->id_correlacional);
+		team_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
+		team_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
+		team_logger_info("Cant Elementos en lista: %d", loc_rcv->cant_elem);
+		for (int el = 0; el < loc_rcv->cant_elem; el++) {
+			t_position* pos = malloc(sizeof(t_position));
+			pos = list_get(loc_rcv->posiciones, el);
+			team_logger_info("Position is (%d, %d)", pos->pos_x, pos->pos_y);
 		}
-		switch (protocol) {
-		case ACK: {
-			team_logger_info("Ack received");
-			t_ack *ack_receive = utils_receive_and_deserialize(new_broker_fd,
-					protocol);
-			team_logger_info("ID recibido: %d", ack_receive->id);
-			team_logger_info("ID correlacional %d",
-					ack_receive->id_correlacional);
+		usleep(500000);
+		break;
+	}
 
-			break;
-		}
-
-		case NEW_POKEMON: {
-			team_logger_info("New received del borker");
-			t_new_pokemon *new_receive = utils_receive_and_deserialize(
-					new_broker_fd, protocol);
-			team_logger_info("ID recibido: %d", new_receive->id);
-			team_logger_info("ID Correlacional: %d",
-					new_receive->id_correlacional);
-			team_logger_info("Cantidad: %d", new_receive->cantidad);
-			team_logger_info("Nombre Pokemon: %s", new_receive->nombre_pokemon);
-			team_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
-			team_logger_info("Posicion X: %d", new_receive->pos_x);
-			team_logger_info("Posicion Y: %d", new_receive->pos_y);
-			break;
-		}
-
-		}
-
+	case APPEARED_POKEMON: {
+		team_logger_info("Appeared received");
+		t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
+				new_broker_fd, protocol);
+		team_logger_info("ID correlacional: %d",
+				appeared_rcv->id_correlacional);
+		team_logger_info("Cantidad: %d", appeared_rcv->cantidad);
+		team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);
+		team_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
+		team_logger_info("Posicion X: %d", appeared_rcv->pos_x);
+		team_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
+		usleep(50000);
+		break;
+	}
+	}
 	return NULL;
 }
 
