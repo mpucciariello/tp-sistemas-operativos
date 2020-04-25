@@ -90,11 +90,8 @@ void send_message_test() {
 		team_logger_info("Conexion con BROKER establecida correctamente!");
 
 		t_protocol ack_protocol;
-		t_protocol new_protocol;
-		t_protocol catch_protocol;
 		t_protocol get_protocol;
-		t_protocol appeared_protocol;
-		t_protocol localized_protocol;
+		t_protocol catch_protocol;
 		t_protocol subscribe_protocol;
 
 		// To broker
@@ -118,6 +115,19 @@ void send_message_test() {
 		team_logger_info(sub_snd->ip);
 		team_logger_info("%d", sub_snd->puerto);
 
+		usleep(500000);
+
+		// To broker
+		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
+		catch_send->id_correlacional = 111;
+		catch_send->nombre_pokemon = string_duplicate("Weepinbell");
+		catch_send->pos_x = 17;
+		catch_send->pos_y = 8;
+		catch_send->tamanio_nombre = 11;
+		catch_send->id_gen = -1;
+		catch_protocol = CATCH_POKEMON;
+		team_logger_info("Catch sent");
+		utils_serialize_and_send(broker_fd_send, catch_protocol, catch_send);
 		usleep(500000);
 
 		// To broker
