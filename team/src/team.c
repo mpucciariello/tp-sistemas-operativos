@@ -35,7 +35,7 @@ void team_init() {
 
 	t_cola cola = NEW_QUEUE;
 	team_logger_info(
-			"Creando un hilo para subscribirse a la cola get del broker %d");
+			"Creando un hilo para subscribirse a la cola new del broker %d");
 
 	pthread_create(&tid, NULL, (void*) subscribe_to, (void*) &cola);
 	pthread_detach(tid);
@@ -43,10 +43,11 @@ void team_init() {
 	team_logger_info(
 			"Creando un hilo para subscribirse a la cola catch del broker %d");
 
+	/*
 	cola = CATCH_QUEUE;
 	pthread_create(&tid2, NULL, (void*) subscribe_to, (void*) &cola);
 	pthread_detach(tid2);
-
+	*/
 	pthread_create(&tid3, NULL, (void*) send_message_test, NULL);
 	pthread_detach(tid3);
 	for(;;);

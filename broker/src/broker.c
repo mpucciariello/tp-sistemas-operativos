@@ -42,19 +42,20 @@ void broker_server_init() {
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
+	int accepted_fd;
 	for (;;) {
-		int accepted_fd;
-		pthread_t tid;
 
+		pthread_t tid;
 		if ((accepted_fd = accept(broker_socket,
 				(struct sockaddr *) &client_info, &addrlen)) != -1) {
 
-			pthread_create(&tid, NULL, (void*) handle_connection,
-					(void*) &accepted_fd);
-			pthread_detach(tid);
 			broker_logger_info(
 					"Creando un hilo para atender una conexión en el socket %d",
 					accepted_fd);
+			pthread_create(&tid, NULL, (void*) handle_connection,
+					(void*) &accepted_fd);
+			pthread_detach(tid);
+			usleep(500000);
 		} else {
 			broker_logger_error("Error al conectar con un cliente");
 		}
@@ -186,7 +187,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
 			broker_logger_info("IP Recibido: %s",
 								ip);
-
+			sub_rcv->f_desc = client_fd ;
 			//ver diccionario para el proceso
 			search_queue(sub_rcv);
 			free(sub_rcv->ip);
