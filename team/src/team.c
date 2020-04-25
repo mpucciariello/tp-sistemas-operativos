@@ -24,6 +24,20 @@ int team_load() {
 	return 0;
 }
 
+void team_connect_to() {
+
+}
+
+//Esto iria en un hilo
+void team_retry_connect()
+{
+	while (true)
+	{
+		utils_delay(team_config->tiempo_reconexion);
+		team_connect_to();
+	}
+}
+
 void team_init() {
 
 	team_planner_init();
