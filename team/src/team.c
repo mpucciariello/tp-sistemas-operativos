@@ -270,15 +270,19 @@ static void *handle_connection(void *arg) {
 		}
 		switch (protocol) {
 
-		// From Broker
-		case LOCALIZED_POKEMON: {
-			team_logger_info("Localized received");
-			break;
-		}
-
-			// From Broker
-		case CAUGHT_POKEMON: {
-			team_logger_info("Caught received");
+		// From GB
+		case APPEARED_POKEMON: {
+			team_logger_info("Appeared received");
+			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
+					client_fd, protocol);
+			team_logger_info("ID correlacional: %d",
+					appeared_rcv->id_correlacional);
+			team_logger_info("Cantidad: %d", appeared_rcv->cantidad);
+			team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);
+			team_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
+			team_logger_info("Posicion X: %d", appeared_rcv->pos_x);
+			team_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
+			usleep(50000);
 			break;
 		}
 
