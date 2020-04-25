@@ -34,6 +34,10 @@ typedef struct {
 	void (*action)(char**, int);
 } t_command;
 
+int game_boy_broker_fd;
+int game_boy_team_fd;
+int game_boy_game_card_fd;
+
 int game_boy_console_read(t_dictionary*);
 t_dictionary* game_boy_get_command_actions();
 void game_boy_free_command_actions(t_dictionary*);

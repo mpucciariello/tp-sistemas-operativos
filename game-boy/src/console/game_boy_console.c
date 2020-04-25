@@ -48,7 +48,7 @@ void broker_catch_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("BROKER CATCH_POKEMON");
-	t_catch_pokemon* catch_snd = malloc(sizeof(t_appeared_pokemon));
+	t_catch_pokemon* catch_snd = malloc(sizeof(t_catch_pokemon));
 	catch_snd->nombre_pokemon = string_duplicate(arguments[2]);
 	catch_snd->tamanio_nombre = strlen(arguments[2]);
 	catch_snd->pos_x = arguments[3];
@@ -65,6 +65,12 @@ void broker_caught_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("BROKER CAUGHT_POKEMON");
+	t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
+	caught_snd->id_correlacional = arguments[2];
+	caught_snd->result = 0;
+
+	utils_serialize_and_send(game_boy_broker_fd, CAUGHT_POKEMON, caught_snd);
+	game_boy_logger_info("Envio de CAUGHT_POKEMON Pokemon");
 }
 
 void broker_get_pokemon_command(char** arguments, int arguments_size) {
@@ -74,6 +80,12 @@ void broker_get_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("BROKER GET_POKEMON");
+	t_get_pokemon* get_snd = malloc(sizeof(t_get_pokemon));
+	get_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	get_snd->tamanio_nombre = strlen(GET_POKEMON);
+
+	utils_serialize_and_send(game_boy_broker_fd, GET_POKEMON, get_snd);
+	game_boy_logger_info("Envio de GET_POKEMON Pokemon");
 }
 
 void team_appeared_pokemon_command(char** arguments, int arguments_size) {
@@ -83,6 +95,14 @@ void team_appeared_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("TEAM APPEARED_POKEMON");
+	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
+	appeared_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	appeared_snd->tamanio_nombre = strlen(arguments[2]);
+	appeared_snd->pos_x = arguments[3];
+	appeared_snd->pos_y = arguments[4];
+
+	utils_serialize_and_send(game_boy_team_fd, APPEARED_POKEMON, appeared_snd);
+	game_boy_logger_info("Envio de APPEARED Pokemon");
 }
 
 void game_card_new_pokemon_command(char** arguments, int arguments_size) {
@@ -92,6 +112,16 @@ void game_card_new_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("GAMECARD NEW_POKEMON");
+	t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
+	new_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	new_snd->tamanio_nombre = strlen(arguments[2]);
+	new_snd->pos_x = atoi(arguments[3]);
+	new_snd->pos_y = atoi(arguments[4]);
+	new_snd->cantidad = atoi(arguments[5]);
+	new_snd->id_correlacional = atoi(arguments[6]);
+
+	utils_serialize_and_send(game_boy_game_card_fd, NEW_POKEMON, new_snd);
+	game_boy_logger_info("Envio de NEW Pokemon");
 }
 
 void game_card_catch_pokemon_command(char** arguments, int arguments_size) {
@@ -101,6 +131,15 @@ void game_card_catch_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("GAMECARD CATCH_POKEMON");
+	t_catch_pokemon* catch_snd = malloc(sizeof(t_catch_pokemon));
+	catch_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	catch_snd->tamanio_nombre = strlen(arguments[2]);
+	catch_snd->pos_x = arguments[3];
+	catch_snd->pos_y = arguments[4];
+	catch_snd->id_correlacional = arguments[5];
+
+	utils_serialize_and_send(game_boy_game_card_fd, CATCH_POKEMON, catch_snd);
+	game_boy_logger_info("Envio de CATCH_POKEMON Pokemon");
 }
 
 void game_card_get_pokemon_command(char** arguments, int arguments_size) {
@@ -110,6 +149,12 @@ void game_card_get_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("GAMECARD GET_POKEMON");
+	t_get_pokemon* get_snd = malloc(sizeof(t_get_pokemon));
+	get_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	get_snd->tamanio_nombre = strlen(GET_POKEMON);
+
+	utils_serialize_and_send(game_boy_game_card_fd, GET_POKEMON, get_snd);
+	game_boy_logger_info("Envio de GET_POKEMON Pokemon");
 }
 void suscriptor_command(char** arguments, int arguments_size) {
 	if(arguments_size != 3) {
