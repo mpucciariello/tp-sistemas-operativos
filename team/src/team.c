@@ -47,25 +47,33 @@ void team_init() {
 	pthread_t tid;
 	pthread_t tid2;
 	pthread_t tid3;
+	pthread_t tid4;
 
-	t_cola cola = NEW_QUEUE;
 	team_logger_info(
-			"Creando un hilo para subscribirse a la cola new del broker %d");
-
+			"Creando un hilo para subscribirse a la cola APPEARED del broker %d");
+	t_cola cola = APPEARED_POKEMON;
 	pthread_create(&tid, NULL, (void*) subscribe_to, (void*) &cola);
 	pthread_detach(tid);
+	usleep(500000);
 
 	team_logger_info(
-			"Creando un hilo para subscribirse a la cola catch del broker %d");
+			"Creando un hilo para subscribirse a la cola LOCALIZED del broker %d");
 
-	usleep(500000);
 	cola = CATCH_QUEUE;
 	pthread_create(&tid2, NULL, (void*) subscribe_to, (void*) &cola);
 	pthread_detach(tid2);
 	usleep(500000);
 
-	pthread_create(&tid3, NULL, (void*) send_message_test, NULL);
+	team_logger_info(
+			"Creando un hilo para subscribirse a la cola CAUGHT del broker %d");
+
+	cola = CAUGHT_QUEUE;
+	pthread_create(&tid3, NULL, (void*) subscribe_to, (void*) &cola);
 	pthread_detach(tid3);
+	usleep(500000);
+
+	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
+	pthread_detach(tid4);
 	for (;;)
 		;
 
