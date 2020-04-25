@@ -24,7 +24,12 @@ char* utils_get_parameter_i(char** array, int i) {
 }
 
 int utils_get_array_size(char** array) {
-	return (sizeof(array)/sizeof(char*));
+//	return (sizeof(array)/sizeof(char*));
+	int i = 0;
+	while(array[i] != NULL) {
+		i++;
+	}
+	return i;
 }
 
 char* utils_get_extension(char* file_name) {
@@ -55,13 +60,11 @@ void utils_free_array(char** array) {
 
 char* utils_array_to_string(char** array) {
 	int i = 0;
-	char* aux;
 	char* ret = string_new();
 	string_append(&ret, OPENING_SQUARE_BRACKET);
 	while (array[i] != NULL) {
-		aux = array[i];
+		char* aux = array[i];
 		string_append(&ret, aux);
-		free(aux);
 		if (array[i + 1] != NULL) {
 			string_append(&ret, COMMA);
 			string_append(&ret, SPACE);

@@ -25,7 +25,13 @@ char* planner_entrenador_string(t_entrenador_pokemon* entrenador) {
 	char* entrenador_string = string_new();
 	string_append(&entrenador_string, "Id: ");
 	string_append(&entrenador_string, string_itoa(entrenador->id));
-	string_append(&entrenador_string, " Pokemons: ");
+	string_append(&entrenador_string, " Posicion: (");
+	char* posx = string_itoa(entrenador->position->pos_x);
+	string_append(&entrenador_string, posx);
+	string_append(&entrenador_string, ", ");
+	char* posy = string_itoa(entrenador->position->pos_y);
+	string_append(&entrenador_string, posy);
+	string_append(&entrenador_string, ") Pokemons: ");
 	for(int i = 0; i < list_size(entrenador->pokemons); i++) {
 		t_pokemon* pokemon = list_get(entrenador->pokemons, i);
 		string_append(&entrenador_string, pokemon->name);
@@ -44,21 +50,23 @@ char* planner_entrenador_string(t_entrenador_pokemon* entrenador) {
 	return entrenador_string;
 }
 
-t_position* planner_extract_position(char** pos_spl) {
+t_position* planner_extract_position(char* pos_spl, char* split_char) {
+	char** splitted = string_split(pos_spl, split_char);
 	t_position* posicion = malloc(sizeof(t_position));
-	posicion->pos_x = atoi(utils_get_parameter_i(pos_spl, 0));
-	posicion->pos_y = atoi(utils_get_parameter_i(pos_spl, 1));
+	posicion->pos_x = atoi(utils_get_parameter_i(splitted, 0));
+	posicion->pos_y = atoi(utils_get_parameter_i(splitted, 1));
 
 	return posicion;
 }
 
-t_list* planner_extract_pokemons(char** pokes_spl) {
+t_list* planner_extract_pokemons(char* pokes_spl, char* split_char) {
 	t_list* pokemons = list_create();
-	int pokes_spl_size = utils_get_array_size(pokes_spl);
+	char** splitted = string_split(pokes_spl, split_char);
+	int pokes_spl_size = utils_get_array_size(splitted);
 	for(int j = 0; j < pokes_spl_size; j++) {
 		t_pokemon* pokemon = malloc(sizeof(t_pokemon));
 		pokemon->id = j;
-		pokemon->name = string_duplicate(utils_get_parameter_i(pokes_spl, j));
+		pokemon->name = string_duplicate(utils_get_parameter_i(splitted, j));
 		list_add(pokemons, pokemon);
 	}
 	return pokemons;
@@ -68,16 +76,10 @@ void planner_load_entrenadores() {
 	int i = 0;
 	char* split_char = "|";
 	while(team_config->posiciones_entrenadores[i] != NULL && team_config->pokemon_entrenadores[i] != NULL &&
-		  team_config->objetivos_entrenadores[i] != NULL) {
-
-		char** pos_spl = string_split(team_config->posiciones_entrenadores[i], split_char);
-		t_position* posicion = planner_extract_position(pos_spl);
-
-		char** pokes_spl = string_split(team_config->pokemon_entrenadores[i], split_char);
-		t_list* pokemons = planner_extract_pokemons(pokes_spl);
-
-		char** target_spl = string_split(team_config->objetivos_entrenadores[i], split_char);
-		t_list* objetivos = planner_extract_pokemons(target_spl);
+					team_config->objetivos_entrenadores[i] != NULL) {
+		t_position* posicion = planner_extract_position(team_config->posiciones_entrenadores[i], split_char);
+		t_list* pokemons = planner_extract_pokemons(team_config->pokemon_entrenadores[i], split_char);
+		t_list* objetivos = planner_extract_pokemons(team_config->objetivos_entrenadores[i], split_char);
 
 		t_entrenador_pokemon* entrenador = planner_entrenador_create(i, posicion, pokemons, objetivos);
 		list_add(new_queque, entrenador);
@@ -94,6 +96,36 @@ void planner_init_quees()
 	ready_queque = list_create();
 	block_queque = list_create();
 	exit_queque = list_create();
+}
+
+float team_planner_calculate_exponential_mean(int burst_time)
+{
+	float tn = 0.0f;
+	float alpha = 0.5f;
+	//tn+1 = α*tn + (1 - α)*tn
+	float next_tn = alpha * (float) burst_time + (1.0 - alpha) * tn;
+	return next_tn;
+}
+
+void team_planner_set_algorithm() {
+	switch(team_config->algoritmo_planificacion) {
+		case FIFO:
+			break;
+		case RR: {
+			int quantum = team_config->quantum;
+			team_logger_info("Quantum: %d", quantum);
+		}
+			break;
+		case SJF_CD:
+			break;
+		case SJF_SD: {
+			float initial_estimate = (float) team_config->estimacion_inicial;
+			team_logger_info("Estimacion inicial: %f", initial_estimate);
+		}
+			break;
+		default:
+			break;
+	}
 }
 
 void team_planner_init()
