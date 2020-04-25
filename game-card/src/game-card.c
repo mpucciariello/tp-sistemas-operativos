@@ -27,7 +27,7 @@ int game_card_load()
 
 
 void game_card_init(){	
-		game_card_logger_info("Inicando GAME CARD..");
+		game_card_logger_info("Inicando GAMECARD..");
 		gcfs_create_structs();
 
 	    pthread_attr_t attrs;
@@ -59,7 +59,7 @@ void game_card_init(){
 		pthread_detach(tid3);
 		usleep(500000);
 
-		game_card_logger_info("Creando un hilo para poder al Gamecard en modo servidor");
+		game_card_logger_info("Creando un hilo para poner al GAMECARD en modo Servidor");
 		game_card_init_as_server();
 		usleep(500000);
 
@@ -163,10 +163,10 @@ void *recv_game_card(int fd){
 					game_card_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
 					game_card_logger_info("Posicion X: %d", new_receive->pos_x);
 					game_card_logger_info("Posicion Y: %d", new_receive->pos_y);
+					
 					usleep(100000);
 					break;
 				}
-								// From team
 				case GET_POKEMON: {
 					game_card_logger_info("Get received");
 					t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd,
@@ -178,8 +178,6 @@ void *recv_game_card(int fd){
 					usleep(50000);
 					break;
 				}
-
-					// From team
 				case CATCH_POKEMON: {
 					game_card_logger_info("Catch received");
 					t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(

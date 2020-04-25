@@ -57,6 +57,10 @@ void team_init() {
 
 	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
 	pthread_detach(tid4);
+
+    team_logger_info("Creando un hilo para poner al Team en modo Servidor");
+	team_server_init();
+	usleep(500000);
 	for (;;);
 
 }
@@ -285,40 +289,7 @@ void team_server_init() {
 }
 static void *handle_connection(void *arg) {
 	int client_fd = *((int *) arg);
-
-	team_logger_info("Conexion establecida con cliente GAME BOY: %d",
-			client_fd);
-	int received_bytes;
-	int protocol;
-	while (true) {
-		received_bytes = recv(client_fd, &protocol, sizeof(int), 0);
-
-		if (received_bytes <= 0) {
-			team_logger_error("Error al recibir mensaje");
-			return NULL;
-		}
-		switch (protocol) {
-
-		// From GB
-		case APPEARED_POKEMON: {
-			team_logger_info("Appeared received");
-			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
-					client_fd, protocol);
-			team_logger_info("ID correlacional: %d",
-					appeared_rcv->id_correlacional);
-			team_logger_info("Cantidad: %d", appeared_rcv->cantidad);
-			team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);
-			team_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
-			team_logger_info("Posicion X: %d", appeared_rcv->pos_x);
-			team_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
-			usleep(50000);
-			break;
-		}
-
-		default:
-			break;
-		}
-	}
+	recv_broker(client_fd);
 }
 
 void team_exit() {
