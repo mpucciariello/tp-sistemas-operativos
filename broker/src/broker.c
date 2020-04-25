@@ -64,6 +64,14 @@ void broker_server_init() {
 static void *handle_connection(void *arg) {
 	int client_fd = *((int *) arg);
 
+	t_protocol ack_protocol;
+	t_protocol new_protocol;
+	t_protocol catch_protocol;
+	t_protocol get_protocol;
+	t_protocol appeared_protocol;
+	t_protocol localized_protocol;
+	t_protocol subscribe_protocol;
+
 	broker_logger_info("Conexion establecida con cliente: %d", client_fd);
 
 	int received_bytes;
@@ -141,7 +149,22 @@ static void *handle_connection(void *arg) {
 					get_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
+
 			usleep(50000);
+
+			// To GC
+			t_get_pokemon* get_snd = malloc(sizeof(t_get_pokemon));
+			get_snd->id_correlacional = get_rcv->id_correlacional;
+			get_snd->nombre_pokemon = get_rcv->nombre_pokemon;
+			get_snd->tamanio_nombre = strlen(get_snd->nombre_pokemon) + 1;
+			get_protocol = GET_POKEMON;
+			team_logger_info("GET SENT TO GAMECARD");
+			for (int i= 0; i<list_size(get_queue); i++) {
+				t_subscribe_nodo* node = list_get(GET_QUEUE,i);
+				utils_serialize_and_send(node->f_desc, get_protocol, get_snd);
+			}
+
+			usleep(500000);
 			break;
 		}
 
@@ -160,13 +183,13 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			break;
 		}
-
 			// From GC
 		case LOCALIZED_POKEMON: {
 			broker_logger_info("Localized received");
 			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
+
 					loc_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
@@ -176,7 +199,24 @@ static void *handle_connection(void *arg) {
 				pos = list_get(loc_rcv->posiciones, el);
 				broker_logger_info("Position is (%d, %d)", pos->pos_x, pos->pos_y);
 			}
+
+			// To team
+			t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
+			loc_snd->id_correlacional = loc_rcv->id_correlacional;
+			loc_snd->nombre_pokemon = loc_rcv->nombre_pokemon;
+			loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
+			loc_snd->cant_elem = list_size(loc_rcv->posiciones);
+			localized_protocol = LOCALIZED_POKEMON;
+			team_logger_info("LOCALIZED SENT TO TEAM");
+			loc_snd->posiciones = loc_rcv->posiciones;
+			for (int i= 0; i<list_size(localized_queue); i++) {
+				t_subscribe_nodo* node = list_get(LOCALIZED_QUEUE,i);
+				utils_serialize_and_send(node->f_desc, localized_protocol, loc_snd);
+			}
+
 			usleep(50000);
+
+
 			break;
 		}
 		case SUBSCRIBE: {
