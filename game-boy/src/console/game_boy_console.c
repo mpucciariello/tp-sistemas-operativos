@@ -104,9 +104,16 @@ int game_boy_console_read(t_dictionary* command_actions) {
 
 	char** arguments = game_boy_get_arguments_from_input(input, arguments_size);
 
-	char* key = string_duplicate(arguments[0]);
+	char *concated_key = string_new();
+	string_append(&concated_key, arguments[0]);
+	if(!string_equals_ignore_case(concated_key, "SUSCRIPTOR")) {
+		string_append(&concated_key, " ");
+		string_append(&concated_key, arguments[1]);
+	}
 
-	if (string_equals_ignore_case(key, EXIT_KEY) || string_equals_ignore_case(key, QUIT_KEY))
+	char* key = concated_key;
+
+	if (string_equals_ignore_case(key, EXIT_KEY))
 		return -1;
 	else
 		game_boy_command_execute(key, command_actions, arguments, arguments_size);
