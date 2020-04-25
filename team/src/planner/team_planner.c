@@ -92,6 +92,7 @@ void planner_load_entrenadores() {
 
 void planner_init_quees()
 {
+	exec_entrenador = malloc(sizeof(t_entrenador_pokemon));
 	new_queque = list_create();
 	ready_queque = list_create();
 	block_queque = list_create();
@@ -135,18 +136,25 @@ void team_planner_init()
 	planner_load_entrenadores();
 }
 
+void planner_destroy_pokemons(t_pokemon* pokemon)
+{
+	free(pokemon->name);
+	free(pokemon);
+}
+
 void planner_destroy_entrenador(t_entrenador_pokemon* entrenador)
 {
 	free(entrenador->position);
-	list_destroy(entrenador->pokemons);
+	list_destroy_and_destroy_elements(entrenador->pokemons, (void*)planner_destroy_pokemons);
 	free(entrenador->pokemons);
-	list_destroy(entrenador->targets);
+	list_destroy_and_destroy_elements(entrenador->targets, (void*)planner_destroy_pokemons);
 	free(entrenador->targets);
 	free(entrenador);
 }
 
 void planner_destroy_quees()
 {
+	planner_destroy_entrenador(exec_entrenador);
 	list_destroy_and_destroy_elements(new_queque, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(ready_queque, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(block_queque, (void*)planner_destroy_entrenador);

@@ -12,6 +12,15 @@ void broker_new_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("BROKER NEW_POKEMON");
+	t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
+	new_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	new_snd->tamanio_nombre = strlen(arguments[2]);
+	new_snd->pos_x = atoi(arguments[3]);
+	new_snd->pos_y = atoi(arguments[4]);
+	new_snd->cantidad = atoi(arguments[5]);
+
+	utils_serialize_and_send(game_boy_broker_fd, NEW_POKEMON, new_snd);
+	game_boy_logger_info("Envio de NEW Pokemon");
 }
 
 void broker_appeared_pokemon_command(char** arguments, int arguments_size) {
@@ -21,6 +30,15 @@ void broker_appeared_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("BROKER APPEARED_POKEMON");
+	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
+	appeared_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	appeared_snd->tamanio_nombre = strlen(arguments[2]);
+	appeared_snd->pos_x = arguments[3];
+	appeared_snd->pos_y = arguments[4];
+	appeared_snd->id_correlacional = arguments[5];
+
+	utils_serialize_and_send(game_boy_broker_fd, APPEARED_POKEMON, appeared_snd);
+	game_boy_logger_info("Envio de APPEARED Pokemon");
 }
 
 void broker_catch_pokemon_command(char** arguments, int arguments_size) {
@@ -30,6 +48,14 @@ void broker_catch_pokemon_command(char** arguments, int arguments_size) {
 		return;
 	}
 	game_boy_logger_info("BROKER CATCH_POKEMON");
+	t_catch_pokemon* catch_snd = malloc(sizeof(t_appeared_pokemon));
+	catch_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	catch_snd->tamanio_nombre = strlen(arguments[2]);
+	catch_snd->pos_x = arguments[3];
+	catch_snd->pos_y = arguments[4];
+
+	utils_serialize_and_send(game_boy_broker_fd, CATCH_POKEMON, catch_snd);
+	game_boy_logger_info("Envio de CATCH_POKEMON Pokemon");
 }
 
 void broker_caught_pokemon_command(char** arguments, int arguments_size) {
@@ -60,18 +86,18 @@ void team_appeared_pokemon_command(char** arguments, int arguments_size) {
 }
 
 void game_card_new_pokemon_command(char** arguments, int arguments_size) {
-	if(arguments_size != 6) {
+	if(arguments_size != 7) {
 		game_boy_logger_error("Comando o parametros invalidos");
-		game_boy_logger_warn("GAMECARD NEW_POKEMON [POKEMON] [POSX] [POSY] [CANTIDAD]");
+		game_boy_logger_warn("GAMECARD NEW_POKEMON [POKEMON] [POSX] [POSY] [CANTIDAD] [ID_MENSAJE]");
 		return;
 	}
 	game_boy_logger_info("GAMECARD NEW_POKEMON");
 }
 
 void game_card_catch_pokemon_command(char** arguments, int arguments_size) {
-	if(arguments_size != 5) {
+	if(arguments_size != 6) {
 		game_boy_logger_error("Comando o parametros invalidos");
-		game_boy_logger_warn("GAMECARD CATCH_POKEMON [POKEMON] [POSX] [POSY]");
+		game_boy_logger_warn("GAMECARD CATCH_POKEMON [POKEMON] [POSX] [POSY] [ID_MENSAJE]");
 		return;
 	}
 	game_boy_logger_info("GAMECARD CATCH_POKEMON");
