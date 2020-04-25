@@ -76,7 +76,6 @@ void game_boy_init() {
 	pthread_create(&tid, NULL, (void*) connect_to_game_card, NULL);
 	pthread_detach(tid);
 
-/*
 	game_boy_logger_info(
 				"Creando un hilo para enviar al team");
 	pthread_create(&tid, NULL, (void*) connect_to_team, NULL);
@@ -84,9 +83,9 @@ void game_boy_init() {
 
 	game_boy_logger_info(
 				"Creando un hilo para enviar al game card");
-	pthread_create(&tid, NULL, (void*) connect_to_game_card, NULL );
+	pthread_create(&tid, NULL, (void*) connect_to_broker, NULL );
 	pthread_detach(tid);
-*/
+
 	game_boy_logger_info("Creando un hilo para consola");
 	pthread_create(&tid, NULL, (void*) game_boy_console, NULL);
 	pthread_detach(tid);
