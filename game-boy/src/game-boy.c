@@ -100,7 +100,7 @@ void game_boy_init() {
 
 	game_boy_logger_info(
 				"Creando un hilo para enviar al broker %d");
-	pthread_create(&tid, NULL, (void*) connect_to_broker, NULL);
+	pthread_create(&tid, NULL, (void*) connect_to_game_card, NULL);
 	pthread_detach(tid);
 
 /*

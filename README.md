@@ -64,3 +64,6 @@ repo
 └─── Dependencia/  
       └─── makefile
 ```
+
+
+export LD_LIBRARY_PATH=/{PATH_PROYECTO}/shared-common/Debug
