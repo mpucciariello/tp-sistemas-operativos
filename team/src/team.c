@@ -177,7 +177,7 @@ void *recv_broker(int new_broker_fd) {
 		team_logger_info("Localized received");
 		t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
 				new_broker_fd, protocol);
-		broker_logger_info("ID correlacional: %d",
+		team_logger_info("ID correlacional: %d",
 
 		loc_rcv->id_correlacional);
 		team_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
