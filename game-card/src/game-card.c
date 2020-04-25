@@ -217,7 +217,7 @@ void *recv_game_card(int fd) {
 			loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
 			loc_snd->cant_elem = list_size(positions);
 			localized_protocol = LOCALIZED_POKEMON;
-			game_card_logger_info("LOCALIZED SENT TO TEAM");
+			game_card_logger_info("LOCALIZED SENT TO BROKER");
 			loc_snd->posiciones = positions;
 			utils_serialize_and_send(client_fd, localized_protocol, loc_snd);
 			usleep(50000);
@@ -246,7 +246,7 @@ void *recv_game_card(int fd) {
 			caught_snd->id_msg = catch_rcv->id_gen;
 			caught_snd->result = 1;
 			caught_protocol = CAUGHT_POKEMON;
-			game_card_logger_info("CAUGHT SENT TO TEAM");
+			game_card_logger_info("CAUGHT SENT TO BROKER");
 			utils_serialize_and_send(client_fd, caught_protocol, caught_snd);
 			usleep(500000);
 			break;
