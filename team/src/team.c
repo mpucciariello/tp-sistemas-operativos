@@ -55,10 +55,9 @@ void team_init() {
 	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
 	pthread_detach(tid3);
 
-//	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
-//	pthread_detach(tid4);
-	for (;;)
-		;
+	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
+	pthread_detach(tid4);
+	for (;;);
 
 }
 
@@ -185,8 +184,8 @@ void team_retry_connect(void* arg) {
 	void* arg2 = arg;
 	while (true) {
 		is_connected = false;
-		utils_delay(team_config->tiempo_reconexion);
 		subscribe_to(arg2);
+		utils_delay(team_config->tiempo_reconexion);
 	}
 }
 

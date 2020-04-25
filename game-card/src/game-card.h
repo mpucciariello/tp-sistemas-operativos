@@ -15,12 +15,14 @@
 #include "../../shared-common/common/sockets.h"
 #include "../../shared-common/common/utils.h"
 
-
-int game_card_fd, game_card_socket;
+int game_card_fd;
+bool is_connected;
 
 int game_card_load();
-void game_card_and_broker_connection_init();
-void game_card_and_gameboy_connection_init();
+void game_card_init();
+void game_card_retry_connect(void* arg);
+void game_card_init_as_server();
+void *handle_connection(int fd);
 void game_card_exit();
 void subscribe_to(void *arg);
 

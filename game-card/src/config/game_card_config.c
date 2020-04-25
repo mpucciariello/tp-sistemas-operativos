@@ -26,7 +26,7 @@ void read_config(t_config* config_file)
 	game_card_config->ip_broker = string_duplicate(config_get_string_value(config_file, "IP_BROKER"));
 	game_card_config->puerto_broker = config_get_int_value(config_file, "PUERTO_BROKER");
 	game_card_config->ip_game_card = string_duplicate(config_get_string_value(config_file, "IP_GAME_CARD"));
-	game_card_config->puerto_game_card = config_get_int_value(config_file, "PUERTO_BROKER");
+	game_card_config->puerto_game_card = config_get_int_value(config_file, "PUERTO_GAME_CARD");
 
 }
 
