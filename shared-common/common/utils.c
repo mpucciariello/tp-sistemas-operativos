@@ -23,6 +23,10 @@ char* utils_get_parameter_i(char** array, int i) {
 	return array[i] != NULL ? array[i] : EMPTY_STRING;
 }
 
+int utils_get_array_size(char** array) {
+	return (sizeof(array)/sizeof(char*));
+}
+
 char* utils_get_extension(char* file_name) {
 	char *extension = strrchr(file_name, DOT);
 	return !extension || extension == file_name ? EMPTY_STRING : extension + 1;

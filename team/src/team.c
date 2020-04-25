@@ -26,6 +26,7 @@ int team_load() {
 
 void team_init() {
 
+	team_planner_init();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);

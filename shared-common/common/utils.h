@@ -30,6 +30,7 @@
 void utils_end_string(char *string);
 bool utils_is_empty(char* string);
 char* utils_get_parameter_i(char** array, int i);
+int utils_get_array_size(char** array);
 char* utils_get_extension(char* file_name);
 char* utils_get_file_name(char* path);
 bool utils_is_number(char* string);
