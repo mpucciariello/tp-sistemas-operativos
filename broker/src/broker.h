@@ -18,7 +18,7 @@ void broker_server_init();
 static void *handle_connection(void *arg);
 void broker_exit();
 void search_queue(t_subscribe *unSubscribe);
-void initialice_queue();
+void initialize_queue();
 void add_to(t_list *list, char *ip, uint32_t puerto, uint32_t fd);
 
 
@@ -30,6 +30,6 @@ typedef struct {
 	uint32_t f_desc;
 } t_subscribe_nodo;
 
-t_subscribe_nodo* check_already_subscribe(char *ip,uint32_t puerto,t_list *list);
+t_subscribe_nodo* check_already_subscribed(char *ip,uint32_t puerto,t_list *list);
 
 #endif /* BROKER_H_ */

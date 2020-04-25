@@ -100,7 +100,6 @@ void send_message_test() {
 
 		// To broker
 		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
-
 		subscribe_protocol = SUBSCRIBE;
 		sub_snd->ip = string_duplicate(team_config->ip_team);
 		sub_snd->puerto = team_config->puerto_team;
@@ -122,52 +121,6 @@ void send_message_test() {
 		utils_serialize_and_send(broker_fd_send, get_protocol, get_send);
 
 		usleep(500000);
-
-		// To broker
-		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
-		catch_send->id_correlacional = 111;
-		catch_send->nombre_pokemon = string_duplicate("Weepinbell");
-		catch_send->pos_x = 17;
-		catch_send->pos_y = 8;
-		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon) + 1;
-		catch_send->id_gen = -1;
-		catch_protocol = CATCH_POKEMON;
-		team_logger_info("Catch sent");
-		utils_serialize_and_send(broker_fd_send, catch_protocol, catch_send);
-
-		usleep(500000);
-
-		// For testing purposes, should not be here
-		t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
-		new_snd->nombre_pokemon = string_duplicate("pikachu");
-		new_snd->id = 1;
-		new_snd->id_correlacional = 1;
-		new_snd->tamanio_nombre = 8;
-		new_snd->pos_x = 1;
-		new_snd->pos_y = 1;
-		new_protocol = NEW_POKEMON;
-		team_logger_info("Envio de New Pokemon");
-		utils_serialize_and_send(broker_fd_send, new_protocol, new_snd);
-
-		usleep(500000);
-		// For testing purposes, should not be here
-		t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
-		appeared_protocol = APPEARED_POKEMON;
-		appeared_snd->nombre_pokemon = string_duplicate("Raichu");
-		appeared_snd->tamanio_nombre = 7;
-		appeared_snd->id_correlacional = 2;
-		appeared_snd->pos_x = 1;
-		appeared_snd->pos_y = 1;
-		appeared_snd->cantidad = 1;
-		team_logger_info("Envio de APPEARED Pokemon");
-		utils_serialize_and_send(broker_fd_send, appeared_protocol,
-				appeared_snd);
-		//recv_broker(broker_fd_send);
-		usleep(500000);
-
-		//team_logger_info("Iniciando TEAM..");
-
-		//team_server_init();
 	}
 }
 
