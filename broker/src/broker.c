@@ -126,6 +126,8 @@ static void *handle_connection(void *arg) {
 			//utils_serialize_and_send(client_fd, new_protocol, new_snd);
 			for (int i= 0; i<list_size(new_queue); i++) {
 				t_subscribe_nodo* node = list_get(new_queue,i);
+				broker_logger_info("Envio a IP %s",node->ip);
+				broker_logger_info("Envio a PUERO %d",node->puerto);
 				utils_serialize_and_send(node->f_desc, new_protocol, new_snd);
 			}
 
