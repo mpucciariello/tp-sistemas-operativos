@@ -133,6 +133,7 @@ void subscribe_to(void *arg) {
 	sub_snd->puerto = game_card_config->puerto_game_card;
 	sub_snd->proceso = TEAM;
 	sub_snd->cola = cola;
+	sub_snd->f_desc = -1;
 	utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
 	recv_game_card(new_broker_fd);
 
