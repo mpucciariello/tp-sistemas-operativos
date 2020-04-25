@@ -23,8 +23,8 @@ typedef struct
 	int id;
 	e_state state;
 	t_position* position;
-	t_pokemon** pokemons;
-	t_pokemon** targets;
+	t_list* pokemons;
+	t_list* targets;
 } t_entrenador_pokemon;
 
 void team_planner_init();

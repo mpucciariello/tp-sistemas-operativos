@@ -22,5 +22,6 @@ int game_card_load();
 void game_card_and_broker_connection_init();
 void game_card_and_gameboy_connection_init();
 void game_card_exit();
+void subscribe_to(void *arg);
 
 #endif /* GAME_CARD_H_ */

@@ -23,6 +23,15 @@ char* utils_get_parameter_i(char** array, int i) {
 	return array[i] != NULL ? array[i] : EMPTY_STRING;
 }
 
+int utils_get_array_size(char** array) {
+//	return (sizeof(array)/sizeof(char*));
+	int i = 0;
+	while(array[i] != NULL) {
+		i++;
+	}
+	return i;
+}
+
 char* utils_get_extension(char* file_name) {
 	char *extension = strrchr(file_name, DOT);
 	return !extension || extension == file_name ? EMPTY_STRING : extension + 1;
@@ -51,13 +60,11 @@ void utils_free_array(char** array) {
 
 char* utils_array_to_string(char** array) {
 	int i = 0;
-	char* aux;
 	char* ret = string_new();
 	string_append(&ret, OPENING_SQUARE_BRACKET);
 	while (array[i] != NULL) {
-		aux = array[i];
+		char* aux = array[i];
 		string_append(&ret, aux);
-		free(aux);
 		if (array[i + 1] != NULL) {
 			string_append(&ret, COMMA);
 			string_append(&ret, SPACE);
@@ -163,6 +170,12 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 				strlen(((t_subscribe*) package_send)->ip) + 1);
 		utils_package_add(package, &((t_subscribe*) package_send)->puerto,
 				sizeof(uint32_t));
+		utils_package_add(package, &((t_subscribe*) package_send)->cola,
+						sizeof(uint32_t));
+		utils_package_add(package, &((t_subscribe*) package_send)->proceso,
+						sizeof(uint32_t));
+		utils_package_add(package, &((t_subscribe*) package_send)->f_desc,
+								sizeof(uint32_t));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 
@@ -357,11 +370,14 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 	}
 
 	case SUBSCRIBE: {
-		t_subscribe* subscribe_req = malloc(sizeof(t_generate));
+		t_subscribe* subscribe_req = malloc(sizeof(t_subscribe));
 		t_list* list = utils_receive_package(socket);
 		subscribe_req->ip = malloc(utils_get_buffer_size(list, 0));
 		utils_get_from_list_to(subscribe_req->ip, list, 0);
 		utils_get_from_list_to(&subscribe_req->puerto, list, 1);
+		utils_get_from_list_to(&subscribe_req->cola, list, 2);
+		utils_get_from_list_to(&subscribe_req->proceso, list, 3);
+		utils_get_from_list_to(&subscribe_req->f_desc, list, 4);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return subscribe_req;
 	}

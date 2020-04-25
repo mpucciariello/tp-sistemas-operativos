@@ -34,6 +34,8 @@ typedef struct
 	char* ip_broker;
 	int puerto_broker;
 	char* log_file;
+	char* ip_team;
+	int puerto_team;
 } t_team_config;
 
 t_team_config* team_config;

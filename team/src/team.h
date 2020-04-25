@@ -15,7 +15,7 @@
 #include "../../shared-common/common/sockets.h"
 #include "../../shared-common/common/utils.h"
 
-int team_fd, team_socket;
+int team_socket;
 
 int team_load();
 void team_init();
@@ -23,4 +23,7 @@ void team_server_init();
 static void *handle_connection(void *arg);
 void team_exit();
 
+void *recv_broker(int broker_fd);
+void subscribe_to(void *arg);
+void send_message_test();
 #endif /* TEAM_H_ */

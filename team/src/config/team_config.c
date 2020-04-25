@@ -49,12 +49,14 @@ void read_config(t_config* config_file)
 	team_config->objetivos_entrenadores = config_get_array_value(config_file, "OBJETIVOS_ENTRENADORES");
 	team_config->tiempo_reconexion = config_get_int_value(config_file, "TIEMPO_RECONEXION");
 	team_config->retardo_ciclo_cpu = config_get_int_value(config_file, "RETARDO_CICLO_CPU");
-	team_config->algoritmo_planificacion = team_algoritmo_planificacion_from_string(string_duplicate(config_get_string_value(config_file, "ALGORITMO_PLANIFICACION")));
+	char* algoritmo = string_duplicate(config_get_string_value(config_file, "ALGORITMO_PLANIFICACION"));
+	team_config->algoritmo_planificacion = team_algoritmo_planificacion_from_string(algoritmo);
 	team_config->quantum = config_get_int_value(config_file, "QUANTUM");
 	team_config->estimacion_inicial = config_get_int_value(config_file, "ESTIMACION_INICIAL");
-	team_config->ip_broker = malloc(sizeof(char*));
 	team_config->ip_broker = string_duplicate(config_get_string_value(config_file, "IP_BROKER"));
 	team_config->puerto_broker = config_get_int_value(config_file, "PUERTO_BROKER");
+	team_config->ip_team = string_duplicate(config_get_string_value(config_file, "IP_TEAM"));
+	team_config->puerto_team = config_get_int_value(config_file, "PUERTO_TEAM");
 	team_config->log_file = malloc(sizeof(char*));
 	team_config->log_file = string_duplicate(config_get_string_value(config_file, "LOG_FILE"));
 }
@@ -94,4 +96,6 @@ void team_print_config()
 	team_logger_info("IP_BROKER: %s", team_config->ip_broker);
 	team_logger_info("PUERTO_BROKER: %d", team_config->puerto_broker);
 	team_logger_info("LOG_FILE: %s", team_config->log_file);
+	team_logger_info("IP_TEAM: %s", team_config->ip_team);
+	team_logger_info("PUERTO_TEAM: %d", team_config->puerto_team);
 }
