@@ -22,8 +22,9 @@ int game_card_load();
 void game_card_init();
 void game_card_retry_connect(void* arg);
 void game_card_init_as_server();
-void *handle_connection(int fd);
+void *recv_game_card(int fd);
 void game_card_exit();
 void subscribe_to(void *arg);
+static void *handle_connection(void *arg);
 
 #endif /* GAME_CARD_H_ */

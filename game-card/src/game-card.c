@@ -95,7 +95,7 @@ void subscribe_to(void *arg) {
         sub_snd->cola = cola;
         sub_snd->f_desc = -1;
         utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
-        handle_connection(new_broker_fd);
+        recv_game_card(new_broker_fd);
 	}
 }
 
@@ -129,7 +129,14 @@ void game_card_init_as_server() {
 	}
 }
 
-void *handle_connection(int fd){
+static void *handle_connection(void *arg)
+{
+	int client_fd = *((int *) arg);
+	recv_game_card(client_fd);
+	return NULL;
+}
+
+void *recv_game_card(int fd){
 		int received_bytes;
 		int protocol;
 		int client_fd = fd;
