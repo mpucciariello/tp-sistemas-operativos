@@ -38,30 +38,34 @@ void team_init() {
 	team_logger_info(
 			"Creando un hilo para subscribirse a la cola APPEARED del broker %d");
 	t_cola cola_appeared = APPEARED_QUEUE;
-	pthread_create(&tid, NULL, (void*) team_retry_connect, (void*) &cola_appeared);
+	pthread_create(&tid, NULL, (void*) team_retry_connect,
+			(void*) &cola_appeared);
 	pthread_detach(tid);
 
 	team_logger_info(
 			"Creando un hilo para subscribirse a la cola LOCALIZED del broker %d");
 
 	t_cola cola_localized = LOCALIZED_QUEUE;
-	pthread_create(&tid2, NULL, (void*) team_retry_connect, (void*) &cola_localized);
+	pthread_create(&tid2, NULL, (void*) team_retry_connect,
+			(void*) &cola_localized);
 	pthread_detach(tid2);
 
 	team_logger_info(
 			"Creando un hilo para subscribirse a la cola CAUGHT del broker %d");
 
 	t_cola cola_caught = CAUGHT_QUEUE;
-	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
+	pthread_create(&tid3, NULL, (void*) team_retry_connect,
+			(void*) &cola_caught);
 	pthread_detach(tid3);
 
 	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
 	pthread_detach(tid4);
 
-    team_logger_info("Creando un hilo para poner al Team en modo Servidor");
+	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
 	team_server_init();
 	usleep(500000);
-	for (;;);
+	for (;;)
+		;
 
 }
 
@@ -79,29 +83,6 @@ void send_message_test() {
 		t_protocol get_protocol;
 		t_protocol catch_protocol;
 		t_protocol subscribe_protocol;
-
-		// To broker
-		t_ack* ack_snd = malloc(sizeof(t_ack));
-		ack_snd->id = 1;
-		ack_snd->id_correlacional = 1;
-		ack_protocol = ACK;
-		team_logger_info("Envio de ACK!");
-		utils_serialize_and_send(broker_fd_send, ack_protocol, ack_snd);
-
-		usleep(500000);
-
-		// To broker
-		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
-		subscribe_protocol = SUBSCRIBE;
-		sub_snd->ip = string_duplicate(team_config->ip_team);
-		sub_snd->puerto = team_config->puerto_team;
-		sub_snd->proceso = TEAM;
-		sub_snd->cola = GET_QUEUE;
-		utils_serialize_and_send(broker_fd_send, subscribe_protocol, sub_snd);
-		team_logger_info(sub_snd->ip);
-		team_logger_info("%d", sub_snd->puerto);
-
-		usleep(500000);
 
 		// To broker
 		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
@@ -133,32 +114,31 @@ void subscribe_to(void *arg) {
 
 	t_cola cola = *((int *) arg);
 	team_logger_info("tipo Cola: %d ", cola);
-	switch(cola) {
+	switch (cola) {
 	case NEW_QUEUE: {
 		team_logger_info("Cola NEW ");
-			break;
-		}
-		case CATCH_QUEUE: {
-			team_logger_info("Cola CATCH ");
-			break;
-		}
-		case CAUGHT_QUEUE: {
-			team_logger_info("Cola CAUGHT ");
-			break;
-		}
-		case GET_QUEUE: {
-			team_logger_info("Cola GET ");
-			break;
-		}
-		case LOCALIZED_QUEUE: {
-			team_logger_info("Cola LOCALIZED ");
-			break;
-		}
-		case APPEARED_QUEUE: {
-			team_logger_info("Cola APPEARED ");
-			break;
-		}
-
+		break;
+	}
+	case CATCH_QUEUE: {
+		team_logger_info("Cola CATCH ");
+		break;
+	}
+	case CAUGHT_QUEUE: {
+		team_logger_info("Cola CAUGHT ");
+		break;
+	}
+	case GET_QUEUE: {
+		team_logger_info("Cola GET ");
+		break;
+	}
+	case LOCALIZED_QUEUE: {
+		team_logger_info("Cola LOCALIZED ");
+		break;
+	}
+	case APPEARED_QUEUE: {
+		team_logger_info("Cola APPEARED ");
+		break;
+	}
 	}
 
 	int new_broker_fd = socket_connect_to_server(team_config->ip_broker,
@@ -177,9 +157,8 @@ void subscribe_to(void *arg) {
 		sub_snd->proceso = TEAM;
 		sub_snd->cola = cola;
 		utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
-		usleep(500000);
 
-		recv_broker(new_broker_fd);
+		receive_msg(new_broker_fd);
 		is_connected = true;
 	}
 }
@@ -193,60 +172,70 @@ void team_retry_connect(void* arg) {
 	}
 }
 
-void *recv_broker(int new_broker_fd) {
+void *receive_msg(int fd) {
 	int protocol;
 
-	int received_bytes = recv(new_broker_fd, &protocol, sizeof(int), 0);
+	while (1) {
 
-	if (received_bytes <= 0) {
-		team_logger_error("Error al recibir mensaje");
-		return NULL;
-	}
-	switch (protocol) {
-	case CAUGHT_POKEMON: {
-		team_logger_info("Caught received");
-		t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(
-				new_broker_fd, protocol);
-		team_logger_info("ID correlacional: %d", caught_rcv->id_correlacional);
-		team_logger_info("ID mensaje: %d", caught_rcv->id_msg);
-		team_logger_info("Resultado (0/1): %d", caught_rcv->result);
-		usleep(50000);
-		break;
-	}
+		int received_bytes = recv(fd, &protocol, sizeof(int), 0);
 
-	case LOCALIZED_POKEMON: {
-		team_logger_info("Localized received");
-		t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
-				new_broker_fd, protocol);
-		team_logger_info("ID correlacional: %d",
-
-		loc_rcv->id_correlacional);
-		team_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
-		team_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
-		team_logger_info("Cant Elementos en lista: %d", loc_rcv->cant_elem);
-		for (int el = 0; el < loc_rcv->cant_elem; el++) {
-			t_position* pos = malloc(sizeof(t_position));
-			pos = list_get(loc_rcv->posiciones, el);
-			team_logger_info("Position is (%d, %d)", pos->pos_x, pos->pos_y);
+		if (received_bytes <= 0) {
+			team_logger_error("Se perdio la conexion");
+			return NULL;
 		}
-		usleep(500000);
-		break;
-	}
 
-	case APPEARED_POKEMON: {
-		team_logger_info("Appeared received");
-		t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
-				new_broker_fd, protocol);
-		team_logger_info("ID correlacional: %d",
-				appeared_rcv->id_correlacional);
-		team_logger_info("Cantidad: %d", appeared_rcv->cantidad);
-		team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);
-		team_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
-		team_logger_info("Posicion X: %d", appeared_rcv->pos_x);
-		team_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
-		usleep(50000);
-		break;
-	}
+		switch (protocol) {
+		case CAUGHT_POKEMON: {
+			team_logger_info("Caught received");
+			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd,
+					protocol);
+			team_logger_info("ID correlacional: %d",
+					caught_rcv->id_correlacional);
+			team_logger_info("ID mensaje: %d", caught_rcv->id_msg);
+			team_logger_info("Resultado (0/1): %d", caught_rcv->result);
+			usleep(50000);
+			break;
+		}
+
+		case LOCALIZED_POKEMON: {
+			team_logger_info("Localized received");
+			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd,
+					protocol);
+			team_logger_info("ID correlacional: %d",
+
+			loc_rcv->id_correlacional);
+			team_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
+			team_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
+			team_logger_info("Cant Elementos en lista: %d", loc_rcv->cant_elem);
+			for (int el = 0; el < loc_rcv->cant_elem; el++) {
+				t_position* pos = malloc(sizeof(t_position));
+				pos = list_get(loc_rcv->posiciones, el);
+				team_logger_info("Position is (%d, %d)", pos->pos_x,
+						pos->pos_y);
+			}
+			usleep(500000);
+			break;
+		}
+
+		case APPEARED_POKEMON: {
+			team_logger_info("Appeared received");
+			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd,
+					protocol);
+			team_logger_info("ID correlacional: %d",
+					appeared_rcv->id_correlacional);
+			team_logger_info("Cantidad: %d", appeared_rcv->cantidad);
+			team_logger_info("Nombre Pokemon: %s",
+					appeared_rcv->nombre_pokemon);
+			team_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
+			team_logger_info("Posicion X: %d", appeared_rcv->pos_x);
+			team_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
+			usleep(50000);
+			break;
+		}
+
+		default:
+			break;
+		}
 	}
 	return NULL;
 }
@@ -289,7 +278,7 @@ void team_server_init() {
 }
 static void *handle_connection(void *arg) {
 	int client_fd = *((int *) arg);
-	recv_broker(client_fd);
+	receive_msg(client_fd);
 }
 
 void team_exit() {

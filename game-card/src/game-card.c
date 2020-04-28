@@ -259,6 +259,7 @@ void process_new_and_send_appeared(void* arg) {
 		game_card_logger_info("APPEARED sent to BROKER");
 	}
 	usleep(500000);
+	game_card_logger_info("CLOSING CONNECTION WITH BROKER");
 	socket_close_conection(client_fd);
 }
 
@@ -282,6 +283,7 @@ void process_get_and_send_localized(void* arg) {
 	loc_snd->nombre_pokemon = get_rcv->nombre_pokemon;
 	loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
 	loc_snd->cant_elem = list_size(positions);
+	loc_snd->posiciones = positions;
 	t_protocol localized_protocol = LOCALIZED_POKEMON;
 
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,

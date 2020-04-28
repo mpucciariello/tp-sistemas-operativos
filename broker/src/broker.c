@@ -81,13 +81,15 @@ static void *handle_connection(void *arg) {
 		received_bytes = recv(client_fd, &protocol, sizeof(int), 0);
 
 		if (received_bytes <= 0) {
-			broker_logger_error("Error al recibir mensaje");
+			broker_logger_error("Se perdio la conexion");
 			return NULL;
 		}
 		switch (protocol) {
 
+		// From Team o GC
 		case ACK: {
-			broker_logger_info("Ack received");
+
+			broker_logger_info("ACK RECEIVED");
 			t_ack *ack_receive = utils_receive_and_deserialize(client_fd,
 					protocol);
 			broker_logger_info("ID recibido: %d", ack_receive->id);
@@ -99,7 +101,7 @@ static void *handle_connection(void *arg) {
 
 			// From GB
 		case NEW_POKEMON: {
-			broker_logger_info("New received");
+			broker_logger_info("NEW RECEIVED FROM GB");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
 			broker_logger_info("ID recibido: %d", new_receive->id);
@@ -136,7 +138,7 @@ static void *handle_connection(void *arg) {
 
 			// From GB or GC
 		case APPEARED_POKEMON: {
-			broker_logger_info("Appeared received");
+			broker_logger_info("APPEARED RECEIVED");
 			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
@@ -171,7 +173,7 @@ static void *handle_connection(void *arg) {
 		}
 			// From team
 		case GET_POKEMON: {
-			broker_logger_info("Get received");
+			broker_logger_info("GET RECEIVED FROM TEAM");
 			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd,
 					protocol);
 			broker_logger_info("ID correlacional: %d",
@@ -199,7 +201,7 @@ static void *handle_connection(void *arg) {
 
 			// From team
 		case CATCH_POKEMON: {
-			broker_logger_info("Catch received");
+			broker_logger_info("CATCH RECEIVED FROM TEAM");
 			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
@@ -221,7 +223,7 @@ static void *handle_connection(void *arg) {
 			catch_send->id_gen = uuid;
 			uuid++;
 			catch_protocol = CATCH_POKEMON;
-			broker_logger_info("Catch sent");
+			broker_logger_info("CATCH SENT TO GC");
 			for (int i = 0; i < list_size(catch_queue); i++) {
 				t_subscribe_nodo* node = list_get(catch_queue, i);
 				utils_serialize_and_send(node->f_desc, catch_protocol,
@@ -233,7 +235,7 @@ static void *handle_connection(void *arg) {
 		}
 			// From GC
 		case LOCALIZED_POKEMON: {
-			broker_logger_info("Localized received");
+			broker_logger_info("LOCALIZED RECEIVED FROM GC");
 			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
@@ -271,7 +273,7 @@ static void *handle_connection(void *arg) {
 
 			// From Team or GC
 		case SUBSCRIBE: {
-			broker_logger_info("SUBSCRIBE received");
+			broker_logger_info("SUBSCRIBE RECEIVED");
 			t_subscribe *sub_rcv = utils_receive_and_deserialize(client_fd,
 					protocol);
 			char * ip = string_duplicate(sub_rcv->ip);
@@ -288,7 +290,7 @@ static void *handle_connection(void *arg) {
 
 			// From GC or GB
 		case CAUGHT_POKEMON: {
-			broker_logger_info("Caught received");
+			broker_logger_info("CAUGHT RECEIVED");
 			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",

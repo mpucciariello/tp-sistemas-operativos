@@ -23,7 +23,7 @@ void team_init();
 void team_server_init();
 static void *handle_connection(void *arg);
 void team_exit();
-void *recv_broker(int broker_fd);
+void *receive_msg(int broker_fd);
 void subscribe_to(void *arg);
 void send_message_test();
 void team_retry_connect(void* arg);
