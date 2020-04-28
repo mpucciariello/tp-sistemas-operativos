@@ -158,7 +158,7 @@ void subscribe_to(void *arg) {
 		sub_snd->cola = cola;
 		utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
 
-		receive_msg(new_broker_fd);
+		receive_msg(new_broker_fd, 0);
 		is_connected = true;
 	}
 }
@@ -172,8 +172,9 @@ void team_retry_connect(void* arg) {
 	}
 }
 
-void *receive_msg(int fd) {
+void *receive_msg(int fd, int send_to) {
 	int protocol;
+	int is_server = send_to;
 
 	while (1) {
 
@@ -230,6 +231,14 @@ void *receive_msg(int fd) {
 			team_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			team_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
 			usleep(50000);
+
+			if (is_server == 0) {
+				pthread_t tid;
+				pthread_create(&tid, NULL, (void*) send_ack,
+						(void*) &appeared_rcv->id_correlacional);
+				pthread_detach(tid);
+			}
+
 			break;
 		}
 
@@ -265,8 +274,13 @@ void team_server_init() {
 		if ((accepted_fd = accept(team_socket, (struct sockaddr *) &client_info,
 				&addrlen)) != -1) {
 
+			t_handle_connection* connection_handler = malloc(
+					sizeof(t_handle_connection));
+			connection_handler->fd = accepted_fd;
+			connection_handler->bool_val = 1;
+
 			pthread_create(&tid, NULL, (void*) handle_connection,
-					(void*) &accepted_fd);
+					(void*) connection_handler);
 			pthread_detach(tid);
 			team_logger_info(
 					"Creando un hilo para atender una conexión en el socket %d",
@@ -277,13 +291,31 @@ void team_server_init() {
 	}
 }
 static void *handle_connection(void *arg) {
-	int client_fd = *((int *) arg);
-	receive_msg(client_fd);
+	t_handle_connection* connect_handler = (t_handle_connection *) arg;
+	int client_fd = connect_handler->fd;
+	receive_msg(client_fd, connect_handler->bool_val);
+}
+
+void send_ack(void* arg) {
+	int val = *((int*) arg);
+	t_ack* ack_snd = malloc(sizeof(t_ack));
+	t_protocol ack_protocol = ACK;
+	ack_snd->id = val;
+	ack_snd->id_correlacional = val;
+
+	int client_fd = socket_connect_to_server(team_config->ip_broker,
+			team_config->puerto_broker);
+	if (client_fd > 0) {
+		utils_serialize_and_send(client_fd, ack_protocol, ack_snd);
+		team_logger_info("ACK SENT TO BROKER");
+	}
+	team_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
+	socket_close_conection(client_fd);
 }
 
 void team_exit() {
-	socket_close_conection(team_socket);
-	//socket_close_conection(broker_fd);
-	team_config_free();
-	team_logger_destroy();
+socket_close_conection(team_socket);
+//socket_close_conection(broker_fd);
+team_config_free();
+team_logger_destroy();
 }

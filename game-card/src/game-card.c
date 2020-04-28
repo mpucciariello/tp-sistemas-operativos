@@ -122,7 +122,8 @@ void game_card_init_as_server() {
 		pthread_t tid;
 		if ((accepted_fd = accept(game_card_socket,
 				(struct sockaddr *) &client_info, &addrlen)) != -1) {
-			t_handle_connection* connection_handler = malloc(sizeof(t_handle_connection));
+			t_handle_connection* connection_handler = malloc(
+					sizeof(t_handle_connection));
 			connection_handler->fd = accepted_fd;
 			connection_handler->bool_val = 1;
 			pthread_create(&tid, NULL, (void*) handle_connection,
@@ -184,8 +185,7 @@ void *recv_game_card(int fd, int respond_to) {
 
 			if (is_server == 0) {
 				pthread_t tid;
-				pthread_create(&tid, NULL,
-						(void*) send_ack,
+				pthread_create(&tid, NULL, (void*) send_ack,
 						(void*) &new_receive->id_correlacional);
 				pthread_detach(tid);
 			}
@@ -217,8 +217,7 @@ void *recv_game_card(int fd, int respond_to) {
 
 			if (is_server == 0) {
 				pthread_t tid2;
-				pthread_create(&tid2, NULL,
-						(void*) send_ack,
+				pthread_create(&tid2, NULL, (void*) send_ack,
 						(void*) &get_rcv->id_correlacional);
 				pthread_detach(tid2);
 			}
@@ -254,8 +253,7 @@ void *recv_game_card(int fd, int respond_to) {
 
 			if (is_server == 0) {
 				pthread_t tid4;
-				pthread_create(&tid4, NULL,
-						(void*) send_ack,
+				pthread_create(&tid4, NULL, (void*) send_ack,
 						(void*) &catch_rcv->id_correlacional);
 				pthread_detach(tid4);
 			}
@@ -282,14 +280,14 @@ void send_ack(void* arg) {
 	ack_snd->id = id;
 	ack_snd->id_correlacional = id;
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
-				game_card_config->puerto_broker);
+			game_card_config->puerto_broker);
 	if (client_fd > 0) {
 		utils_serialize_and_send(client_fd, ack_protocol, ack_snd);
 		game_card_logger_info("ACK SENT TO BROKER");
 	}
 	game_card_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
 	socket_close_conection(client_fd);
-		}
+}
 
 void process_new_and_send_appeared(void* arg) {
 	t_new_pokemon* new_receive = (t_new_pokemon*) arg;
