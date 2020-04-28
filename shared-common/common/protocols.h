@@ -15,6 +15,11 @@ typedef struct {
 } t_buffer;
 
 typedef struct {
+	int fd;
+	int bool_val;
+} t_handle_connection;
+
+typedef struct {
 	int pos_x;
 	int pos_y;
 } t_position;

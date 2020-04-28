@@ -85,10 +85,13 @@ void subscribe_to(void *arg) {
 			game_card_config->puerto_broker);
 
 	if (new_broker_fd < 0) {
-		game_card_logger_warn("No se pudo conectar la cola %d con BROKER", cola);
+		game_card_logger_warn("No se pudo conectar la cola %d con BROKER",
+				cola);
 		socket_close_conection(new_broker_fd);
 	} else {
-		game_card_logger_info("Conexion de la cola %d con BROKER establecida correctamente!", cola);
+		game_card_logger_info(
+				"Conexion de la cola %d con BROKER establecida correctamente!",
+				cola);
 		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
 		t_protocol subscribe_protocol = SUBSCRIBE;
 		sub_snd->ip = string_duplicate(game_card_config->ip_game_card);
@@ -97,7 +100,7 @@ void subscribe_to(void *arg) {
 		sub_snd->cola = cola;
 		sub_snd->f_desc = -1;
 		utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
-		recv_game_card(new_broker_fd);
+		recv_game_card(new_broker_fd, 0);
 	}
 }
 
@@ -119,8 +122,11 @@ void game_card_init_as_server() {
 		pthread_t tid;
 		if ((accepted_fd = accept(game_card_socket,
 				(struct sockaddr *) &client_info, &addrlen)) != -1) {
+			t_handle_connection* connection_handler = malloc(sizeof(t_handle_connection));
+			connection_handler->fd = accepted_fd;
+			connection_handler->bool_val = 1;
 			pthread_create(&tid, NULL, (void*) handle_connection,
-					(void*) &accepted_fd);
+					(void*) connection_handler);
 			pthread_detach(tid);
 			game_card_logger_info(
 					"Creando un hilo para atender una conexión en el socket %d",
@@ -133,14 +139,18 @@ void game_card_init_as_server() {
 }
 
 static void *handle_connection(void *arg) {
-	int client_fd = *((int *) arg);
-	recv_game_card(client_fd);
+	t_handle_connection* connect_handler = (t_handle_connection *) arg;
+	int client_fd = connect_handler->fd;
+	recv_game_card(client_fd, connect_handler->bool_val);
 	return NULL;
 }
-void *recv_game_card(int fd) {
+void *recv_game_card(int fd, int respond_to) {
 	int received_bytes;
 	int protocol;
 	int client_fd = fd;
+
+	// 1 = Receives from GB; 0 = Receives from Broker
+	int is_server = respond_to;
 
 	while (true) {
 		received_bytes = recv(client_fd, &protocol, sizeof(int), 0);
@@ -171,11 +181,19 @@ void *recv_game_card(int fd) {
 			pthread_attr_t attrs;
 			pthread_attr_init(&attrs);
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
-			pthread_t tid;
 
-			pthread_create(&tid, NULL, (void*) process_new_and_send_appeared,
+			if (is_server == 0) {
+				pthread_t tid;
+				pthread_create(&tid, NULL,
+						(void*) send_ack,
+						(void*) &new_receive->id_correlacional);
+				pthread_detach(tid);
+			}
+
+			pthread_t tid1;
+			pthread_create(&tid1, NULL, (void*) process_new_and_send_appeared,
 					(void*) new_receive);
-			pthread_detach(tid);
+			pthread_detach(tid1);
 
 			break;
 		}
@@ -196,11 +214,19 @@ void *recv_game_card(int fd) {
 			pthread_attr_t attrs;
 			pthread_attr_init(&attrs);
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
-			pthread_t tid1;
 
-			pthread_create(&tid1, NULL, (void*) process_get_and_send_localized,
+			if (is_server == 0) {
+				pthread_t tid2;
+				pthread_create(&tid2, NULL,
+						(void*) send_ack,
+						(void*) &get_rcv->id_correlacional);
+				pthread_detach(tid2);
+			}
+
+			pthread_t tid3;
+			pthread_create(&tid3, NULL, (void*) process_get_and_send_localized,
 					(void*) get_rcv);
-			pthread_detach(tid1);
+			pthread_detach(tid3);
 
 			break;
 		}
@@ -225,20 +251,45 @@ void *recv_game_card(int fd) {
 			pthread_attr_t attrs;
 			pthread_attr_init(&attrs);
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
-			pthread_t tid2;
 
-			pthread_create(&tid2, NULL, (void*) process_catch_and_send_caught,
+			if (is_server == 0) {
+				pthread_t tid4;
+				pthread_create(&tid4, NULL,
+						(void*) send_ack,
+						(void*) &catch_rcv->id_correlacional);
+				pthread_detach(tid4);
+			}
+
+			pthread_t tid5;
+
+			pthread_create(&tid5, NULL, (void*) process_catch_and_send_caught,
 					(void*) catch_rcv);
-			pthread_detach(tid2);
+			pthread_detach(tid5);
 			break;
 		}
 
 		default:
 			break;
-
 		}
 	}
 }
+
+void send_ack(void* arg) {
+	int id = *((int*) arg);
+
+	t_ack* ack_snd = malloc(sizeof(t_ack));
+	t_protocol ack_protocol = ACK;
+	ack_snd->id = id;
+	ack_snd->id_correlacional = id;
+	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
+				game_card_config->puerto_broker);
+	if (client_fd > 0) {
+		utils_serialize_and_send(client_fd, ack_protocol, ack_snd);
+		game_card_logger_info("ACK SENT TO BROKER");
+	}
+	game_card_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
+	socket_close_conection(client_fd);
+		}
 
 void process_new_and_send_appeared(void* arg) {
 	t_new_pokemon* new_receive = (t_new_pokemon*) arg;
