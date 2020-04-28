@@ -23,7 +23,7 @@ int game_card_load() {
 }
 
 void game_card_init() {
-	game_card_logger_info("Inicando GAME CARD..");
+	game_card_logger_info("Inicando GAMECARD..");
 	gcfs_create_structs();
 
 	pthread_attr_t attrs;
@@ -85,10 +85,10 @@ void subscribe_to(void *arg) {
 			game_card_config->puerto_broker);
 
 	if (new_broker_fd < 0) {
-		game_card_logger_warn("No se pudo conectar con BROKER");
+		game_card_logger_warn("No se pudo conectar la cola %d con BROKER", cola);
 		socket_close_conection(new_broker_fd);
 	} else {
-		game_card_logger_info("Conexion con BROKER establecida correctamente!");
+		game_card_logger_info("Conexion de la cola %d con BROKER establecida correctamente!", cola);
 		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
 		t_protocol subscribe_protocol = SUBSCRIBE;
 		sub_snd->ip = string_duplicate(game_card_config->ip_game_card);
@@ -105,10 +105,10 @@ void game_card_init_as_server() {
 	int game_card_socket = socket_create_listener(
 			game_card_config->ip_game_card, game_card_config->puerto_game_card);
 	if (game_card_socket < 0) {
-		game_card_logger_error("Error al crear server");
+		game_card_logger_error("Error al levantar GAMECARD server");
 	}
 	game_card_logger_info(
-			"Server creado correctamente!! Esperando conexiones...");
+			"Server creado correctamente!! Esperando conexion del GAMEBOY");
 	struct sockaddr_in client_info;
 	socklen_t addrlen = sizeof client_info;
 	pthread_attr_t attrs;
@@ -153,7 +153,7 @@ void *recv_game_card(int fd) {
 
 		// From Broker or GB
 		case NEW_POKEMON: {
-			game_card_logger_info("New received");
+			game_card_logger_info("NEW received");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
 			game_card_logger_info("ID recibido: %d", new_receive->id);
@@ -182,7 +182,7 @@ void *recv_game_card(int fd) {
 
 			// From broker or GB
 		case GET_POKEMON: {
-			game_card_logger_info("Get received");
+			game_card_logger_info("GET received");
 			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd,
 					protocol);
 			game_card_logger_info("ID correlacional: %d",
@@ -207,7 +207,7 @@ void *recv_game_card(int fd) {
 
 			// From broker or GB
 		case CATCH_POKEMON: {
-			game_card_logger_info("Catch received");
+			game_card_logger_info("CATCH received");
 			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			game_card_logger_info("ID correlacional: %d",
@@ -256,7 +256,7 @@ void process_new_and_send_appeared(void* arg) {
 			game_card_config->puerto_broker);
 	if (client_fd > 0) {
 		utils_serialize_and_send(client_fd, appeared_protocol, appeared_snd);
-		game_card_logger_info("APPEARED SENT TO BROKER");
+		game_card_logger_info("APPEARED sent to BROKER");
 	}
 	usleep(500000);
 	socket_close_conection(client_fd);
@@ -288,7 +288,7 @@ void process_get_and_send_localized(void* arg) {
 			game_card_config->puerto_broker);
 	if (client_fd > 0) {
 		utils_serialize_and_send(client_fd, localized_protocol, loc_snd);
-		game_card_logger_info("LOCALIZED SENT TO BROKER");
+		game_card_logger_info("LOCALIZED sent to BROKER");
 	}
 	usleep(50000);
 	socket_close_conection(client_fd);
@@ -303,13 +303,12 @@ void process_catch_and_send_caught(void* arg) {
 	caught_snd->id_msg = catch_rcv->id_gen;
 	caught_snd->result = 1;
 	t_protocol caught_protocol = CAUGHT_POKEMON;
-	game_card_logger_info("CAUGHT SENT TO BROKER");
 
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
 			game_card_config->puerto_broker);
 	if (client_fd > 0) {
 		utils_serialize_and_send(client_fd, caught_protocol, caught_snd);
-		game_card_logger_info("CAUGHT SENT TO BROKER");
+		game_card_logger_info("CAUGHT sent to BROKER");
 	}
 	usleep(500000);
 	socket_close_conection(client_fd);
