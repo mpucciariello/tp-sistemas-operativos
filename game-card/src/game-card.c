@@ -142,21 +142,6 @@ void *recv_game_card(int fd) {
 	int protocol;
 	int client_fd = fd;
 
-	t_protocol appeared_protocol;
-	t_protocol caught_protocol;
-	t_protocol localized_protocol;
-
-	// Temporal mock for list (to return @LOCALIZED)
-	t_list* positions = list_create();
-	t_position *pos = malloc(sizeof(t_position));
-	pos->pos_x = 21;
-	pos->pos_y = 8;
-	t_position *pos2 = malloc(sizeof(t_position));
-	pos2->pos_x = 2;
-	pos2->pos_y = 8;
-	list_add(positions, pos);
-	list_add(positions, pos2);
-
 	while (true) {
 		received_bytes = recv(client_fd, &protocol, sizeof(int), 0);
 
@@ -165,6 +150,7 @@ void *recv_game_card(int fd) {
 			return NULL;
 		}
 		switch (protocol) {
+
 		// From Broker or GB
 		case NEW_POKEMON: {
 			game_card_logger_info("New received");
@@ -182,19 +168,15 @@ void *recv_game_card(int fd) {
 			game_card_logger_info("Posicion Y: %d", new_receive->pos_y);
 			usleep(100000);
 
-			t_appeared_pokemon* appeared_snd = malloc(
-					sizeof(t_appeared_pokemon));
-			appeared_protocol = APPEARED_POKEMON;
-			appeared_snd->nombre_pokemon = new_receive->nombre_pokemon;
-			appeared_snd->tamanio_nombre = new_receive->tamanio_nombre;
-			appeared_snd->id_correlacional = new_receive->id_correlacional;
-			appeared_snd->pos_x = new_receive->pos_x;
-			appeared_snd->pos_y = new_receive->pos_y;
-			appeared_snd->cantidad = new_receive->cantidad;
-			game_card_logger_info("APPEARED SENT TO BROKER");
-			utils_serialize_and_send(client_fd, appeared_protocol,
-					appeared_snd);
-			usleep(500000);
+			pthread_attr_t attrs;
+			pthread_attr_init(&attrs);
+			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
+			pthread_t tid;
+
+			pthread_create(&tid, NULL, (void*) process_new_and_send_appeared,
+					(void*) new_receive);
+			pthread_detach(tid);
+
 			break;
 		}
 
@@ -211,16 +193,15 @@ void *recv_game_card(int fd) {
 			usleep(50000);
 
 			// To broker
-			t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
-			loc_snd->id_correlacional = get_rcv->id_correlacional;
-			loc_snd->nombre_pokemon = get_rcv->nombre_pokemon;
-			loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
-			loc_snd->cant_elem = list_size(positions);
-			localized_protocol = LOCALIZED_POKEMON;
-			game_card_logger_info("LOCALIZED SENT TO BROKER");
-			loc_snd->posiciones = positions;
-			utils_serialize_and_send(client_fd, localized_protocol, loc_snd);
-			usleep(50000);
+			pthread_attr_t attrs;
+			pthread_attr_init(&attrs);
+			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
+			pthread_t tid1;
+
+			pthread_create(&tid1, NULL, (void*) process_get_and_send_localized,
+					(void*) get_rcv);
+			pthread_detach(tid1);
+
 			break;
 		}
 
@@ -241,14 +222,14 @@ void *recv_game_card(int fd) {
 			usleep(50000);
 
 			// To Broker
-			t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
-			caught_snd->id_correlacional = catch_rcv->id_correlacional;
-			caught_snd->id_msg = catch_rcv->id_gen;
-			caught_snd->result = 1;
-			caught_protocol = CAUGHT_POKEMON;
-			game_card_logger_info("CAUGHT SENT TO BROKER");
-			utils_serialize_and_send(client_fd, caught_protocol, caught_snd);
-			usleep(500000);
+			pthread_attr_t attrs;
+			pthread_attr_init(&attrs);
+			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
+			pthread_t tid2;
+
+			pthread_create(&tid2, NULL, (void*) process_catch_and_send_caught,
+					(void*) catch_rcv);
+			pthread_detach(tid2);
 			break;
 		}
 
@@ -257,6 +238,81 @@ void *recv_game_card(int fd) {
 
 		}
 	}
+}
+
+void process_new_and_send_appeared(void* arg) {
+	t_new_pokemon* new_receive = (t_new_pokemon*) arg;
+
+	// Process New and send Appeared to broker
+	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
+	t_protocol appeared_protocol = APPEARED_POKEMON;
+	appeared_snd->nombre_pokemon = new_receive->nombre_pokemon;
+	appeared_snd->tamanio_nombre = new_receive->tamanio_nombre;
+	appeared_snd->id_correlacional = new_receive->id_correlacional;
+	appeared_snd->pos_x = new_receive->pos_x;
+	appeared_snd->pos_y = new_receive->pos_y;
+	appeared_snd->cantidad = new_receive->cantidad;
+	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
+			game_card_config->puerto_broker);
+	if (client_fd > 0) {
+		utils_serialize_and_send(client_fd, appeared_protocol, appeared_snd);
+		game_card_logger_info("APPEARED SENT TO BROKER");
+	}
+	usleep(500000);
+	socket_close_conection(client_fd);
+}
+
+void process_get_and_send_localized(void* arg) {
+	t_get_pokemon* get_rcv = (t_get_pokemon*) arg;
+
+	// Temporal mock for list (to return @LOCALIZED)
+	t_list* positions = list_create();
+	t_position *pos = malloc(sizeof(t_position));
+	pos->pos_x = 21;
+	pos->pos_y = 8;
+	t_position *pos2 = malloc(sizeof(t_position));
+	pos2->pos_x = 2;
+	pos2->pos_y = 8;
+	list_add(positions, pos);
+	list_add(positions, pos2);
+
+	// Process get and sent localize
+	t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
+	loc_snd->id_correlacional = get_rcv->id_correlacional;
+	loc_snd->nombre_pokemon = get_rcv->nombre_pokemon;
+	loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
+	loc_snd->cant_elem = list_size(positions);
+	t_protocol localized_protocol = LOCALIZED_POKEMON;
+
+	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
+			game_card_config->puerto_broker);
+	if (client_fd > 0) {
+		utils_serialize_and_send(client_fd, localized_protocol, loc_snd);
+		game_card_logger_info("LOCALIZED SENT TO BROKER");
+	}
+	usleep(50000);
+	socket_close_conection(client_fd);
+}
+
+void process_catch_and_send_caught(void* arg) {
+	t_catch_pokemon* catch_rcv = (t_catch_pokemon*) arg;
+
+	// Process Catch and send Caught to broker
+	t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
+	caught_snd->id_correlacional = catch_rcv->id_correlacional;
+	caught_snd->id_msg = catch_rcv->id_gen;
+	caught_snd->result = 1;
+	t_protocol caught_protocol = CAUGHT_POKEMON;
+	game_card_logger_info("CAUGHT SENT TO BROKER");
+
+	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
+			game_card_config->puerto_broker);
+	if (client_fd > 0) {
+		utils_serialize_and_send(client_fd, caught_protocol, caught_snd);
+		game_card_logger_info("CAUGHT SENT TO BROKER");
+	}
+	usleep(500000);
+	socket_close_conection(client_fd);
 }
 
 void game_card_exit() {

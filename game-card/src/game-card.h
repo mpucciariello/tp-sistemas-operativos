@@ -26,5 +26,8 @@ void *recv_game_card(int fd);
 void game_card_exit();
 void subscribe_to(void *arg);
 static void *handle_connection(void *arg);
+void process_new_and_send_appeared(void* arg);
+void process_get_and_send_localized(void* arg);
+void process_catch_and_send_caught(void* arg);
 
 #endif /* GAME_CARD_H_ */
