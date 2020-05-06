@@ -114,7 +114,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Posicion X: %d", new_receive->pos_x);
 			broker_logger_info("Posicion Y: %d", new_receive->pos_y);
 			usleep(100000);
-
+			t_message_to_void *message = convert_to_void(protocol, new_receive);
 			// To GC
 			t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
 			new_snd->nombre_pokemon = string_duplicate(
@@ -164,7 +164,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
 			usleep(50000);
-
+			t_message_to_void *message = convert_to_void(protocol, appeared_rcv);
 			// To Team
 			t_appeared_pokemon* appeared_snd = malloc(
 					sizeof(t_appeared_pokemon));
@@ -193,6 +193,7 @@ static void *handle_connection(void *arg) {
 							appeared_snd);
 				}
 			}
+
 			usleep(500000);
 			break;
 		}
@@ -207,7 +208,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
 
 			usleep(50000);
-
+			t_message_to_void *message = convert_to_void(protocol, get_rcv);
 			// To GC
 			t_get_pokemon* get_snd = malloc(sizeof(t_get_pokemon));
 			get_snd->id_correlacional = get_rcv->id_correlacional;
@@ -250,7 +251,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
 			usleep(50000);
-
+			t_message_to_void *message = convert_to_void(protocol, catch_rcv);
 			// To GC
 			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 			catch_send->id_correlacional = catch_rcv->id_correlacional;
@@ -301,7 +302,7 @@ static void *handle_connection(void *arg) {
 				broker_logger_info("Position is (%d, %d)", pos->pos_x,
 						pos->pos_y);
 			}
-
+			t_message_to_void *message = convert_to_void(protocol, loc_rcv);
 			// To team
 			t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
 			loc_snd->id_correlacional = loc_rcv->id_correlacional;
@@ -360,7 +361,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("ID mensaje: %d", caught_rcv->id_msg);
 			broker_logger_info("Resultado (0/1): %d", caught_rcv->result);
 			usleep(50000);
-
+			t_message_to_void *message = convert_to_void(protocol, caught_rcv);
 			// To Team
 			t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
 			caught_snd->id_correlacional = caught_rcv->id_correlacional;
@@ -385,6 +386,7 @@ static void *handle_connection(void *arg) {
 							caught_snd);
 				}
 			}
+
 
 			usleep(50000);
 			break;
@@ -487,4 +489,140 @@ void broker_exit() {
 	socket_close_conection(broker_socket);
 	broker_config_free();
 	broker_logger_destroy();
+}
+
+t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
+
+	t_message_to_void* message_to_void = malloc(sizeof(t_message_to_void));
+	message_to_void->size_message = 0;
+	switch (protocol) {
+	case NEW_POKEMON: {
+		broker_logger_info("NEW MESSAGE , CONVERT IT to VOID *");
+		t_new_pokemon *new_receive = (t_new_pokemon*) package_recv;
+		message_to_void->message = malloc(
+				new_receive->tamanio_nombre + sizeof(uint32_t) * 4);
+		int offset = 0;
+		memcpy(message_to_void->message + offset, &new_receive->tamanio_nombre,
+				new_receive->tamanio_nombre);
+		offset += new_receive->tamanio_nombre;
+		memcpy(message_to_void->message + offset, new_receive->nombre_pokemon,
+				sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(message_to_void->message + offset, &new_receive->pos_x,
+				sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(message_to_void->message + offset, &new_receive->pos_y,
+				sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(message_to_void->message + offset, &new_receive->cantidad,
+				sizeof(uint32_t));
+		message_to_void->size_message = new_receive->tamanio_nombre
+				+ sizeof(uint32_t) * 4;
+
+		break;
+	}
+
+		// From GB or GC
+	case APPEARED_POKEMON: {
+		broker_logger_info("APPEARED MESSAGE , CONVERT IT TO VOID *");
+
+		t_appeared_pokemon *appeared_rcv = (t_appeared_pokemon*) package_recv;
+		message_to_void->message = malloc(
+				appeared_rcv->tamanio_nombre + sizeof(uint32_t) * 3);
+		int offset = 0;
+		memcpy(message_to_void->message + offset, &appeared_rcv->tamanio_nombre,
+				appeared_rcv->tamanio_nombre);
+		offset += appeared_rcv->tamanio_nombre;
+		memcpy(message_to_void->message + offset, appeared_rcv->nombre_pokemon,
+				sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(message_to_void->message + offset, &appeared_rcv->pos_x,
+				sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(message_to_void->message + offset, &appeared_rcv->pos_y,
+				sizeof(uint32_t));
+
+		message_to_void->size_message = appeared_rcv->tamanio_nombre
+				+ sizeof(uint32_t) * 3;
+		break;
+	}
+		// From team
+	case GET_POKEMON: {
+		broker_logger_info("GET MESSAGE, CONVERT IT TO VOID *");
+		t_get_pokemon *get_rcv = (t_get_pokemon*) package_recv;
+		message_to_void->message = malloc(
+				get_rcv->tamanio_nombre + sizeof(uint32_t));
+		int offset = 0;
+		memcpy(message_to_void->message + offset, &get_rcv->tamanio_nombre,
+				get_rcv->tamanio_nombre);
+		offset += get_rcv->tamanio_nombre;
+		memcpy(message_to_void->message + offset, get_rcv->nombre_pokemon,
+				sizeof(uint32_t));
+		message_to_void->size_message = get_rcv->tamanio_nombre
+				+ sizeof(uint32_t);
+		break;
+	}
+
+		// From team
+	case CATCH_POKEMON: {
+		broker_logger_info("CATCH MESSAGE , CONVERT IT TO VOID *");
+		t_catch_pokemon *catch_rcv = (t_catch_pokemon*) package_recv;
+		message_to_void->message = malloc(
+				catch_rcv->tamanio_nombre + sizeof(uint32_t) * 3);
+		int offset = 0;
+		memcpy(message_to_void->message + offset, &catch_rcv->tamanio_nombre,
+				catch_rcv->tamanio_nombre);
+		offset += catch_rcv->tamanio_nombre;
+		memcpy(message_to_void->message + offset, catch_rcv->nombre_pokemon,
+				sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(message_to_void->message + offset, &catch_rcv->pos_x,
+				sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(message_to_void->message + offset, &catch_rcv->pos_y,
+				sizeof(uint32_t));
+
+		message_to_void->size_message = catch_rcv->tamanio_nombre
+				+ sizeof(uint32_t) * 3;
+		break;
+	}
+		// From GC
+	case LOCALIZED_POKEMON: {
+		broker_logger_info("LOCALIZED MESSAGE , CONVERT IT TO VOID *");
+		t_localized_pokemon *loc_rcv = (t_localized_pokemon*) package_recv;
+		message_to_void->message = malloc(
+				loc_rcv->tamanio_nombre + sizeof(uint32_t) +sizeof(uint32_t)*2*loc_rcv->cant_elem);
+		int offset = 0;
+		memcpy(message_to_void->message + offset, &loc_rcv->tamanio_nombre,
+				loc_rcv->tamanio_nombre);
+		offset += loc_rcv->tamanio_nombre;
+		memcpy(message_to_void->message + offset, loc_rcv->nombre_pokemon,
+				sizeof(uint32_t));
+		for(int i=0;i<loc_rcv->cant_elem;i++){
+			offset += sizeof(uint32_t);
+			t_position *pos =list_get(loc_rcv->posiciones,i);
+			memcpy(message_to_void->message + offset, &pos->pos_x,
+							sizeof(uint32_t));
+					offset += sizeof(uint32_t);
+		    memcpy(message_to_void->message + offset, &pos->pos_y,
+							sizeof(uint32_t));
+
+		}
+		message_to_void->size_message = loc_rcv->tamanio_nombre + sizeof(uint32_t) +sizeof(uint32_t)*2*loc_rcv->cant_elem;
+		break;
+	}
+
+	case CAUGHT_POKEMON: {
+		broker_logger_info("CAUGHT MESSAGE , CONVERT IT TO VOID *");
+		t_caught_pokemon *caught_rcv = (t_caught_pokemon*) package_recv;
+		message_to_void->message = malloc(sizeof(uint32_t));
+
+		memcpy(message_to_void->message, &caught_rcv->result, sizeof(uint32_t));
+		message_to_void->size_message = sizeof(uint32_t);
+		break;
+	}
+
+	}
+	return message_to_void;
+
 }

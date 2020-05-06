@@ -35,4 +35,10 @@ typedef struct {
 
 t_subscribe_nodo* check_already_subscribed(char *ip,uint32_t puerto,t_list *list);
 
+typedef struct {
+	void* message;
+	uint32_t size_message;
+} t_message_to_void;
+
+t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
 #endif /* BROKER_H_ */
