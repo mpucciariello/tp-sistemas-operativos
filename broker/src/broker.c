@@ -129,7 +129,18 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("NEW SENT TO GC");
 			for (int i = 0; i < list_size(new_queue); i++) {
 				t_subscribe_nodo* node = list_get(new_queue, i);
-				utils_serialize_and_send(node->f_desc, new_protocol, new_snd);
+				if (node->endtime != -1) {
+					if (time(NULL) >= node->endtime) {
+						socket_close_conection(node->f_desc);
+						list_remove(new_queue, i);
+					} else {
+						utils_serialize_and_send(node->f_desc, new_protocol,
+								new_snd);
+					}
+				} else {
+					utils_serialize_and_send(node->f_desc, new_protocol,
+							new_snd);
+				}
 			}
 
 			usleep(50000);
@@ -165,8 +176,18 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("APPEARED SENT TO TEAM");
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
-				utils_serialize_and_send(node->f_desc, appeared_protocol,
-						appeared_snd);
+				if (node->endtime != -1) {
+					if (time(NULL) >= node->endtime) {
+						socket_close_conection(node->f_desc);
+						list_remove(appeared_queue, i);
+					} else {
+						utils_serialize_and_send(node->f_desc,
+								appeared_protocol, appeared_snd);
+					}
+				} else {
+					utils_serialize_and_send(node->f_desc, appeared_protocol,
+							appeared_snd);
+				}
 			}
 			usleep(500000);
 			break;
@@ -192,7 +213,18 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("GET SENT TO GAMECARD");
 			for (int i = 0; i < list_size(get_queue); i++) {
 				t_subscribe_nodo* node = list_get(get_queue, i);
-				utils_serialize_and_send(node->f_desc, get_protocol, get_snd);
+				if (node->endtime != -1) {
+					if (time(NULL) >= node->endtime) {
+						socket_close_conection(node->f_desc);
+						list_remove(get_queue, i);
+					} else {
+						utils_serialize_and_send(node->f_desc, get_protocol,
+								get_snd);
+					}
+				} else {
+					utils_serialize_and_send(node->f_desc, get_protocol,
+							get_snd);
+				}
 			}
 
 			usleep(500000);
@@ -226,8 +258,18 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("CATCH SENT TO GC");
 			for (int i = 0; i < list_size(catch_queue); i++) {
 				t_subscribe_nodo* node = list_get(catch_queue, i);
-				utils_serialize_and_send(node->f_desc, catch_protocol,
-						catch_send);
+				if (node->endtime != -1) {
+					if (time(NULL) >= node->endtime) {
+						socket_close_conection(node->f_desc);
+						list_remove(catch_queue, i);
+					} else {
+						utils_serialize_and_send(node->f_desc, catch_protocol,
+								catch_send);
+					}
+				} else {
+					utils_serialize_and_send(node->f_desc, catch_protocol,
+							catch_send);
+				}
 			}
 
 			usleep(500000);
@@ -263,8 +305,18 @@ static void *handle_connection(void *arg) {
 			loc_snd->posiciones = loc_rcv->posiciones;
 			for (int i = 0; i < list_size(localized_queue); i++) {
 				t_subscribe_nodo* node = list_get(localized_queue, i);
-				utils_serialize_and_send(node->f_desc, localized_protocol,
-						loc_snd);
+				if (node->endtime != -1) {
+					if (time(NULL) >= node->endtime) {
+						socket_close_conection(node->f_desc);
+						list_remove(localized_queue, i);
+					} else {
+						utils_serialize_and_send(node->f_desc,
+								localized_protocol, loc_snd);
+					}
+				} else {
+					utils_serialize_and_send(node->f_desc, localized_protocol,
+							loc_snd);
+				}
 			}
 
 			usleep(50000);
@@ -308,8 +360,18 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("CAUGHT SENT TO TEAM");
 			for (int i = 0; i < list_size(caught_queue); i++) {
 				t_subscribe_nodo* node = list_get(caught_queue, i);
-				utils_serialize_and_send(node->f_desc, caught_protocol,
-						caught_snd);
+				if (node->endtime != -1) {
+					if (time(NULL) >= node->endtime) {
+						socket_close_conection(node->f_desc);
+						list_remove(caught_queue, i);
+					} else {
+						utils_serialize_and_send(node->f_desc, caught_protocol,
+								caught_snd);
+					}
+				} else {
+					utils_serialize_and_send(node->f_desc, caught_protocol,
+							caught_snd);
+				}
 			}
 
 			usleep(50000);
@@ -340,18 +402,29 @@ t_subscribe_nodo* check_already_subscribed(char *ip, uint32_t puerto,
 	return list_find(list, (void*) find_subscribed);
 }
 
-void add_to(t_list *list, char *ip, uint32_t puerto, uint32_t fd) {
+void add_to(t_list *list, t_subscribe* subscriber) {
 
-	t_subscribe_nodo* node = check_already_subscribed(ip, puerto, list);
+	t_subscribe_nodo* node = check_already_subscribed(subscriber->ip,
+			subscriber->puerto, list);
 	if (node == NULL) {
 		t_subscribe_nodo *nodo = malloc(sizeof(t_subscribe_nodo));
-		nodo->ip = string_duplicate(ip);
-		nodo->puerto = puerto;
-		nodo->f_desc = fd;
+		nodo->ip = string_duplicate(subscriber->ip);
+		nodo->puerto = subscriber->puerto;
+		// Sync uid_subscribe var
+		nodo->id = uid_subscribe;
+		uid_subscribe++;
+
+		if (subscriber->proceso == GAME_BOY) {
+			nodo->endtime = time(NULL) + subscriber->seconds;
+		} else {
+			nodo->endtime = -1;
+		}
+
+		nodo->f_desc = subscriber->f_desc;
 		list_add(list, nodo);
 	} else {
 		broker_logger_info("Ya esta Subscripto");
-		node->f_desc = fd;
+		node->f_desc = subscriber->f_desc;
 	}
 }
 
@@ -361,43 +434,37 @@ void search_queue(t_subscribe *subscriber) {
 	case NEW_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola NEW ",
 				subscriber->ip, subscriber->puerto);
-		add_to(new_queue, subscriber->ip, subscriber->puerto,
-				subscriber->f_desc);
+		add_to(new_queue, subscriber);
 		break;
 	}
 	case CATCH_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
 				subscriber->ip, subscriber->puerto);
-		add_to(catch_queue, subscriber->ip, subscriber->puerto,
-				subscriber->f_desc);
+		add_to(catch_queue, subscriber);
 		break;
 	}
 	case CAUGHT_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
 				subscriber->ip, subscriber->puerto);
-		add_to(caught_queue, subscriber->ip, subscriber->puerto,
-				subscriber->f_desc);
+		add_to(caught_queue, subscriber);
 		break;
 	}
 	case GET_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola GET ",
 				subscriber->ip, subscriber->puerto);
-		add_to(get_queue, subscriber->ip, subscriber->puerto,
-				subscriber->f_desc);
+		add_to(get_queue, subscriber);
 		break;
 	}
 	case LOCALIZED_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
 				subscriber->ip, subscriber->puerto);
-		add_to(localized_queue, subscriber->ip, subscriber->puerto,
-				subscriber->f_desc);
+		add_to(localized_queue, subscriber);
 		break;
 	}
 	case APPEARED_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
 				subscriber->ip, subscriber->puerto);
-		add_to(appeared_queue, subscriber->ip, subscriber->puerto,
-				subscriber->f_desc);
+		add_to(appeared_queue, subscriber);
 		break;
 	}
 

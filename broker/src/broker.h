@@ -12,6 +12,7 @@
 #include "../../shared-common/common/utils.h"
 
 int broker_socket;
+int uid_subscribe = 0;
 
 int broker_load();
 void broker_server_init();
@@ -19,7 +20,7 @@ static void *handle_connection(void *arg);
 void broker_exit();
 void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
-void add_to(t_list *list, char *ip, uint32_t puerto, uint32_t fd);
+void add_to(t_list *list, t_subscribe* sub);
 
 
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
@@ -27,6 +28,8 @@ t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localiz
 typedef struct {
 	char* ip;
 	uint32_t puerto;
+	uint32_t id;
+	int32_t endtime;
 	uint32_t f_desc;
 } t_subscribe_nodo;
 

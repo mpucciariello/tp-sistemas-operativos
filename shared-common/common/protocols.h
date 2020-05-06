@@ -20,8 +20,8 @@ typedef struct {
 } t_handle_connection;
 
 typedef struct {
-	int pos_x;
-	int pos_y;
+	uint32_t pos_x;
+	uint32_t pos_y;
 } t_position;
 
 typedef enum {
@@ -113,6 +113,7 @@ typedef struct {
 	t_proceso proceso;
 	t_cola cola;
 	uint32_t f_desc;
+	int32_t seconds;
 } t_subscribe;
 
 typedef struct {
@@ -122,5 +123,21 @@ typedef struct {
 	uint32_t cant_elem;
 	t_list* posiciones;
 } t_localized_pokemon;
+
+
+typedef struct {
+	uint32_t id;
+	uint32_t pos;
+	uint32_t len;
+	t_cola tipo_cola;
+	t_list suscriptores;
+	uint32_t cant_ack;
+	time_t timestamp;
+} t_nodo_msj;
+
+typedef struct {
+	uint32_t id_subscriber;
+	int ack_sent;
+} t_suscriptor_msj;
 
 #endif /* COMMON_PROTOCOLS_H_ */

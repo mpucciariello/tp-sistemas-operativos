@@ -7,6 +7,7 @@
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include "../logger/game_boy_logger.h"
+#include "../config/game_boy_config.h"
 #include "../../../shared-common/common/protocols.h"
 #include "../../../shared-common/common/utils.h"
 
@@ -33,10 +34,6 @@ typedef struct {
 	char *key;
 	void (*action)(char**, int);
 } t_command;
-
-int game_boy_broker_fd;
-int game_boy_team_fd;
-int game_boy_game_card_fd;
 
 int game_boy_console_read(t_dictionary*);
 t_dictionary* game_boy_get_command_actions();
