@@ -76,9 +76,8 @@ char* utils_array_to_string(char** array) {
 }
 
 void utils_delay(int seconds) {
-	int millis = 500000 * seconds;
-	clock_t start = clock();
-	while (clock() < start + millis)
+	time_t start = time(NULL);
+	while (time(NULL) < start + seconds)
 		;
 }
 
