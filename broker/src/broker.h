@@ -40,5 +40,8 @@ typedef struct {
 	uint32_t size_message;
 } t_message_to_void;
 
+
 t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
+
+void *get_from_memory(t_protocol protocol, int posicion, void *message);
 #endif /* BROKER_H_ */
