@@ -24,6 +24,10 @@ typedef struct {
 	uint32_t pos_y;
 } t_position;
 
+typedef struct {
+
+} t_empty;
+
 typedef enum {
 	HANDSHAKE,
 	ACK,
@@ -34,7 +38,8 @@ typedef enum {
 	GET_POKEMON,
 	ID_GENERATE,
 	LOCALIZED_POKEMON,
-	SUBSCRIBE
+	SUBSCRIBE,
+	NOOP
 } t_protocol;
 
 typedef enum {
@@ -123,7 +128,6 @@ typedef struct {
 	uint32_t cant_elem;
 	t_list* posiciones;
 } t_localized_pokemon;
-
 
 typedef struct {
 	uint32_t id;

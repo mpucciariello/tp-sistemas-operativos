@@ -26,7 +26,7 @@ char* utils_get_parameter_i(char** array, int i) {
 int utils_get_array_size(char** array) {
 //	return (sizeof(array)/sizeof(char*));
 	int i = 0;
-	while(array[i] != NULL) {
+	while (array[i] != NULL) {
 		i++;
 	}
 	return i;
@@ -163,6 +163,13 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		break;
 	}
 
+	case NOOP: {
+		t_package* package = utils_package_create(protocol);
+		utils_package_send_to(package, socket);
+		utils_package_destroy(package);
+		break;
+	}
+
 	case SUBSCRIBE: {
 		t_package* package = utils_package_create(protocol);
 		utils_package_add(package, ((t_subscribe*) package_send)->ip,
@@ -170,13 +177,13 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package, &((t_subscribe*) package_send)->puerto,
 				sizeof(uint32_t));
 		utils_package_add(package, &((t_subscribe*) package_send)->cola,
-						sizeof(uint32_t));
+				sizeof(uint32_t));
 		utils_package_add(package, &((t_subscribe*) package_send)->proceso,
-						sizeof(uint32_t));
+				sizeof(uint32_t));
 		utils_package_add(package, &((t_subscribe*) package_send)->f_desc,
-								sizeof(uint32_t));
+				sizeof(uint32_t));
 		utils_package_add(package, &((t_subscribe*) package_send)->seconds,
-										sizeof(int32_t));
+				sizeof(int32_t));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 
@@ -282,9 +289,11 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package,
 				&((t_localized_pokemon*) package_send)->cant_elem,
 				sizeof(uint32_t));
-		for(int i = 0; i < ((t_localized_pokemon*) package_send)->cant_elem; i++) {
+		for (int i = 0; i < ((t_localized_pokemon*) package_send)->cant_elem;
+				i++) {
 			t_position *pos = malloc(sizeof(t_position));
-			pos = list_get(((t_localized_pokemon*) package_send)->posiciones, i);
+			pos = list_get(((t_localized_pokemon*) package_send)->posiciones,
+					i);
 			utils_package_add(package, &pos->pos_x, sizeof(int));
 			utils_package_add(package, &pos->pos_y, sizeof(int));
 		}
@@ -370,6 +379,10 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		return get_req;
 	}
 
+	case NOOP: {
+		break;
+	}
+
 	case SUBSCRIBE: {
 		t_subscribe* subscribe_req = malloc(sizeof(t_subscribe));
 		t_list* list = utils_receive_package(socket);
@@ -402,10 +415,10 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		utils_get_from_list_to(&localized_req->tamanio_nombre, list, 2);
 		utils_get_from_list_to(&localized_req->cant_elem, list, 3);
 		localized_req->posiciones = list_create();
-		for(int i = 4; i < (localized_req->cant_elem*2) + 4; i+=2) {
+		for (int i = 4; i < (localized_req->cant_elem * 2) + 4; i += 2) {
 			t_position* pos = malloc(sizeof(t_position));
 			utils_get_from_list_to(&pos->pos_x, list, i);
-			utils_get_from_list_to(&pos->pos_y, list, i+1);
+			utils_get_from_list_to(&pos->pos_y, list, i + 1);
 			list_add(localized_req->posiciones, pos);
 		}
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);

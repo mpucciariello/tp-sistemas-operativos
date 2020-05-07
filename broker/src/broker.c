@@ -131,7 +131,9 @@ static void *handle_connection(void *arg) {
 				t_subscribe_nodo* node = list_get(new_queue, i);
 				if (node->endtime != -1) {
 					if (time(NULL) >= node->endtime) {
-						socket_close_conection(node->f_desc);
+						t_empty* noop = malloc(sizeof(t_empty));
+						t_protocol noop_protocol = NOOP;
+						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
 						list_remove(new_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc, new_protocol,
@@ -178,7 +180,9 @@ static void *handle_connection(void *arg) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
 				if (node->endtime != -1) {
 					if (time(NULL) >= node->endtime) {
-						socket_close_conection(node->f_desc);
+						t_empty* noop = malloc(sizeof(t_empty));
+						t_protocol noop_protocol = NOOP;
+						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
 						list_remove(appeared_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc,
@@ -215,7 +219,9 @@ static void *handle_connection(void *arg) {
 				t_subscribe_nodo* node = list_get(get_queue, i);
 				if (node->endtime != -1) {
 					if (time(NULL) >= node->endtime) {
-						socket_close_conection(node->f_desc);
+						t_empty* noop = malloc(sizeof(t_empty));
+						t_protocol noop_protocol = NOOP;
+						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
 						list_remove(get_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc, get_protocol,
@@ -260,7 +266,9 @@ static void *handle_connection(void *arg) {
 				t_subscribe_nodo* node = list_get(catch_queue, i);
 				if (node->endtime != -1) {
 					if (time(NULL) >= node->endtime) {
-						socket_close_conection(node->f_desc);
+						t_empty* noop = malloc(sizeof(t_empty));
+						t_protocol noop_protocol = NOOP;
+						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
 						list_remove(catch_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc, catch_protocol,
@@ -307,7 +315,9 @@ static void *handle_connection(void *arg) {
 				t_subscribe_nodo* node = list_get(localized_queue, i);
 				if (node->endtime != -1) {
 					if (time(NULL) >= node->endtime) {
-						socket_close_conection(node->f_desc);
+						t_empty* noop = malloc(sizeof(t_empty));
+						t_protocol noop_protocol = NOOP;
+						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
 						list_remove(localized_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc,
@@ -362,7 +372,9 @@ static void *handle_connection(void *arg) {
 				t_subscribe_nodo* node = list_get(caught_queue, i);
 				if (node->endtime != -1) {
 					if (time(NULL) >= node->endtime) {
-						socket_close_conection(node->f_desc);
+						t_empty* noop = malloc(sizeof(t_empty));
+						t_protocol noop_protocol = NOOP;
+						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
 						list_remove(caught_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc, caught_protocol,

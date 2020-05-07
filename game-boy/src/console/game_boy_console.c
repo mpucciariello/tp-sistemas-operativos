@@ -187,7 +187,7 @@ t_cola get_queue_by_name(char* cola) {
 }
 
 void suscriptor_command(char** arguments, int arguments_size) {
-	if (arguments_size != 3) {
+	if (arguments_size != 3 || get_queue_by_name(arguments[1]) == -1) {
 		game_boy_logger_error("Comando o parametros invalidos");
 		game_boy_logger_warn("SUSCRIPTOR [COLA_DE_MENSAJES] [TIEMPO]");
 		return;
@@ -202,7 +202,7 @@ void suscriptor_command(char** arguments, int arguments_size) {
 	sub_snd->cola = get_queue_by_name(arguments[1]);
 	sub_snd->seconds = atoi(arguments[2]);
 	utils_serialize_and_send(game_boy_broker_fd, subscribe_protocol, sub_snd);
-	game_boy_logger_info("Envio de SUBSCRIBE");
+	game_boy_logger_info("Suscripcion exitosa");
 
 	int protocol;
 	int received_bytes;
@@ -211,7 +211,8 @@ void suscriptor_command(char** arguments, int arguments_size) {
 		received_bytes = recv(game_boy_broker_fd, &protocol, sizeof(int), 0);
 
 		if (received_bytes <= 0) {
-			game_boy_logger_error("Error al recibir mensaje");
+			game_boy_logger_error("Connection lost");
+			return;
 		}
 
 		switch (protocol) {
@@ -275,6 +276,11 @@ void suscriptor_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("Resultado (0/1): %d", caught_rcv->result);
 			usleep(50000);
 			break;
+		}
+
+		case NOOP: {
+			game_boy_logger_info("CONNECTION TIMEOUT");
+			return;
 		}
 
 		case LOCALIZED_POKEMON: {
