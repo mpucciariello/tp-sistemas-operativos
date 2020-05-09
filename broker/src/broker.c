@@ -543,6 +543,7 @@ void broker_exit() {
 
 t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
+	int offset = 0;
 	t_message_to_void* message_to_void = malloc(sizeof(t_message_to_void));
 	message_to_void->size_message = 0;
 	switch (protocol) {
@@ -551,7 +552,6 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		t_new_pokemon *new_receive = (t_new_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				new_receive->tamanio_nombre + sizeof(uint32_t) * 4);
-		int offset = 0;
 		memcpy(message_to_void->message + offset, &new_receive->tamanio_nombre,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -579,7 +579,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		t_appeared_pokemon *appeared_rcv = (t_appeared_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				appeared_rcv->tamanio_nombre + sizeof(uint32_t) * 3);
-		int offset = 0;
+
 		memcpy(message_to_void->message + offset, &appeared_rcv->tamanio_nombre,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -602,7 +602,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		t_get_pokemon *get_rcv = (t_get_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				get_rcv->tamanio_nombre + sizeof(uint32_t));
-		int offset = 0;
+
 		memcpy(message_to_void->message + offset, &get_rcv->tamanio_nombre,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -619,7 +619,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		t_catch_pokemon *catch_rcv = (t_catch_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				catch_rcv->tamanio_nombre + sizeof(uint32_t) * 3);
-		int offset = 0;
+
 		memcpy(message_to_void->message + offset, &catch_rcv->tamanio_nombre,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -643,7 +643,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		message_to_void->message = malloc(
 				loc_rcv->tamanio_nombre + sizeof(uint32_t)
 				+sizeof(uint32_t)+ sizeof(uint32_t) * 2 * loc_rcv->cant_elem);
-		int offset = 0;
+
 		memcpy(message_to_void->message + offset, &loc_rcv->tamanio_nombre,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -684,12 +684,14 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
 void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
+	int offset = posicion;
+
 	switch (protocol) {
 	case NEW_POKEMON: {
 		broker_logger_info("GETTING \"NEW\" MESSAGE FROM  MEMORY..");
 		t_new_pokemon *new_receive = malloc(sizeof(t_new_pokemon));
 
-		int offset = 0;
+
 		memcpy(&new_receive->tamanio_nombre, message + offset,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -722,7 +724,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 		t_appeared_pokemon *appeared_rcv = malloc(sizeof(t_appeared_pokemon));
 
-		int offset = 0;
+
 		memcpy(&appeared_rcv->tamanio_nombre, message + offset,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -750,9 +752,9 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("GETING \"GET\" MESSAGE FROM  MEMORY..");
 		t_get_pokemon* get_rcv = malloc(sizeof(t_get_pokemon));
 
-		int offset = 0;
+
 		memcpy(&get_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
-		offset += get_rcv->tamanio_nombre;
+		offset += sizeof(uint32_t);
 		get_rcv->nombre_pokemon = malloc(get_rcv->tamanio_nombre);
 		memcpy(get_rcv->nombre_pokemon, message + offset,
 				get_rcv->tamanio_nombre);
@@ -769,7 +771,6 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 	case CATCH_POKEMON: {
 		broker_logger_info("GETTING \"CATCH\" MESSAGE FROM  MEMORY..");
 		t_catch_pokemon *catch_rcv = malloc(sizeof(t_catch_pokemon));
-		int offset = 0;
 		memcpy(&catch_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 		catch_rcv->nombre_pokemon = malloc(catch_rcv->tamanio_nombre);
@@ -787,7 +788,6 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("GETTING \"LOCALIZED\" MESSAGE FROM MEMORY..");
 		t_localized_pokemon *loc_rcv = malloc(sizeof(t_localized_pokemon));
 
-		int offset = 0;
 		memcpy(&loc_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 		loc_rcv->nombre_pokemon = malloc(loc_rcv->tamanio_nombre);
@@ -839,7 +839,7 @@ int save_on_memory(t_message_to_void *message_void){
 	pthread_mutex_lock(&mpointer);
 	int from = pointer;
 	pointer += message_void->size_message;
-	memcpy(memory,message_void->message,message_void->size_message);
+	memcpy(memory + from,message_void->message,message_void->size_message);
 	pthread_mutex_unlock(&mpointer);
 	return from;
 }
