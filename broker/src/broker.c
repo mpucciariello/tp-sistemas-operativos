@@ -706,12 +706,11 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
-		broker_logger_info("__________________________________________");
-		broker_logger_info("Pokemon: %s", &new_receive->nombre_pokemon);
-		broker_logger_info("Name length: %d", &new_receive->tamanio_nombre);
-		broker_logger_info("X Axis position: %d", &new_receive->pos_x);
-		broker_logger_info("Y Axis position: %d", &new_receive->pos_y);
-		broker_logger_info("Quantity: %d", &new_receive->cantidad);
+		broker_logger_info("Pokemon: %s", new_receive->nombre_pokemon);
+		broker_logger_info("Name length: %d", new_receive->tamanio_nombre);
+		broker_logger_info("X Axis position: %d", new_receive->pos_x);
+		broker_logger_info("Y Axis position: %d", new_receive->pos_y);
+		broker_logger_info("Quantity: %d", new_receive->cantidad);
 
 		return new_receive;
 
@@ -739,11 +738,10 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
-		broker_logger_info("__________________________________________");
-		broker_logger_info("Pokemon: %s", &appeared_rcv->nombre_pokemon);
-		broker_logger_info("Name length: %d", &appeared_rcv->tamanio_nombre);
-		broker_logger_info("X Axis position: %d", &appeared_rcv->pos_x);
-		broker_logger_info("Y Axis position: %d", &appeared_rcv->pos_y);
+		broker_logger_info("Pokemon: %s", appeared_rcv->nombre_pokemon);
+		broker_logger_info("Name length: %d", appeared_rcv->tamanio_nombre);
+		broker_logger_info("X Axis position: %d", appeared_rcv->pos_x);
+		broker_logger_info("Y Axis position: %d", appeared_rcv->pos_y);
 
 		return appeared_rcv;
 	}
@@ -761,9 +759,8 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
-		broker_logger_info("__________________________________________");
-		broker_logger_info("Pokemon: %s", &get_rcv->nombre_pokemon);
-		broker_logger_info("Name length: %d", &get_rcv->tamanio_nombre);
+		broker_logger_info("Pokemon: %s", get_rcv->nombre_pokemon);
+		broker_logger_info("Name length: %d", get_rcv->tamanio_nombre);
 
 		return get_rcv;
 	}
