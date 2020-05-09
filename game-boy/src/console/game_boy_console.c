@@ -15,8 +15,8 @@ void broker_new_pokemon_command(char** arguments, int arguments_size) {
 	}
 	game_boy_logger_info("BROKER NEW_POKEMON");
 	t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
-	new_snd->nombre_pokemon = string_duplicate(arguments[2]);
-	new_snd->tamanio_nombre = strlen(arguments[2]);
+	new_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
+	new_snd->tamanio_nombre = strlen(arguments[2]) +1;
 	new_snd->pos_x = atoi(arguments[3]);
 	new_snd->pos_y = atoi(arguments[4]);
 	new_snd->cantidad = atoi(arguments[5]);
@@ -34,7 +34,7 @@ void broker_appeared_pokemon_command(char** arguments, int arguments_size) {
 	}
 	game_boy_logger_info("BROKER APPEARED_POKEMON");
 	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
-	appeared_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	appeared_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	appeared_snd->tamanio_nombre = strlen(arguments[2]);
 	appeared_snd->pos_x = atoi(arguments[3]);
 	appeared_snd->pos_y = atoi(arguments[4]);
@@ -53,7 +53,7 @@ void broker_catch_pokemon_command(char** arguments, int arguments_size) {
 	}
 	game_boy_logger_info("BROKER CATCH_POKEMON");
 	t_catch_pokemon* catch_snd = malloc(sizeof(t_catch_pokemon));
-	catch_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	catch_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	catch_snd->tamanio_nombre = strlen(arguments[2]);
 	catch_snd->pos_x = atoi(arguments[3]);
 	catch_snd->pos_y = atoi(arguments[4]);
@@ -71,7 +71,7 @@ void broker_caught_pokemon_command(char** arguments, int arguments_size) {
 	game_boy_logger_info("BROKER CAUGHT_POKEMON");
 	t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
 	caught_snd->id_correlacional = atoi(arguments[2]);
-	char* ok_fail = string_duplicate(arguments[3]);
+	char* ok_fail = strcat(string_duplicate(arguments[2]), "\0");
 	int result = 0;
 	if (string_equals_ignore_case(ok_fail, "ok")) {
 		result = 1;
@@ -90,7 +90,7 @@ void broker_get_pokemon_command(char** arguments, int arguments_size) {
 	}
 	game_boy_logger_info("BROKER GET_POKEMON");
 	t_get_pokemon* get_snd = malloc(sizeof(t_get_pokemon));
-	get_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	get_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	get_snd->tamanio_nombre = strlen(arguments[2]);
 
 	utils_serialize_and_send(game_boy_broker_fd, GET_POKEMON, get_snd);
@@ -105,7 +105,7 @@ void team_appeared_pokemon_command(char** arguments, int arguments_size) {
 	}
 	game_boy_logger_info("TEAM APPEARED_POKEMON");
 	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
-	appeared_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	appeared_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	appeared_snd->tamanio_nombre = strlen(arguments[2]);
 	appeared_snd->pos_x = atoi(arguments[3]);
 	appeared_snd->pos_y = atoi(arguments[4]);
@@ -123,7 +123,7 @@ void game_card_new_pokemon_command(char** arguments, int arguments_size) {
 	}
 	game_boy_logger_info("GAMECARD NEW_POKEMON");
 	t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
-	new_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	new_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	new_snd->tamanio_nombre = strlen(arguments[2]);
 	new_snd->pos_x = atoi(arguments[3]);
 	new_snd->pos_y = atoi(arguments[4]);
@@ -143,7 +143,7 @@ void game_card_catch_pokemon_command(char** arguments, int arguments_size) {
 	}
 	game_boy_logger_info("GAMECARD CATCH_POKEMON");
 	t_catch_pokemon* catch_snd = malloc(sizeof(t_catch_pokemon));
-	catch_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	catch_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	catch_snd->tamanio_nombre = strlen(arguments[2]);
 	catch_snd->pos_x = atoi(arguments[3]);
 	catch_snd->pos_y = atoi(arguments[4]);
@@ -161,7 +161,7 @@ void game_card_get_pokemon_command(char** arguments, int arguments_size) {
 	}
 	game_boy_logger_info("GAMECARD GET_POKEMON");
 	t_get_pokemon* get_snd = malloc(sizeof(t_get_pokemon));
-	get_snd->nombre_pokemon = string_duplicate(arguments[2]);
+	get_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	get_snd->tamanio_nombre = strlen(arguments[2]);
 
 	utils_serialize_and_send(game_boy_game_card_fd, GET_POKEMON, get_snd);
