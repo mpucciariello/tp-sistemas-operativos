@@ -73,7 +73,7 @@ void broker_caught_pokemon_command(char** arguments, int arguments_size) {
 	caught_snd->id_correlacional = atoi(arguments[2]);
 	char* ok_fail = string_duplicate(arguments[3]);
 	int result = 0;
-	if (string_equals_ignore_case(ok_fail, "fail")) {
+	if (string_equals_ignore_case(ok_fail, "ok")) {
 		result = 1;
 	}
 	caught_snd->result = result;

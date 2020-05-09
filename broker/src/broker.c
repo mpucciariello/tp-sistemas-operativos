@@ -532,7 +532,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	message_to_void->size_message = 0;
 	switch (protocol) {
 	case NEW_POKEMON: {
-		broker_logger_info("NEW MESSAGE , CONVERT IT to VOID *");
+		broker_logger_info("NEW RECEIVED, CONVERTING to VOID*..");
 		t_new_pokemon *new_receive = (t_new_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				new_receive->tamanio_nombre + sizeof(uint32_t) * 4);
@@ -559,7 +559,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
 		// From GB or GC
 	case APPEARED_POKEMON: {
-		broker_logger_info("APPEARED MESSAGE , CONVERT IT TO VOID *");
+		broker_logger_info("APPEARED RECEIVED, CONVERTING TO VOID*..");
 
 		t_appeared_pokemon *appeared_rcv = (t_appeared_pokemon*) package_recv;
 		message_to_void->message = malloc(
@@ -583,7 +583,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	}
 		// From team
 	case GET_POKEMON: {
-		broker_logger_info("GET MESSAGE, CONVERT IT TO VOID *");
+		broker_logger_info("GET RECEIVED, CONVERTING TO VOID*..");
 		t_get_pokemon *get_rcv = (t_get_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				get_rcv->tamanio_nombre + sizeof(uint32_t));
@@ -600,7 +600,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
 		// From team
 	case CATCH_POKEMON: {
-		broker_logger_info("CATCH MESSAGE , CONVERT IT TO VOID *");
+		broker_logger_info("CATCH RECEIVED, CONVERTING TO VOID*..");
 		t_catch_pokemon *catch_rcv = (t_catch_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				catch_rcv->tamanio_nombre + sizeof(uint32_t) * 3);
@@ -623,7 +623,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	}
 		// From GC
 	case LOCALIZED_POKEMON: {
-		broker_logger_info("LOCALIZED MESSAGE , CONVERT IT TO VOID *");
+		broker_logger_info("LOCALIZED RECEIVED, CONVERTING TO VOID*..");
 		t_localized_pokemon *loc_rcv = (t_localized_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				loc_rcv->tamanio_nombre + sizeof(uint32_t)
@@ -653,7 +653,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	}
 
 	case CAUGHT_POKEMON: {
-		broker_logger_info("CAUGHT MESSAGE , CONVERT IT TO VOID *");
+		broker_logger_info("CAUGHT RECEIVED, CONVERTING TO VOID*..");
 		t_caught_pokemon *caught_rcv = (t_caught_pokemon*) package_recv;
 		message_to_void->message = malloc(sizeof(uint32_t));
 
@@ -671,7 +671,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 	switch (protocol) {
 	case NEW_POKEMON: {
-		broker_logger_info("NEW MESSAGE , GET IT FROM  MEMORY");
+		broker_logger_info("GETTING \"NEW\" MESSAGE FROM  MEMORY..");
 		t_new_pokemon *new_receive = malloc(sizeof(t_new_pokemon));
 
 		int offset = 0;
@@ -695,7 +695,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 		// From GB or GC
 	case APPEARED_POKEMON: {
-		broker_logger_info("APPEARED MESSAGE , GET IT FROM  MEMORY");
+		broker_logger_info("GETTING \"APPEARED\" MESSAGE FROM  MEMORY..");
 
 		t_appeared_pokemon *appeared_rcv = malloc(sizeof(t_appeared_pokemon));
 
@@ -717,7 +717,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 	}
 		// From team
 	case GET_POKEMON: {
-		broker_logger_info("GET MESSAGE, GET IT FROM  MEMORY");
+		broker_logger_info("GETING \"GET\" MESSAGE FROM  MEMORY..");
 		t_get_pokemon* get_rcv = malloc(sizeof(t_get_pokemon));
 
 		int offset = 0;
@@ -732,7 +732,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 		// From team
 	case CATCH_POKEMON: {
-		broker_logger_info("CATCH MESSAGE , GET IT FROM  MEMORY");
+		broker_logger_info("GETTING \"CATCH\" MESSAGE FROM  MEMORY..");
 		t_catch_pokemon *catch_rcv = malloc(sizeof(t_catch_pokemon));
 		int offset = 0;
 		memcpy(&catch_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
@@ -749,7 +749,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 	}
 		// From GC
 	case LOCALIZED_POKEMON: {
-		broker_logger_info("LOCALIZED MESSAGE , GET From MEMORY");
+		broker_logger_info("GETTING \"LOCALIZED\" MESSAGE FROM MEMORY..");
 		t_localized_pokemon *loc_rcv = malloc(sizeof(t_localized_pokemon));
 
 		int offset = 0;
@@ -776,7 +776,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 	}
 
 	case CAUGHT_POKEMON: {
-		broker_logger_info("CAUGHT MESSAGE , CONVERT IT TO VOID *");
+		broker_logger_info("GETTING \"CAUGHT\" MESSAGE FROM MEMORY..");
 		t_caught_pokemon *caught_rcv = malloc(sizeof(t_caught_pokemon));
 		memcpy(&caught_rcv->result, message, sizeof(uint32_t));
 		return caught_rcv;
