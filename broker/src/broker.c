@@ -692,7 +692,6 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		int offset = 0;
 		memcpy(&new_receive->tamanio_nombre, message + offset,
 				sizeof(uint32_t));
-
 		offset += sizeof(uint32_t);
 		new_receive->nombre_pokemon = malloc(new_receive->tamanio_nombre);
 		memcpy(new_receive->nombre_pokemon, message + offset,
@@ -704,6 +703,16 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		memcpy(&new_receive->pos_y, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 		memcpy(&new_receive->cantidad, message + offset, sizeof(uint32_t));
+
+		broker_logger_info("******************************************");
+		broker_logger_info("RECEIVED:");
+		broker_logger_info("__________________________________________");
+		broker_logger_info("Pokemon: %s", &new_receive->nombre_pokemon);
+		broker_logger_info("Name length: %d", &new_receive->tamanio_nombre);
+		broker_logger_info("X Axis position: %d", &new_receive->pos_x);
+		broker_logger_info("Y Axis position: %d", &new_receive->pos_y);
+		broker_logger_info("Quantity: %d", &new_receive->cantidad);
+
 		return new_receive;
 
 	}
@@ -728,6 +737,14 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		offset += sizeof(uint32_t);
 		memcpy(&appeared_rcv->pos_y, message + offset, sizeof(uint32_t));
 
+		broker_logger_info("******************************************");
+		broker_logger_info("RECEIVED:");
+		broker_logger_info("__________________________________________");
+		broker_logger_info("Pokemon: %s", &appeared_rcv->nombre_pokemon);
+		broker_logger_info("Name length: %d", &appeared_rcv->tamanio_nombre);
+		broker_logger_info("X Axis position: %d", &appeared_rcv->pos_x);
+		broker_logger_info("Y Axis position: %d", &appeared_rcv->pos_y);
+
 		return appeared_rcv;
 	}
 		// From team
@@ -741,6 +758,12 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		get_rcv->nombre_pokemon = malloc(get_rcv->tamanio_nombre);
 		memcpy(get_rcv->nombre_pokemon, message + offset,
 				get_rcv->tamanio_nombre);
+
+		broker_logger_info("******************************************");
+		broker_logger_info("RECEIVED:");
+		broker_logger_info("__________________________________________");
+		broker_logger_info("Pokemon: %s", &get_rcv->nombre_pokemon);
+		broker_logger_info("Name length: %d", &get_rcv->tamanio_nombre);
 
 		return get_rcv;
 	}
