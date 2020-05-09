@@ -20,12 +20,11 @@ typedef enum
 } e_paths_structure;
 
 typedef struct {
-	unsigned int tamanioBloque,
-	cantidadDeBloques;
+	unsigned int blockSize, blocks;
 	char* magicNumber;
 }Metadata_LFS;
 
-Metadata_LFS lfsmetadata;
+Metadata_LFS lfsMetaData;
 
 t_config* config_metadata;
 t_config* config_table_metadata;
@@ -35,6 +34,8 @@ char* struct_paths[3];
 int blocks_quantity;
 int blocks_size;
 
+void createBlocks();
+void readMetaData();
 void gcfs_create_structs();
 void gcfs_free_bitmap();
 

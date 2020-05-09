@@ -26,6 +26,7 @@ void game_card_init() {
 	game_card_logger_info("Inicando GAMECARD..");
 	gcfs_create_structs();
 
+	/*
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -65,8 +66,7 @@ void game_card_init() {
 			"Creando un hilo para poner al GAMECARD en modo Servidor");
 	game_card_init_as_server();
 	usleep(500000);
-	for (;;)
-		;
+	for (;;);*/
 }
 
 void game_card_retry_connect(void* arg) {

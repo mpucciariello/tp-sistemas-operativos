@@ -2,6 +2,10 @@
 
 t_list* files;
 
+static void mostrar_bitarray(){
+	for(int k =0;k<(bitarray_get_max_bit(bitmap));k++)printf("test bit posicion, es  %d en posicion %d \n", bitarray_test_bit(bitmap,k),k);
+}
+
 static int _mkpath(char* file_path, mode_t mode)
 {
 	assert(file_path && *file_path);
@@ -56,22 +60,9 @@ void gcfs_create_structs()
 
 	string_append(&bin_metadata, dir_metadata);
 	string_append(&bin_metadata, "/Metadata.bin");
-	if((f_metadata = fopen(bin_metadata, "r")) == NULL)
-	{
-		game_card_logger_warn("TALL_GRASS no encontrado, se creara uno nuevo");
-		f_metadata = fopen(bin_metadata, "wb+");
-		config_metadata = config_create(bin_metadata);
-		config_set_value(config_metadata, "BLOCK_SIZE", "64");
-		config_set_value(config_metadata, "BLOCKS", "5192");
-		config_set_value(config_metadata, "MAGIC_NUMBER", "TALL_GRASS");
-		config_save(config_metadata);
-	}
-	else
-	{
-		config_metadata = config_create(bin_metadata);
-	}
-	fclose(f_metadata);
-	game_card_logger_info("Creado el archivo Metadata.bin");
+	
+	readMetaData();
+	createBlocks();
 
 	string_append(&bin_bitmap, dir_metadata);
 	string_append(&bin_bitmap, "/Bitmap.bin");
@@ -104,23 +95,40 @@ void gcfs_create_structs()
 }
 
 
-void creacionDeBloques(char* dirPath){
+void createBlocks(){
 
-	game_card_logger_error("Creacion de bloques");
-
-	for (int numeroDeBloque = 0; numeroDeBloque < lfsmetadata.cantidadDeBloques; numeroDeBloque++) {
-		char *bloque=string_itoa(numeroDeBloque);
-		char *numberBloque = malloc (strlen(dirPath)+strlen(bloque)+strlen(".bin"));
-		strcpy(numberBloque, dirPath);
-		strcat(numberBloque, bloque);
-		strcat(numberBloque,".bin");
-		FILE* particion = fopen(numberBloque,"w");
-		fclose(particion);
-	}
-	free(dirPath);
+	game_card_logger_info("Creando bloques en el path /Bloques");
+	char* blocksPath = malloc(strlen(game_card_config->punto_montaje_tallgrass)+strlen("Bloques/"));
+	strcpy(blocksPath, game_card_config->punto_montaje_tallgrass);
+	strcat(blocksPath, "Bloques/");
+	FILE * newBloque;
+    
+	for(int i=0; i <= lfsMetaData.blocks-1; i++){
+        char* nroBloque = string_new();
+        string_append(&nroBloque, blocksPath);
+        string_append(&nroBloque, string_itoa(i));
+        string_append(&nroBloque, ".bin");
+        newBloque = fopen(nroBloque,"w+b");
+        fclose(newBloque);
+        free(nroBloque);
+    }
 }
 
 
+void readMetaData() {
+	game_card_logger_info("Leyendo el archivo Metadata.bin");
+	char *metadata_path = (char *) malloc(1 + strlen(game_card_config->punto_montaje_tallgrass) + strlen("/Metadata/Metadata.bin"));;
+	strcpy(metadata_path, game_card_config->punto_montaje_tallgrass);
+	string_append(&metadata_path,"/Metadata/Metadata.bin");
+	t_config* metadataFile = config_create(metadata_path);
+
+	lfsMetaData.blocks = config_get_int_value(metadataFile,"BLOCKS");
+    lfsMetaData.magicNumber = string_duplicate(config_get_string_value(metadataFile,"MAGIC_NUMBER"));
+	lfsMetaData.blockSize = config_get_int_value(metadataFile,"BLOCK_SIZE");
+	
+	free(metadata_path);
+	config_destroy(metadataFile);
+}
 
 void gcfs_free_bitmap()
 {
