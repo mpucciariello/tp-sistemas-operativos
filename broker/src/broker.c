@@ -116,8 +116,8 @@ static void *handle_connection(void *arg) {
 			usleep(100000);
 			t_message_to_void *message_void = convert_to_void(protocol, new_receive);
 			get_from_memory(protocol, 0, message_void->message);
-			free(message_void->message);
-			free(message_void);
+			//free(message_void->message);
+			//free(message_void);
 			// To GC
 			t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
 			new_snd->nombre_pokemon = string_duplicate(
@@ -147,8 +147,8 @@ static void *handle_connection(void *arg) {
 							new_snd);
 				}
 			}
-			free(new_snd->nombre_pokemon);
-			free(new_snd);
+			//free(new_snd->nombre_pokemon);
+			//free(new_snd);
 			usleep(50000);
 			break;
 		}
@@ -171,8 +171,8 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
 			get_from_memory(protocol, 0, message_void->message);
-			free(message_void->message);
-						free(message_void);
+			//free(message_void->message);
+			//			free(message_void);
 			// To Team
 			t_appeared_pokemon* appeared_snd = malloc(
 					sizeof(t_appeared_pokemon));
@@ -201,8 +201,8 @@ static void *handle_connection(void *arg) {
 							appeared_snd);
 				}
 			}
-			free(appeared_snd->nombre_pokemon);
-			free(appeared_snd);
+			//free(appeared_snd->nombre_pokemon);
+			//free(appeared_snd);
 			usleep(500000);
 			break;
 		}
@@ -219,8 +219,8 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, get_rcv);
 			get_from_memory(protocol, 0, message_void->message);
-			free(message_void->message);
-			free(message_void);
+			//free(message_void->message);
+			//free(message_void);
 			// To GC
 			t_get_pokemon* get_snd = malloc(sizeof(t_get_pokemon));
 			get_snd->id_correlacional = get_rcv->id_correlacional;
@@ -245,10 +245,10 @@ static void *handle_connection(void *arg) {
 							get_snd);
 				}
 			}
-			free(get_snd->nombre_pokemon);
-			free(get_snd);
-			free(get_rcv->nombre_pokemon);
-			free(get_rcv);
+			//free(get_snd->nombre_pokemon);
+			//free(get_snd);
+			//free(get_rcv->nombre_pokemon);
+			//free(get_rcv);
 
 			usleep(500000);
 			break;
@@ -269,8 +269,8 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, catch_rcv);
 			get_from_memory(protocol, 0, message_void->message);
-			free(message_void->message);
-			free(message_void);
+			//free(message_void->message);
+			//free(message_void);
 			// To GC
 			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 			catch_send->id_correlacional = catch_rcv->id_correlacional;
@@ -299,11 +299,11 @@ static void *handle_connection(void *arg) {
 							catch_send);
 				}
 			}
-			free(catch_rcv->nombre_pokemon);
-			free(catch_rcv);
+			//free(catch_rcv->nombre_pokemon);
+			//free(catch_rcv);
 
-			free(catch_send->nombre_pokemon);
-			free(catch_send);
+			//free(catch_send->nombre_pokemon);
+			//free(catch_send);
 			usleep(500000);
 			break;
 		}
@@ -355,12 +355,12 @@ static void *handle_connection(void *arg) {
 							loc_snd);
 				}
 			}
-			free(loc_rcv->nombre_pokemon);
-			list_destroy(loc_rcv->posiciones);
-			free(loc_rcv);
-			free(loc_snd->nombre_pokemon);
-			list_destroy(loc_snd->posiciones);
-			free(loc_snd);
+			//free(loc_rcv->nombre_pokemon);
+			//list_destroy(loc_rcv->posiciones);
+			//free(loc_rcv);
+			//free(loc_snd->nombre_pokemon);
+			//list_destroy(loc_snd->posiciones);
+			//free(loc_snd);
 			usleep(50000);
 			break;
 		}
@@ -376,8 +376,8 @@ static void *handle_connection(void *arg) {
 			sub_rcv->f_desc = client_fd;
 			// TODO: Check dictionary
 			search_queue(sub_rcv);
-			free(sub_rcv->ip);
-			free(sub_rcv);
+			//free(sub_rcv->ip);
+			//free(sub_rcv);
 			usleep(50000);
 			break;
 		}
@@ -627,7 +627,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		t_localized_pokemon *loc_rcv = (t_localized_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				loc_rcv->tamanio_nombre + sizeof(uint32_t)
-						+ sizeof(uint32_t) * 2 * loc_rcv->cant_elem);
+				+sizeof(uint32_t)+ sizeof(uint32_t) * 2 * loc_rcv->cant_elem);
 		int offset = 0;
 		memcpy(message_to_void->message + offset, &loc_rcv->tamanio_nombre,
 				sizeof(uint32_t));
@@ -648,7 +648,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
 		}
 		message_to_void->size_message = loc_rcv->tamanio_nombre
-				+ sizeof(uint32_t) + sizeof(uint32_t) * 2 * loc_rcv->cant_elem;
+				+ sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) * 2 * loc_rcv->cant_elem;
 		break;
 	}
 
@@ -758,8 +758,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		memcpy(loc_rcv->nombre_pokemon, message + offset,
 				loc_rcv->tamanio_nombre);
 
-//		t_list* list = list_create();
-		//loc_rcv->posiciones
+		loc_rcv->posiciones = list_create();
 		offset += loc_rcv->tamanio_nombre;
 		memcpy(&loc_rcv->cant_elem, message + offset, sizeof(uint32_t));
 
@@ -769,7 +768,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 			memcpy(&pos->pos_x, message + offset, sizeof(uint32_t));
 			offset += sizeof(uint32_t);
 			memcpy(&pos->pos_y, message + offset, sizeof(uint32_t));
-	//		list_add(list, pos);
+			list_add(loc_rcv->posiciones, pos);
 		}
 		return loc_rcv;
 	}
