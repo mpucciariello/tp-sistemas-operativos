@@ -34,8 +34,13 @@ char* struct_paths[3];
 int blocks_quantity;
 int blocks_size;
 
-void createBlocks();
-void readMetaData();
+
+void createBlocks(const char* blocksPath);
+void readMetaData(char* metadataPath);
+void createMetaDataFile(char* metadataBin);
+void mountPointSetup();
+void setupMetadata();
+
 void gcfs_create_structs();
 void gcfs_free_bitmap();
 
