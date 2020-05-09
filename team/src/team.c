@@ -264,6 +264,7 @@ void team_server_init() {
 		}
 	}
 }
+
 static void *handle_connection(void *arg) {
 	t_handle_connection* connect_handler = (t_handle_connection *) arg;
 	int client_fd = connect_handler->fd;
@@ -290,6 +291,7 @@ void send_ack(void* arg) {
 void team_exit() {
 	socket_close_conection(team_socket);
 //socket_close_conection(broker_fd);
+	team_planner_destroy()
 	team_config_free();
 	team_logger_destroy();
 }

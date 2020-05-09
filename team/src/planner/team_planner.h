@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <commons/collections/list.h>
+#include <commons/collections/dictionary.h>
 #include "../logger/team_logger.h"
 #include "../config/team_config.h"
 #include "../../../shared-common/common/utils.h"
@@ -27,6 +28,8 @@ typedef struct
 	t_list* targets;
 } t_entrenador_pokemon;
 
+t_dictionary* team_planner_global_targets;
 void team_planner_init();
+void team_planner_destroy();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

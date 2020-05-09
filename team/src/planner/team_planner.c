@@ -72,6 +72,20 @@ t_list* planner_extract_pokemons(char* pokes_spl, char* split_char) {
 	return pokemons;
 }
 
+void planner_init_global_targets(t_list* objetivos) {
+	for(int i = 0; i < list_size(objetivos); i++) {
+		t_pokemon* pokemon = list_get(objetivos, i);
+		char* pokemon_name =string_duplicate(pokemon->name);
+		int cantidad_pokemon = dictionary_get(dictionary, pokemon_name);
+		if(cantidad_pokemon == 0) {
+			dictionary_put(team_planner_global_targets, pokemon_name, 1);
+			break;
+		}
+		cantidad_pokemon++;
+		dictionary_put(team_planner_global_targets, pokemon_name, cantidad_pokemon);
+	}
+}
+
 void planner_load_entrenadores() {
 	int i = 0;
 	char* split_char = "|";
@@ -84,6 +98,7 @@ void planner_load_entrenadores() {
 		t_entrenador_pokemon* entrenador = planner_entrenador_create(i, posicion, pokemons, objetivos);
 		list_add(new_queque, entrenador);
 
+		planner_init_global_targets(objetivos);
 		team_logger_info("Se creo el entrenador: %s", planner_entrenador_string(entrenador));
 		i++;
 	}
@@ -152,6 +167,10 @@ void planner_destroy_entrenador(t_entrenador_pokemon* entrenador)
 	free(entrenador);
 }
 
+void planner_destroy_global_targets(t_dictionary* global_targets) {
+	dictionary_destroy_and_destroy_elements(global_targets, planner_destroy_pokemons);
+}
+
 void planner_destroy_quees()
 {
 	planner_destroy_entrenador(exec_entrenador);
@@ -159,4 +178,9 @@ void planner_destroy_quees()
 	list_destroy_and_destroy_elements(ready_queque, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(block_queque, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(exit_queque, (void*)planner_destroy_entrenador);
+}
+
+void team_planner_destroy() {
+	planner_destroy_quees();
+	planner_destroy_global_targets(team_planner_global_targets);
 }
