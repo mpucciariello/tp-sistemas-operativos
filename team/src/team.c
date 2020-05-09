@@ -35,27 +35,21 @@ void team_init() {
 	pthread_t tid3;
 	pthread_t tid4;
 
-	team_logger_info(
-			"Creando un hilo para subscribirse a la cola APPEARED del broker %d");
+	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
 	t_cola cola_appeared = APPEARED_QUEUE;
-	pthread_create(&tid, NULL, (void*) team_retry_connect,
-			(void*) &cola_appeared);
+	pthread_create(&tid, NULL, (void*) team_retry_connect, (void*) &cola_appeared);
 	pthread_detach(tid);
 
-	team_logger_info(
-			"Creando un hilo para subscribirse a la cola LOCALIZED del broker %d");
+	team_logger_info("Creando un hilo para subscribirse a la cola LOCALIZED del broker %d");
 
 	t_cola cola_localized = LOCALIZED_QUEUE;
-	pthread_create(&tid2, NULL, (void*) team_retry_connect,
-			(void*) &cola_localized);
+	pthread_create(&tid2, NULL, (void*) team_retry_connect, (void*) &cola_localized);
 	pthread_detach(tid2);
 
-	team_logger_info(
-			"Creando un hilo para subscribirse a la cola CAUGHT del broker %d");
+	team_logger_info("Creando un hilo para subscribirse a la cola CAUGHT del broker %d");
 
 	t_cola cola_caught = CAUGHT_QUEUE;
-	pthread_create(&tid3, NULL, (void*) team_retry_connect,
-			(void*) &cola_caught);
+	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
 	pthread_detach(tid3);
 
 	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
@@ -70,8 +64,7 @@ void team_init() {
 }
 
 void send_message_test() {
-	int broker_fd_send = socket_connect_to_server(team_config->ip_broker,
-			team_config->puerto_broker);
+	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 
 	if (broker_fd_send < 0) {
 		team_logger_warn("No se pudo conectar con BROKER");
@@ -79,10 +72,8 @@ void send_message_test() {
 	} else {
 		team_logger_info("Conexion con BROKER establecida correctamente!");
 
-		t_protocol ack_protocol;
 		t_protocol get_protocol;
 		t_protocol catch_protocol;
-		t_protocol subscribe_protocol;
 
 		// To broker
 		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
@@ -141,8 +132,7 @@ void subscribe_to(void *arg) {
 	}
 	}
 
-	int new_broker_fd = socket_connect_to_server(team_config->ip_broker,
-			team_config->puerto_broker);
+	int new_broker_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 
 	if (new_broker_fd < 0) {
 		team_logger_warn("No se pudo conectar con BROKER");
@@ -176,7 +166,7 @@ void *receive_msg(int fd, int send_to) {
 	int protocol;
 	int is_server = send_to;
 
-	while (1) {
+	while (true) {
 
 		int received_bytes = recv(fd, &protocol, sizeof(int), 0);
 
@@ -188,10 +178,8 @@ void *receive_msg(int fd, int send_to) {
 		switch (protocol) {
 		case CAUGHT_POKEMON: {
 			team_logger_info("Caught received");
-			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd,
-					protocol);
-			team_logger_info("ID correlacional: %d",
-					caught_rcv->id_correlacional);
+			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
+			team_logger_info("ID correlacional: %d", caught_rcv->id_correlacional);
 			team_logger_info("ID mensaje: %d", caught_rcv->id_msg);
 			team_logger_info("Resultado (0/1): %d", caught_rcv->result);
 			usleep(50000);
@@ -200,19 +188,15 @@ void *receive_msg(int fd, int send_to) {
 
 		case LOCALIZED_POKEMON: {
 			team_logger_info("Localized received");
-			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd,
-					protocol);
-			team_logger_info("ID correlacional: %d",
-
-			loc_rcv->id_correlacional);
+			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd, protocol);
+			team_logger_info("ID correlacional: %d", loc_rcv->id_correlacional);
 			team_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
 			team_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
 			team_logger_info("Cant Elementos en lista: %d", loc_rcv->cant_elem);
 			for (int el = 0; el < loc_rcv->cant_elem; el++) {
 				t_position* pos = malloc(sizeof(t_position));
 				pos = list_get(loc_rcv->posiciones, el);
-				team_logger_info("Position is (%d, %d)", pos->pos_x,
-						pos->pos_y);
+				team_logger_info("Position is (%d, %d)", pos->pos_x, pos->pos_y);
 			}
 			usleep(500000);
 			break;
@@ -220,13 +204,10 @@ void *receive_msg(int fd, int send_to) {
 
 		case APPEARED_POKEMON: {
 			team_logger_info("Appeared received");
-			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd,
-					protocol);
-			team_logger_info("ID correlacional: %d",
-					appeared_rcv->id_correlacional);
+			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd, protocol);
+			team_logger_info("ID correlacional: %d", appeared_rcv->id_correlacional);
 			team_logger_info("Cantidad: %d", appeared_rcv->cantidad);
-			team_logger_info("Nombre Pokemon: %s",
-					appeared_rcv->nombre_pokemon);
+			team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);
 			team_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
 			team_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			team_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
@@ -234,8 +215,7 @@ void *receive_msg(int fd, int send_to) {
 
 			if (is_server == 0) {
 				pthread_t tid;
-				pthread_create(&tid, NULL, (void*) send_ack,
-						(void*) &appeared_rcv->id_correlacional);
+				pthread_create(&tid, NULL, (void*) send_ack, (void*) &appeared_rcv->id_correlacional);
 				pthread_detach(tid);
 			}
 
@@ -251,8 +231,7 @@ void *receive_msg(int fd, int send_to) {
 
 void team_server_init() {
 
-	team_socket = socket_create_listener(team_config->ip_team,
-			team_config->puerto_team);
+	team_socket = socket_create_listener(team_config->ip_team, team_config->puerto_team);
 	if (team_socket < 0) {
 		team_logger_error("Error al crear server");
 		return;
@@ -271,20 +250,15 @@ void team_server_init() {
 		int accepted_fd;
 		pthread_t tid;
 
-		if ((accepted_fd = accept(team_socket, (struct sockaddr *) &client_info,
-				&addrlen)) != -1) {
+		if ((accepted_fd = accept(team_socket, (struct sockaddr *) &client_info, &addrlen)) != -1) {
 
-			t_handle_connection* connection_handler = malloc(
-					sizeof(t_handle_connection));
+			t_handle_connection* connection_handler = malloc( sizeof(t_handle_connection));
 			connection_handler->fd = accepted_fd;
 			connection_handler->bool_val = 1;
 
-			pthread_create(&tid, NULL, (void*) handle_connection,
-					(void*) connection_handler);
+			pthread_create(&tid, NULL, (void*) handle_connection, (void*) connection_handler);
 			pthread_detach(tid);
-			team_logger_info(
-					"Creando un hilo para atender una conexión en el socket %d",
-					accepted_fd);
+			team_logger_info("Creando un hilo para atender una conexión en el socket %d", accepted_fd);
 		} else {
 			team_logger_error("Error al conectar con un cliente");
 		}
@@ -294,6 +268,7 @@ static void *handle_connection(void *arg) {
 	t_handle_connection* connect_handler = (t_handle_connection *) arg;
 	int client_fd = connect_handler->fd;
 	receive_msg(client_fd, connect_handler->bool_val);
+	return NULL;
 }
 
 void send_ack(void* arg) {
@@ -303,8 +278,7 @@ void send_ack(void* arg) {
 	ack_snd->id = val;
 	ack_snd->id_correlacional = val;
 
-	int client_fd = socket_connect_to_server(team_config->ip_broker,
-			team_config->puerto_broker);
+	int client_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 	if (client_fd > 0) {
 		utils_serialize_and_send(client_fd, ack_protocol, ack_snd);
 		team_logger_info("ACK SENT TO BROKER");
@@ -314,8 +288,8 @@ void send_ack(void* arg) {
 }
 
 void team_exit() {
-socket_close_conection(team_socket);
+	socket_close_conection(team_socket);
 //socket_close_conection(broker_fd);
-team_config_free();
-team_logger_destroy();
+	team_config_free();
+	team_logger_destroy();
 }
