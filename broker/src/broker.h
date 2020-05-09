@@ -22,6 +22,11 @@ void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
 void add_to(t_list *list, t_subscribe* sub);
 
+pthread_mutex_t mpointer;
+
+char *memory;
+
+int pointer;
 
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
 
@@ -44,4 +49,5 @@ typedef struct {
 t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
 
 void *get_from_memory(t_protocol protocol, int posicion, void *message);
+int save_on_memory(t_message_to_void *message_void);
 #endif /* BROKER_H_ */

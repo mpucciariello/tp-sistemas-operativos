@@ -4,6 +4,8 @@ int main(int argc, char *argv[]) {
 	initialize_queue();
 	if (broker_load() < 0)
 		return EXIT_FAILURE;
+	memory = malloc(broker_config->tamano_memoria);
+	pointer = 0;
 	broker_server_init();
 	broker_exit();
 
@@ -21,6 +23,12 @@ int broker_load() {
 		return response;
 	}
 	broker_print_config();
+    //create mutex for pointer
+	if (pthread_mutex_init(&mpointer, NULL) != 0)
+    {
+        printf("\n mutex init failed\n");
+        return 1;
+    }
 
 	return 0;
 }
@@ -115,7 +123,8 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Posicion Y: %d", new_receive->pos_y);
 			usleep(100000);
 			t_message_to_void *message_void = convert_to_void(protocol, new_receive);
-			get_from_memory(protocol, 0, message_void->message);
+			int from = save_on_memory(message_void);
+			get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
@@ -170,7 +179,8 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
-			get_from_memory(protocol, 0, message_void->message);
+			int from = save_on_memory(message_void);
+			get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//			free(message_void);
 			// To Team
@@ -218,7 +228,8 @@ static void *handle_connection(void *arg) {
 
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, get_rcv);
-			get_from_memory(protocol, 0, message_void->message);
+			int from = save_on_memory(message_void);
+			get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
@@ -268,7 +279,9 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, catch_rcv);
-			get_from_memory(protocol, 0, message_void->message);
+			int from = save_on_memory(message_void);
+			get_from_memory(protocol, from, memory);
+
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
@@ -326,7 +339,8 @@ static void *handle_connection(void *arg) {
 						pos->pos_y);
 			}
 			t_message_to_void *message_void = convert_to_void(protocol, loc_rcv);
-			get_from_memory(protocol, 0, message_void->message);
+			int from = save_on_memory(message_void);
+			get_from_memory(protocol, from, memory);
 			free(message_void->message);
 					free(message_void);
 			// To team
@@ -393,7 +407,8 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Resultado (0/1): %d", caught_rcv->result);
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, caught_rcv);
-			get_from_memory(protocol, 0, message_void->message);
+			int from = save_on_memory(message_void);
+			get_from_memory(protocol, from, memory);
 			free(message_void->message);
 			free(message_void);
 			// To Team
@@ -784,6 +799,16 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 	}
 	return NULL;
 
+}
+
+
+int save_on_memory(t_message_to_void *message_void){
+	pthread_mutex_lock(&mpointer);
+	int from = pointer;
+	pointer += message_void->size_message;
+	memcpy(memory,message_void->message,message_void->size_message);
+	pthread_mutex_unlock(&mpointer);
+	return from;
 }
 
 
