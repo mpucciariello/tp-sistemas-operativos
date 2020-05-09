@@ -755,6 +755,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		int offset = 0;
 		memcpy(&loc_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
+		loc_rcv->nombre_pokemon = malloc(loc_rcv->tamanio_nombre);
 		memcpy(loc_rcv->nombre_pokemon, message + offset,
 				loc_rcv->tamanio_nombre);
 
@@ -769,6 +770,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 			offset += sizeof(uint32_t);
 			memcpy(&pos->pos_y, message + offset, sizeof(uint32_t));
 			list_add(loc_rcv->posiciones, pos);
+
 		}
 		return loc_rcv;
 	}
