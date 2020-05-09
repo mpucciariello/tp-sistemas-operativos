@@ -124,19 +124,11 @@ static void *handle_connection(void *arg) {
 			usleep(100000);
 			t_message_to_void *message_void = convert_to_void(protocol, new_receive);
 			int from = save_on_memory(message_void);
-			get_from_memory(protocol, from, memory);
+			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
-			t_new_pokemon* new_snd = malloc(sizeof(t_new_pokemon));
-			new_snd->nombre_pokemon = string_duplicate(
-					new_receive->nombre_pokemon);
 			new_snd->id = 28;
-			new_snd->id_correlacional = new_receive->id_correlacional;
-			new_snd->cantidad = new_receive->cantidad;
-			new_snd->tamanio_nombre = strlen(new_snd->nombre_pokemon) + 1;
-			new_snd->pos_x = new_receive->pos_x;
-			new_snd->pos_y = new_receive->pos_y;
 			new_protocol = NEW_POKEMON;
 			broker_logger_info("NEW SENT TO GC");
 			for (int i = 0; i < list_size(new_queue); i++) {
@@ -180,19 +172,11 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
 			int from = save_on_memory(message_void);
-			get_from_memory(protocol, from, memory);
+			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//			free(message_void);
 			// To Team
-			t_appeared_pokemon* appeared_snd = malloc(
-					sizeof(t_appeared_pokemon));
 			appeared_protocol = APPEARED_POKEMON;
-			appeared_snd->nombre_pokemon = appeared_rcv->nombre_pokemon;
-			appeared_snd->tamanio_nombre = appeared_rcv->tamanio_nombre;
-			appeared_snd->id_correlacional = appeared_rcv->id_correlacional;
-			appeared_snd->pos_x = appeared_rcv->pos_x;
-			appeared_snd->pos_y = appeared_rcv->pos_y;
-			appeared_snd->cantidad = appeared_rcv->cantidad;
 			broker_logger_info("APPEARED SENT TO TEAM");
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
@@ -229,14 +213,10 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, get_rcv);
 			int from = save_on_memory(message_void);
-			get_from_memory(protocol, from, memory);
+			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
-			t_get_pokemon* get_snd = malloc(sizeof(t_get_pokemon));
-			get_snd->id_correlacional = get_rcv->id_correlacional;
-			get_snd->nombre_pokemon = get_rcv->nombre_pokemon;
-			get_snd->tamanio_nombre = strlen(get_snd->nombre_pokemon) + 1;
 			get_protocol = GET_POKEMON;
 			broker_logger_info("GET SENT TO GAMECARD");
 			for (int i = 0; i < list_size(get_queue); i++) {
@@ -280,17 +260,11 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, catch_rcv);
 			int from = save_on_memory(message_void);
-			get_from_memory(protocol, from, memory);
+			t_catch_pokemon* catch_send = get_from_memory(protocol, from, memory);
 
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
-			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
-			catch_send->id_correlacional = catch_rcv->id_correlacional;
-			catch_send->nombre_pokemon = string_duplicate(catch_rcv->nombre_pokemon);
-			catch_send->pos_x = catch_rcv->pos_x;
-			catch_send->pos_y = catch_rcv->pos_y;
-			catch_send->tamanio_nombre = strlen(catch_rcv->nombre_pokemon) + 1;
 			catch_send->id_gen = uuid;
 			uuid++;
 			catch_protocol = CATCH_POKEMON;
@@ -340,15 +314,10 @@ static void *handle_connection(void *arg) {
 			}
 			t_message_to_void *message_void = convert_to_void(protocol, loc_rcv);
 			int from = save_on_memory(message_void);
-			get_from_memory(protocol, from, memory);
+			t_localized_pokemon* loc_snd = get_from_memory(protocol, from, memory);
 			free(message_void->message);
 					free(message_void);
 			// To team
-			t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
-			loc_snd->id_correlacional = loc_rcv->id_correlacional;
-			loc_snd->nombre_pokemon = loc_rcv->nombre_pokemon;
-			loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
-			loc_snd->cant_elem = list_size(loc_rcv->posiciones);
 			localized_protocol = LOCALIZED_POKEMON;
 			broker_logger_info("LOCALIZED SENT TO TEAM");
 			loc_snd->posiciones = loc_rcv->posiciones;
@@ -408,14 +377,10 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, caught_rcv);
 			int from = save_on_memory(message_void);
-			get_from_memory(protocol, from, memory);
+			t_caught_pokemon* caught_snd = get_from_memory(protocol, from, memory);
 			free(message_void->message);
 			free(message_void);
 			// To Team
-			t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
-			caught_snd->id_correlacional = caught_rcv->id_correlacional;
-			caught_snd->id_msg = caught_rcv->id_msg;
-			caught_snd->result = caught_rcv->result;
 			caught_protocol = CAUGHT_POKEMON;
 			broker_logger_info("CAUGHT SENT TO TEAM");
 			for (int i = 0; i < list_size(caught_queue); i++) {
