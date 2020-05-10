@@ -6,6 +6,8 @@ t_list* ready_queque;
 t_list* block_queque;
 t_list* exit_queque;
 
+t_list* keys_list;
+
 t_entrenador_pokemon* planner_entrenador_create(int id_entrenador, t_position* posicion, t_list* pokemons, t_list* targets)
 {
 	t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
@@ -75,20 +77,40 @@ t_list* planner_extract_pokemons(char* pokes_spl, char* split_char) {
 void planner_init_global_targets(t_list* objetivos) {
 	for(int i = 0; i < list_size(objetivos); i++) {
 		t_pokemon* pokemon = list_get(objetivos, i);
-		char* pokemon_name =string_duplicate(pokemon->name);
-		int cantidad_pokemon = dictionary_get(dictionary, pokemon_name);
+		char* pokemon_name = string_duplicate(pokemon->name);
+		int cantidad_pokemon = (int) dictionary_get(team_planner_global_targets, pokemon_name);
 		if(cantidad_pokemon == 0) {
-			dictionary_put(team_planner_global_targets, pokemon_name, 1);
-			break;
+			dictionary_put(team_planner_global_targets, pokemon_name, (int) 1);
+			list_add(keys_list, pokemon_name);
+		} else {
+			cantidad_pokemon++;
+			dictionary_put(team_planner_global_targets, pokemon_name, (int) cantidad_pokemon);
 		}
-		cantidad_pokemon++;
-		dictionary_put(team_planner_global_targets, pokemon_name, cantidad_pokemon);
 	}
+}
+
+char* planner_print_global_targets() {
+	char* global_targets_string = string_new();
+	string_append(&global_targets_string, "Pokemon		|Cantidad		\n");
+	for(int i = 0; i < list_size(keys_list); i++) {
+		char* nombre_pokemon = list_get(keys_list, i);
+		int cantidad_pokemon = (int) dictionary_get(team_planner_global_targets, nombre_pokemon);
+		char* target_string = string_new();
+		string_append(&target_string, nombre_pokemon);
+		string_append(&target_string, "		|");
+		string_append(&target_string, string_itoa(cantidad_pokemon));
+		string_append(&target_string, "		\n");
+
+		string_append(&global_targets_string, target_string);
+	}
+	return global_targets_string;
 }
 
 void planner_load_entrenadores() {
 	int i = 0;
 	char* split_char = "|";
+	keys_list = list_create();
+	team_planner_global_targets = dictionary_create();
 	while(team_config->posiciones_entrenadores[i] != NULL && team_config->pokemon_entrenadores[i] != NULL &&
 					team_config->objetivos_entrenadores[i] != NULL) {
 		t_position* posicion = planner_extract_position(team_config->posiciones_entrenadores[i], split_char);
@@ -103,6 +125,7 @@ void planner_load_entrenadores() {
 		i++;
 	}
 	team_logger_info("Hay %d entrenadores en la cola de NEW", list_size(new_queque));
+	team_logger_info("Hay %d objetivos globlales: \n%s", dictionary_size(team_planner_global_targets), planner_print_global_targets());
 }
 
 void planner_init_quees()
@@ -178,6 +201,7 @@ void planner_destroy_quees()
 	list_destroy_and_destroy_elements(ready_queque, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(block_queque, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(exit_queque, (void*)planner_destroy_entrenador);
+	list_destroy(keys_list);
 }
 
 void team_planner_destroy() {

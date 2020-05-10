@@ -291,7 +291,7 @@ void send_ack(void* arg) {
 void team_exit() {
 	socket_close_conection(team_socket);
 //socket_close_conection(broker_fd);
-	team_planner_destroy()
+	team_planner_destroy();
 	team_config_free();
 	team_logger_destroy();
 }
