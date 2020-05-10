@@ -35,9 +35,12 @@ int blocks_quantity;
 int blocks_size;
 
 
-void createBlocks(const char* blocksPath);
-void readMetaData(char* metadataPath);
+void createBlocks();
 void createMetaDataFile(char* metadataBin);
+void createBitmap(char* bitmapBin);
+
+void readBitmap();
+void readMetaData(char* metadataPath);
 void mountPointSetup();
 void setupMetadata();
 
