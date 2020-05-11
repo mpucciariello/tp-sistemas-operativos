@@ -13,10 +13,11 @@
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
 #include "../shared-common/common/utils.h"
+#include "./bitmap.h"
 
 typedef enum
 {
-	METADATA, FILES, BLOCKS
+	METADATA, FILES, BLOCKS, POKEMON
 } e_paths_structure;
 
 typedef struct {
@@ -30,7 +31,7 @@ t_config* config_metadata;
 t_config* config_table_metadata;
 t_bitarray* bitmap;
 FILE* bitmap_file;
-char* struct_paths[3];
+char* struct_paths[4];
 int blocks_quantity;
 int blocks_size;
 
@@ -38,13 +39,17 @@ int blocks_size;
 void createBlocks();
 void createMetaDataFile(char* metadataBin);
 void createBitmap(char* bitmapBin);
+void createRootFiles();
 
-void readBitmap();
+void readBitmap(char* bitmapBin);
 void readMetaData(char* metadataPath);
-void mountPointSetup();
+
+void setupFilesDirectory();
 void setupMetadata();
 
-void gcfs_create_structs();
-void gcfs_free_bitmap();
+int searchNode(const char* path);
+
+void gcfsCreateStructs();
+void gcfsFreeBitmaps();
 
 #endif /* FILE_SYSTEM_GAME_CARD_FILE_SYSTEM_H_ */

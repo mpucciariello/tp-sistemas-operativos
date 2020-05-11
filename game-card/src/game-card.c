@@ -24,7 +24,7 @@ int game_card_load() {
 
 void game_card_init() {
 	game_card_logger_info("Inicando GAMECARD..");
-	gcfs_create_structs();
+	gcfsCreateStructs();
 
 	/*
 	pthread_attr_t attrs;
@@ -366,7 +366,7 @@ void process_catch_and_send_caught(void* arg) {
 
 void game_card_exit() {
 	socket_close_conection(game_card_fd);
-	gcfs_free_bitmap();
+	gcfsFreeBitmaps();
 	game_card_config_free();
 	game_card_logger_destroy();
 }

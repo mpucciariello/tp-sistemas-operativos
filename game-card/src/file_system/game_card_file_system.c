@@ -1,11 +1,5 @@
 #include "game_card_file_system.h"
 
-t_list* files;
-
-static void mostrar_bitarray(){
-	for(int k =0;k<(bitarray_get_max_bit(bitmap));k++)printf("test bit posicion, es  %d en posicion %d \n", bitarray_test_bit(bitmap,k),k);
-}
-
 static int _mkpath(char* file_path, mode_t mode)
 {
 	assert(file_path && *file_path);
@@ -26,13 +20,15 @@ static int _mkpath(char* file_path, mode_t mode)
 	return 0;
 }
 
-void gcfs_create_structs()
-{
-	mountPointSetup();
+void gcfsCreateStructs(){
+	createRootFiles();
+	setupMetadata();
+	setupFilesDirectory();
+	searchNode("Pokemon/Electrico/Poderosos/");
 	game_card_logger_info("Termino todo OK");
 }
 
-void mountPointSetup() {
+void createRootFiles() {
 	char* dir_metadata = string_new();
 	string_append(&dir_metadata, game_card_config->punto_montaje_tallgrass);
 	string_append(&dir_metadata, "Metadata/");
@@ -44,7 +40,7 @@ void mountPointSetup() {
 	char* dir_bloques = string_new();
 	string_append(&dir_bloques, game_card_config->punto_montaje_tallgrass);
 	string_append(&dir_bloques, "Bloques/");
-	
+
 	if(_mkpath(game_card_config->punto_montaje_tallgrass, 0755) == -1) {
 		game_card_logger_error("_mkpath");
 	} else {
@@ -53,6 +49,7 @@ void mountPointSetup() {
 		game_card_logger_info("Creada carpeta Metadata/");
 		mkdir(archivos, 0777);
 		game_card_logger_info("Creada carpeta Files/");
+		game_card_logger_info("Creada carpeta Files/ %s", dir_bloques);
 		mkdir(dir_bloques, 0777);
 		game_card_logger_info("Creada carpeta Bloques/");
 	}
@@ -60,8 +57,6 @@ void mountPointSetup() {
 	struct_paths[METADATA] = dir_metadata;
 	struct_paths[FILES] = archivos;
 	struct_paths[BLOCKS] = dir_bloques;
-	
-	setupMetadata();
 }
 
 void setupMetadata() {
@@ -95,6 +90,26 @@ void setupMetadata() {
 }
 
 
+void setupFilesDirectory() {
+	char* pokemonBasePath = string_new();
+	char* pokemonBaseBin = string_new();
+	string_append(&pokemonBasePath, struct_paths[FILES]);
+	string_append(&pokemonBasePath, "Pokemon/");
+
+	struct_paths[POKEMON] = pokemonBasePath;	
+
+	mkdir(pokemonBasePath, 0777);
+	
+	string_append(&pokemonBaseBin, pokemonBasePath);
+	string_append(&pokemonBaseBin, "Metadata.bin");
+
+	FILE* pokemonMetadata = fopen(pokemonBaseBin, "w+b");
+	t_config* pokemonConfigMetadata = config_create(pokemonBaseBin);
+	config_set_value(pokemonConfigMetadata, "DIRECTORY", "Y");
+	config_save(pokemonConfigMetadata);
+	game_card_logger_info("Creado directorio base /Pokemon y su Metadata.bin");
+	fclose(pokemonMetadata);
+}
 
 void createBlocks(){
 	game_card_logger_info("Creando bloques en el path /Bloques");
@@ -124,7 +139,7 @@ void createMetaDataFile(char* metadataBin){
 	FILE* metadata = fopen(metadataBin, "w+b");
 	config_metadata = config_create(metadataBin);
 	config_set_value(config_metadata, "BLOCK_SIZE", "64");
-	config_set_value(config_metadata, "BLOCKS", "5"); // asi no tengo 5492 bloques :P
+	config_set_value(config_metadata, "BLOCKS", "15"); // asi no tengo 5492 bloques :P
 	config_set_value(config_metadata, "MAGIC_NUMBER", "TALL_GRASS");
 	config_save(config_metadata);
 	fclose(metadata);
@@ -139,22 +154,65 @@ void readMetaData(char* metadataPath) {
 	config_destroy(metadataFile);
 }
 
-void readBitmap() {
-	game_card_logger_info("Leyendo el archivo Bitmap.bin");
+void readBitmap(char* bitmapBin) {
+	bitmap_file = fopen(bitmapBin, "rb+");
 	fseek(bitmap_file, 0, SEEK_END);
 	int file_size = ftell(bitmap_file);
 	fseek(bitmap_file, 0, SEEK_SET);
 	char* bitarray_str = (char*) mmap(NULL, file_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED, fileno(bitmap_file), 0);
-	if(bitarray_str == (char*) -1) {
-		game_card_logger_error("Fallo el mmap del bitarray: %s", strerror(errno));
+	if(bitarray_str == (char*) -1)
+	{
+		game_card_logger_error("Fallo el mmap: %s", strerror(errno));
 	}
 	fread((void*) bitarray_str, sizeof(char), file_size, bitmap_file);
 	bitmap = bitarray_create_with_mode(bitarray_str, file_size, MSB_FIRST);
-	fclose(bitmap_file);
 }
 
-void gcfs_free_bitmap()
-{
+
+int searchNode(const char* path) {
+	char* completePath = string_new();
+	char* newDirectoryMetadata = string_new();
+	char* super_path = (char*) malloc(strlen(path) +1);
+	char* nombre = (char*) malloc(strlen(path)+1);
+
+	string_append(&completePath, struct_paths[FILES]);
+	string_append(&completePath, path);
+
+	if(access(completePath, F_OK) != -1) {
+        game_card_logger_info("Existe el path %s", completePath);
+		return -1;
+    } else {
+        game_card_logger_info("No existe el path %s", completePath);
+		split_path(path, &super_path, &nombre);
+		
+		searchNode(super_path);
+
+		string_append(&newDirectoryMetadata, completePath);
+		string_append(&newDirectoryMetadata, "Metadata.bin");
+
+		/*
+		t_config *archivo_MetaData = config_create(newDirectoryMetadata);
+
+		config_set_value(archivo_MetaData,"CANTIDAD_BLOQUES",stringUltimoBloque);
+		config_save(archivo_MetaData);
+		free(direccionArchivoMedata);
+		config_destroy(archivo_MetaData);*/
+
+		t_config* newDirMetadata = config_create(newDirectoryMetadata);
+		config_set_value(newDirMetadata, "DIRECTORY", "Y");
+		config_save(newDirMetadata);
+		config_destroy(newDirMetadata);
+		mkdir(completePath, 0777);
+		return 0;
+    };
+
+	free(completePath);
+	free(super_path);
+	free(nombre);
+	return 0;
+}
+
+void gcfsFreeBitmaps() {
 	free(bitmap->bitarray);
 	bitarray_destroy(bitmap);
 }
