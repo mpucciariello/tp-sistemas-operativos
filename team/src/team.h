@@ -18,6 +18,7 @@
 
 int team_socket;
 bool is_connected;
+pthread_mutex_t planner_mutex;
 
 int team_load();
 void team_init();
