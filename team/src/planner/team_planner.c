@@ -85,11 +85,11 @@ void planner_init_global_targets(t_list* objetivos) {
 		char* pokemon_name = string_duplicate(pokemon->name);
 		int cantidad_pokemon = (int) dictionary_get(team_planner_global_targets, pokemon_name);
 		if(cantidad_pokemon == 0) {
-			dictionary_put(team_planner_global_targets, pokemon_name, (int) 1);
+			dictionary_put(team_planner_global_targets, pokemon_name, (void *) 1);
 			list_add(keys_list, pokemon_name);
 		} else {
 			cantidad_pokemon++;
-			dictionary_put(team_planner_global_targets, pokemon_name, (int) cantidad_pokemon);
+			dictionary_put(team_planner_global_targets, pokemon_name, (void *) cantidad_pokemon);
 		}
 	}
 }
@@ -221,7 +221,7 @@ void team_planner_check_unlocks() {
 
 		if(set_free) {
 			team_logger_info("Se libera el entrenador: id %d", trainner->id);
-			trainner->estimated_time = team_planner_calculate_exponential_mean(trainner->current_burst_time, esi->estimated_time);
+			trainner->estimated_time = team_planner_calculate_exponential_mean(trainner->current_burst_time, trainner->estimated_time);
 			team_logger_info("Estimacion recalculada: %f", trainner->estimated_time);
 
 			if(team_planner_is_SJF_algorithm()) {
@@ -300,7 +300,7 @@ void team_planner_apply_FIFO() {
 	//Si no hay entrenador, planifico el proximo
 	if (exec_entrenador == NULL) {
 		int next_out_index = fifo_index;
-		if(next_out_index < list_size(ready_queque)) {
+		if(next_out_index <= list_size(ready_queque)) {
 			exec_entrenador = list_get(ready_queque, next_out_index);
 			list_remove(ready_queque, next_out_index);
 			fifo_index++;
@@ -340,10 +340,10 @@ void team_planner_set_algorithm() {
 			team_planner_apply_RR();
 			break;
 		case SJF_CD:
-			team_planner_apply_SJF(true);
+			team_planner_apply_SJF(false);
 			break;
 		case SJF_SD:
-			team_planner_apply_SJF(false);
+			team_planner_apply_SJF(true);
 			break;
 		default:
 			break;
@@ -372,7 +372,7 @@ void planner_destroy_entrenador(t_entrenador_pokemon* entrenador) {
 }
 
 void planner_destroy_global_targets(t_dictionary* global_targets) {
-	dictionary_destroy_and_destroy_elements(global_targets, planner_destroy_pokemons);
+	dictionary_destroy_and_destroy_elements(global_targets, (void*)planner_destroy_pokemons);
 }
 
 void planner_destroy_quees() {

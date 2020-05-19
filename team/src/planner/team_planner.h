@@ -2,6 +2,7 @@
 #define PLANNER_TEAM_PLANNER_H_
 #include <stdio.h>
 #include <stdlib.h>
+#include <semaphore.h>
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <commons/collections/queue.h>
@@ -29,6 +30,7 @@ typedef struct {
 	int estimated_time;
 } t_entrenador_pokemon;
 
+pthread_mutex_t planner_mutex;
 sem_t sem_entrenadores;
 t_dictionary* team_planner_global_targets;
 
