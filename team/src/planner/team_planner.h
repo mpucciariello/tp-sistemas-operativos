@@ -39,6 +39,7 @@ typedef enum {
 
 typedef struct {
 	int id;
+	int trainner_id;
 	char* name;
 	t_pokemon_state state;
 	t_entrenador_pokemon* blocking_trainner;
