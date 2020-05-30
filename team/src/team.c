@@ -26,6 +26,7 @@ int team_load() {
 
 void team_init() {
 
+	pthread_mutex_init(&planner_mutex, NULL);
 	team_planner_init();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
@@ -291,6 +292,7 @@ void send_ack(void* arg) {
 void team_exit() {
 	socket_close_conection(team_socket);
 //socket_close_conection(broker_fd);
+	pthread_mutex_destroy(&planner_mutex);
 	team_planner_destroy();
 	team_config_free();
 	team_logger_destroy();
