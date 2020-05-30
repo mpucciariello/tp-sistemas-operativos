@@ -190,19 +190,13 @@ int searchNode(const char* path) {
 		string_append(&newDirectoryMetadata, completePath);
 		string_append(&newDirectoryMetadata, "Metadata.bin");
 
-		/*
-		t_config *archivo_MetaData = config_create(newDirectoryMetadata);
-
-		config_set_value(archivo_MetaData,"CANTIDAD_BLOQUES",stringUltimoBloque);
-		config_save(archivo_MetaData);
-		free(direccionArchivoMedata);
-		config_destroy(archivo_MetaData);*/
-
-		t_config* newDirMetadata = config_create(newDirectoryMetadata);
-		config_set_value(newDirMetadata, "DIRECTORY", "Y");
-		config_save(newDirMetadata);
-		config_destroy(newDirMetadata);
 		mkdir(completePath, 0777);
+		FILE* metadata = fopen(newDirectoryMetadata, "w+b");
+		config_metadata = config_create(newDirectoryMetadata);
+		config_set_value(config_metadata, "DIRECTORY", "Y");
+		config_save(config_metadata);
+		config_destroy(config_metadata);
+		fclose(metadata);
 		return 0;
     };
 
