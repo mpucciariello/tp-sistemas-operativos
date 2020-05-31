@@ -15,9 +15,9 @@ typedef enum {
 } e_state;
 
 typedef struct {
-	int id;
-	char* name;
-} t_pokemon;
+	char* pokemon_needed;
+	int blocked_time;
+} t_entrenador_info_bloqueo;
 
 typedef struct {
 	int id;
@@ -28,7 +28,22 @@ typedef struct {
 	int wait_time;
 	int current_burst_time;
 	int estimated_time;
+	t_entrenador_info_bloqueo* blocked_info;
 } t_entrenador_pokemon;
+
+typedef enum {
+	UNKNOWN,
+	FREE,
+	BLOCKED
+} t_pokemon_state;
+
+typedef struct {
+	int id;
+	int trainner_id;
+	char* name;
+	t_pokemon_state state;
+	t_entrenador_pokemon* blocking_trainner;
+} t_pokemon;
 
 pthread_mutex_t planner_mutex;
 sem_t sem_entrenadores;
