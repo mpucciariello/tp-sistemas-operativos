@@ -22,7 +22,7 @@ int lastchar(const char* str, char chr){
  * 		name - Puntero al nombre del archivo
  *
  * 	RET
- * 		0... SIEMPRE!
+ * 		0... SIEMPRE!;
  */
 
 int split_path(const char* path, char** super_path, char** name){

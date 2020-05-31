@@ -32,22 +32,24 @@ t_config* config_table_metadata;
 t_bitarray* bitmap;
 FILE* bitmap_file;
 char* struct_paths[4];
-int blocks_quantity;
-int blocks_size;
 
 
 void createBlocks();
 void createMetaDataFile(char* metadataBin);
 void createBitmap(char* bitmapBin);
 void createRootFiles();
-
+char* obtenerPathDelNumeroDeBloque(int numeroDeBloque);
 void readBitmap(char* bitmapBin);
 void readMetaData(char* metadataPath);
 
 void setupFilesDirectory();
 void setupMetadata();
 
-int searchNode(const char* path);
+int createRecursiveDirectory(const char* path);
+int createFile(const char* fullPath, const char* directory);
+
+
+void createNewPokemon(t_new_pokemon newPokemon);
 
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();

@@ -15,3 +15,7 @@
 
 
 void mostrar_bitarray(t_bitarray* bitmap);
+void setear_bloque_ocupado_en_posicion(t_bitarray* bitmap, off_t pos);
+void setear_bloque_libre_en_posicion(t_bitarray* bitmap, off_t pos);
+bool testear_bloque_libre_en_posicion(t_bitarray* bitmap, int pos);
+int getAndSetFreeBlock(t_bitarray* bitmap, unsigned int blocks);
