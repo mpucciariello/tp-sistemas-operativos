@@ -266,9 +266,22 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 
 	// Existe Pokemon
 	if (access(completePath, F_OK) != -1) {
-		game_card_logger_info("Ya existe ese Pokemon");
+		game_card_logger_info("Ya existe ese Pokemon. Se leen las estructuras");
+		char* existingPokemonMetadata = string_new();
+		char* blocks = string_new();
+		char* isOpen = string_new();
+		
+		string_append(&existingPokemonMetadata, completePath);
+		string_append(&existingPokemonMetadata, "/Metadata.bin");
+		t_config* metadataFile = config_create(existingPokemonMetadata);
+		int blockSize = config_get_int_value(metadataFile, "SIZE");
+	    blocks = string_duplicate(config_get_string_value(metadataFile, "BLOCKS"));
+	    isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
+	    config_destroy(metadataFile);
+
+		
 	} else {
-		game_card_logger_info("No existe ese Pokemon");
+		game_card_logger_info("No existe ese Pokemon. Se crean y escriben las estructuras.");
 		
 		createRecursiveDirectory(super_path);
 		createFile(newPokemon.nombre_pokemon);
@@ -307,7 +320,7 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 	}
 	
 
-	mostrar_bitarray(bitmap);
+	//mostrar_bitarray(bitmap);
 	
 }
 
