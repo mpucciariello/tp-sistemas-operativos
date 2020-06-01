@@ -26,7 +26,7 @@ void gcfsCreateStructs(){
 	setupFilesDirectory();
 
 	t_new_pokemon newPokemon;
-	newPokemon.nombre_pokemon = "Pokemon/Electrico/Poderosos/Pikachu";
+	newPokemon.nombre_pokemon = "Pokemon/Electrico/Zapdos";
 	newPokemon.cantidad = 100;
 	newPokemon.pos_x = 1;
 	newPokemon.pos_y = 1;
@@ -218,9 +218,8 @@ int createRecursiveDirectory(const char* path) {
 	return 0;
 }
 
-int createFile(const char* fullPath, const char* directory) {
+int createFile(const char* fullPath) {
 	char* completePath = string_new();
-	char* newDirectoryMetadata = string_new();
 	string_append(&completePath, struct_paths[FILES]);
 	string_append(&completePath, fullPath);
 
@@ -228,25 +227,32 @@ int createFile(const char* fullPath, const char* directory) {
         game_card_logger_info("Existe el directory para ese pokemon %s", completePath);
 		return -1;
     } else {
-		string_append(&newDirectoryMetadata, completePath);
-		string_append(&newDirectoryMetadata, "/Metadata.bin");
-
 		mkdir(completePath, 0777);
-		FILE* metadata = fopen(newDirectoryMetadata, "w+b");
-		config_metadata = config_create(newDirectoryMetadata);
-		config_set_value(config_metadata, "DIRECTORY", "N");
-		config_set_value(config_metadata, "SIZE", "0");
-		config_set_value(config_metadata, "BLOCKS", "[]");
-		config_set_value(config_metadata, "OPEN", "Y");
-		config_save(config_metadata);
-		config_destroy(config_metadata);
-		fclose(metadata);
+		updatePokemonMetadata(fullPath, "N", "0", "[]", "Y");
 	}
 }
 
+void updatePokemonMetadata(const char* fullPath, const char* directory, const char* size, const char* blocks, const char* open) {
+	char* completePath = string_new();
+	char* newDirectoryMetadata = string_new();
+	string_append(&completePath, struct_paths[FILES]);
+	string_append(&completePath, fullPath);
+
+	string_append(&newDirectoryMetadata, completePath);
+	string_append(&newDirectoryMetadata, "/Metadata.bin");
+	
+	FILE* metadata = fopen(newDirectoryMetadata, "w+b");
+	config_metadata = config_create(newDirectoryMetadata);
+	config_set_value(config_metadata, "DIRECTORY", directory);
+	config_set_value(config_metadata, "SIZE", size);
+	config_set_value(config_metadata, "BLOCKS", blocks);
+	config_set_value(config_metadata, "OPEN", open);
+	config_save(config_metadata);
+	config_destroy(config_metadata);
+	fclose(metadata);
+}
 
 void createNewPokemon(t_new_pokemon newPokemon) {
-	
 	char* super_path = (char*) malloc(strlen(newPokemon.nombre_pokemon) +1);
 	char* pokemonDirectory = (char*) malloc(strlen(newPokemon.nombre_pokemon)+1);
 	split_path(newPokemon.nombre_pokemon, &super_path, &pokemonDirectory);
@@ -254,35 +260,55 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 	char* posY = string_itoa(newPokemon.pos_y);
 	char* cantidad = string_itoa(newPokemon.cantidad);
 
-	char* pokemonPerPosition = string_new();
-	string_append(&pokemonPerPosition, posX);
-	string_append(&pokemonPerPosition, "-");
-	string_append(&pokemonPerPosition, posY);
-	string_append(&pokemonPerPosition, "=");
-	string_append(&pokemonPerPosition, cantidad);
-	string_append(&pokemonPerPosition, "\n");
-	int pokemonPerPositionLength = strlen(pokemonPerPosition);
-	game_card_logger_info("Pokemon per position %s", pokemonPerPosition);
+	char* completePath = string_new();
+	string_append(&completePath, struct_paths[FILES]);
+	string_append(&completePath, newPokemon.nombre_pokemon);
 
+	// Existe Pokemon
+	if (access(completePath, F_OK) != -1) {
+		game_card_logger_info("Ya existe ese Pokemon");
+	} else {
+		game_card_logger_info("No existe ese Pokemon");
+		
+		createRecursiveDirectory(super_path);
+		createFile(newPokemon.nombre_pokemon);
 
-	if(lfsMetaData.blockSize >= pokemonPerPositionLength) {
-		// Pido un bloque
-		int freeBlockPosition = getAndSetFreeBlock(bitmap, lfsMetaData.blocks);
-		game_card_logger_info("Proximo free block %d", freeBlockPosition);
-		char* pathBloque = obtenerPathDelNumeroDeBloque(freeBlockPosition);
-		FILE* blockFile = fopen(pathBloque,"wr");
-		fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, blockFile);
-		fclose(blockFile);
-	} else if(lfsMetaData.blockSize < pokemonPerPositionLength) {
-		// Pido dos bloques
-		game_card_logger_info("Proximo free block %d", getAndSetFreeBlock(bitmap, lfsMetaData.blocks));
-		game_card_logger_info("Proximo 2 free block %d", getAndSetFreeBlock(bitmap, lfsMetaData.blocks));
+		char* pokemonPerPosition = string_new();
+		string_append(&pokemonPerPosition, posX);
+		string_append(&pokemonPerPosition, "-");
+		string_append(&pokemonPerPosition, posY);
+		string_append(&pokemonPerPosition, "=");
+		string_append(&pokemonPerPosition, cantidad);
+		string_append(&pokemonPerPosition, "\n");
+		int pokemonPerPositionLength = strlen(pokemonPerPosition);
+		game_card_logger_info("Pokemon per position %s", pokemonPerPosition);
+
+		if(lfsMetaData.blockSize >= pokemonPerPositionLength) {
+		  // Pido un bloque
+		  int freeBlockPosition = getAndSetFreeBlock(bitmap, lfsMetaData.blocks);
+		  char* usedBlocks = string_new();
+		  string_append(&usedBlocks, "[");
+		  string_append(&usedBlocks, string_itoa(freeBlockPosition));
+		  string_append(&usedBlocks, "]");
+		  // Restamos el /n
+		  char* stringToSaveLength = string_itoa(strlen(pokemonPerPosition) - 1);
+
+		  char* pathBloque = obtenerPathDelNumeroDeBloque(freeBlockPosition);
+		  FILE* blockFile = fopen(pathBloque,"wr");
+		  fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, blockFile);
+		  fclose(blockFile);
+
+		  updatePokemonMetadata(newPokemon.nombre_pokemon, "N", stringToSaveLength, usedBlocks, "Y");
+		} else if(lfsMetaData.blockSize < pokemonPerPositionLength) {
+		  // Pido dos bloques
+		  game_card_logger_info("Proximo free block %d", getAndSetFreeBlock(bitmap, lfsMetaData.blocks));
+		  game_card_logger_info("Proximo 2 free block %d", getAndSetFreeBlock(bitmap, lfsMetaData.blocks));
+	  	}
 	}
+	
 
 	mostrar_bitarray(bitmap);
 	
-	/*createRecursiveDirectory(super_path);
-    createFile(newPokemon.nombre_pokemon, pokemonDirectory);*/
 }
 
 void gcfsFreeBitmaps() {

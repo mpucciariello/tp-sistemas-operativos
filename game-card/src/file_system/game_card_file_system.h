@@ -44,9 +44,9 @@ void readMetaData(char* metadataPath);
 
 void setupFilesDirectory();
 void setupMetadata();
-
+void updatePokemonMetadata(const char* fullPath, const char* directory, const char* size, const char* blocks, const char* open);
 int createRecursiveDirectory(const char* path);
-int createFile(const char* fullPath, const char* directory);
+int createFile(const char* fullPath);
 
 
 void createNewPokemon(t_new_pokemon newPokemon);
