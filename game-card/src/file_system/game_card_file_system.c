@@ -252,6 +252,11 @@ void updatePokemonMetadata(const char* fullPath, const char* directory, const ch
 	fclose(metadata);
 }
 
+void readPokemonLines(char* blockPath) {
+	FILE* blockFile = fopen(blockPath,"r");
+	size_t len = 0;
+}
+
 void createNewPokemon(t_new_pokemon newPokemon) {
 	char* super_path = (char*) malloc(strlen(newPokemon.nombre_pokemon) +1);
 	char* pokemonDirectory = (char*) malloc(strlen(newPokemon.nombre_pokemon)+1);
@@ -278,8 +283,6 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 	    blocks = string_duplicate(config_get_string_value(metadataFile, "BLOCKS"));
 	    isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
 	    config_destroy(metadataFile);
-
-		
 	} else {
 		game_card_logger_info("No existe ese Pokemon. Se crean y escriben las estructuras.");
 		
