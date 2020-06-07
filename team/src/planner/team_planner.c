@@ -333,7 +333,6 @@ void team_planner_run_checks() {
 	// Hay entrenadores listos para ejecutar?
 	if (list_is_empty(ready_queque)) {
 		team_logger_info("No hay enetrenadores listos para ejecutar");
-		pthread_mutex_unlock(&planner_mutex);
 		return;
 	}
 }
@@ -429,6 +428,41 @@ void team_planner_set_algorithm() {
 		default:
 			break;
 	}
+}
+
+void team_planner_check_deadlocks() {
+	int i;
+	for (i = 0; i < list_size(block_queque); i++) {
+		t_entrenador_pokemon* e = list_get(block_queque, i);
+		t_list* objetivos = e->targets;
+		int j;
+		for (j = 0; j < list_size(objetivos); j++) {
+			t_pokemon* p = list_get(objetivos, j);
+			int k;
+			for (k = 0; k < list_size(block_queque); k++) {
+				t_entrenador_pokemon* en = list_get(block_queque, k);
+				t_list* pokemons = en->pokemons;
+				int l;
+				for (l = 0; l < list_size(pokemons); l++) {
+					t_pokemon* po = list_get(pokemons, l);
+					if (e->id != en->id &&
+						string_equals_ignore_case(en->blocked_info->pokemon_needed, p->name) &&
+						string_equals_ignore_case(e->blocked_info->pokemon_needed, po->name)) {
+							team_logger_info("Ocurrio un deadlock entre los entrenadores %d y %d!", e->id, en->id);
+					}
+				}
+			}
+		}
+	}
+}
+
+void team_planner_print_fullfill_target() {
+	pthread_mutex_lock(&planner_mutex);
+	team_logger_info("Cantidad de ciclos de CPU totales: %d", 2);
+	team_logger_info("Cantidad de cambios de contexto realizados: %d", 2);
+	team_logger_info("Cantidad de ciclos de CPU realizados por entrenador:");
+	team_logger_info("Deadlocks producidos: %d  y resueltos: %d", 0, 1);
+	pthread_mutex_unlock(&planner_mutex);
 }
 
 void team_planner_init() {
