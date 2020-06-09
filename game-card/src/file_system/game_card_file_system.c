@@ -365,7 +365,7 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 		t_list* pokemonLines = readPokemonLines(listBlocks);
 
 		if (coordinateExists(newPokemon.pos_x, newPokemon.pos_y, pokemonLines) == 1) {
-
+			
 		}
 
 		config_destroy(metadataFile);
