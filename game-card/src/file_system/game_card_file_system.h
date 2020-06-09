@@ -33,6 +33,11 @@ t_bitarray* bitmap;
 FILE* bitmap_file;
 char* struct_paths[4];
 
+typedef struct {
+	uint32_t cantidad;
+	uint32_t posX;
+	uint32_t posY;
+} blockLine;
 
 void createBlocks();
 void createMetaDataFile(char* metadataBin);
@@ -48,7 +53,10 @@ void updatePokemonMetadata(const char* fullPath, const char* directory, const ch
 int createRecursiveDirectory(const char* path);
 int createFile(const char* fullPath);
 
-
+t_list* stringBlocksToList(char* blocks);
+t_list* readPokemonLines(t_list* blocks);
+blockLine* formatStringToBlockLine(char* blockline);
+int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
 void createNewPokemon(t_new_pokemon newPokemon);
 
 void gcfsCreateStructs();

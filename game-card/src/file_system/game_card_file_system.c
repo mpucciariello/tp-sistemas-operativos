@@ -28,8 +28,8 @@ void gcfsCreateStructs(){
 	t_new_pokemon newPokemon;
 	newPokemon.nombre_pokemon = "Pokemon/Electrico/Zapdos";
 	newPokemon.cantidad = 100;
-	newPokemon.pos_x = 1;
-	newPokemon.pos_y = 1;
+	newPokemon.pos_x = 0;
+	newPokemon.pos_y = 3;
 	createNewPokemon(newPokemon);
 	game_card_logger_info("Termino todo OK");
 }
@@ -252,9 +252,85 @@ void updatePokemonMetadata(const char* fullPath, const char* directory, const ch
 	fclose(metadata);
 }
 
-void readPokemonLines(char* blockPath) {
-	FILE* blockFile = fopen(blockPath,"r");
+// Dado una lista de bloques t_list 1,2,3 se leen los contenidos de dichos bloques
+// y se retorna una lista con los contenidos leidos 
+// t_list(int) => t_list (blockLine)
+t_list* readPokemonLines(t_list* blocks) {
+	t_list* retList = list_create();
 	size_t len = 0;
+	char* line = NULL;
+	ssize_t read;
+	FILE* blockFile;
+
+	for (int i = 0; i < list_size(blocks); i++) {
+		char* blockPath = string_new();
+        string_append(&blockPath, struct_paths[BLOCKS]);
+        string_append(&blockPath, string_itoa(list_get(blocks, i)));
+		string_append(&blockPath, ".bin");
+
+		blockFile = fopen(blockPath, "r");
+
+		if (blockFile == NULL) {
+			game_card_logger_error("No ha sido posible leer el archivo");
+		}
+
+		while((read = getline(&line, &len, blockFile)) != -1) {
+			game_card_logger_info("Line %s", line);
+			blockLine* blockLine = formatStringToBlockLine(line);
+			list_add(retList, blockLine);
+		}
+	}
+
+	fclose(blockFile);
+	if (line) free(line);
+
+	return retList;
+}
+
+// Dado una linea con formato "1-1=100" se devuelve la estructura correspondiente para poder manipularla
+blockLine* formatStringToBlockLine(char* blockline) {
+	blockLine* newLineBlock = malloc(sizeof(blockLine));
+	char** splittedLine = string_split(blockline, "=");
+	char** coordinates = string_split(splittedLine[0], "-");
+	newLineBlock->posX = atoi(coordinates[0]);
+	newLineBlock->posY = atoi(coordinates[1]);
+	newLineBlock->cantidad = atoi(splittedLine[1]);
+	return newLineBlock;
+}
+
+// Dado un string con formato [1,2,3,...] se devuelve una lista con los enteros que simbolizan un numero de bloque
+t_list* stringBlocksToList(char* blocks) {
+	t_list* retList = list_create();
+	// Solo esta usando un bloque
+	if (strlen(blocks) <= 3) {
+		char* blockStrWithoutBraces = string_substring(blocks, 1, 1);
+		list_add(retList, atoi(blockStrWithoutBraces));
+	} // Mas de un bloque siendo usado
+	else {
+		char* blocksStrWithoutBraces = string_substring(blocks, 1, strlen(blocks) - 2);
+		char** blocksWithoutCommaSeparator = string_split(blocksStrWithoutBraces, ",");
+		int i = 0;
+		while(blocksWithoutCommaSeparator[i] != NULL) {
+			list_add(retList, blocksWithoutCommaSeparator[i]);
+			i++;
+		}
+	}
+
+	return retList;
+}
+
+int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines) {
+	int coordinateExist = 0;
+
+	for (int i=0; i<list_size(pokemonLines); i++) {
+		blockLine* newLineBlock = list_get(pokemonLines, i);
+
+		if (newLineBlock->posX == posX && newLineBlock->posY == posY) {
+			coordinateExist = 1;
+		}
+	}
+	
+	return coordinateExist;
 }
 
 void createNewPokemon(t_new_pokemon newPokemon) {
@@ -273,6 +349,7 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 	if (access(completePath, F_OK) != -1) {
 		game_card_logger_info("Ya existe ese Pokemon. Se leen las estructuras");
 		char* existingPokemonMetadata = string_new();
+		char* existingPokemonBlocks = string_new();
 		char* blocks = string_new();
 		char* isOpen = string_new();
 		
@@ -282,7 +359,16 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 		int blockSize = config_get_int_value(metadataFile, "SIZE");
 	    blocks = string_duplicate(config_get_string_value(metadataFile, "BLOCKS"));
 	    isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
-	    config_destroy(metadataFile);
+
+		t_list* listBlocks = stringBlocksToList(blocks);
+		
+		t_list* pokemonLines = readPokemonLines(listBlocks);
+
+		if (coordinateExists(newPokemon.pos_x, newPokemon.pos_y, pokemonLines) == 1) {
+
+		}
+
+		config_destroy(metadataFile);
 	} else {
 		game_card_logger_info("No existe ese Pokemon. Se crean y escriben las estructuras.");
 		
