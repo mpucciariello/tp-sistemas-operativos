@@ -45,6 +45,7 @@ typedef struct {
 	int pointer;
 	int size;
 	t_cola cola;
+	int id;
 } t_nodo_memory;
 
 typedef struct {
@@ -66,6 +67,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
 
 void *get_from_memory(t_protocol protocol, int posicion, void *message);
 int save_on_memory(t_message_to_void *message_void);
-void save_node_list_memory(int pointer, int size,t_cola cola);
-void send_message_from_queue(t_subscribe *subscriber,t_protocol protocol);
+void save_node_list_memory(int pointer, int size,t_cola cola,int id);
+void send_message_to_queue(t_subscribe *subscriber,t_protocol protocol);
+int generar_id();
 #endif /* BROKER_H_ */

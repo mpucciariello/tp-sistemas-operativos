@@ -129,7 +129,7 @@ static void *handle_connection(void *arg) {
 			usleep(100000);
 			t_message_to_void *message_void = convert_to_void(protocol, new_receive);
 			int from = save_on_memory(message_void);
-			save_node_list_memory(from,message_void->size_message,NEW_QUEUE);
+			save_node_list_memory(from,message_void->size_message,NEW_QUEUE,new_receive->id_correlacional);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//free(message_void);
@@ -178,7 +178,7 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
 			int from = save_on_memory(message_void);
-			save_node_list_memory(from,message_void->size_message,APPEARED_QUEUE);
+			save_node_list_memory(from,message_void->size_message,APPEARED_QUEUE,appeared_rcv->id_correlacional);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//			free(message_void);
@@ -221,7 +221,7 @@ static void *handle_connection(void *arg) {
 			get_rcv->id_correlacional = generar_id();
 			t_message_to_void *message_void = convert_to_void(protocol, get_rcv);
 			int from = save_on_memory(message_void);
-			save_node_list_memory(from,message_void->size_message,GET_QUEUE);
+			save_node_list_memory(from,message_void->size_message,GET_QUEUE,get_rcv->id_correlacional );
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 			//free(message_void->message);
 			//free(message_void);
@@ -259,24 +259,20 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("CATCH RECEIVED FROM TEAM");
 			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
-			broker_logger_info("ID correlacional: %d",
-					catch_rcv->id_correlacional);
-			//broker_logger_info("ID Generado: %d", catch_rcv->id_gen);
 			broker_logger_info("Nombre Pokemon: %s", catch_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", catch_rcv->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
-			catch_rcv->id_gen = generar_id();
+
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, catch_rcv);
 			int from = save_on_memory(message_void);
-			save_node_list_memory(from,message_void->size_message,CATCH_QUEUE);
+			catch_rcv->id_gen = generar_id();
+			save_node_list_memory(from,message_void->size_message,CATCH_QUEUE,catch_rcv->id_gen);
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from, memory);
 
-			//free(message_void->message);
-			//free(message_void);
 			// To GC
-			catch_send->id_gen = uuid;
+			catch_send->id_gen = generar_id();
 			uuid++;
 			catch_protocol = CATCH_POKEMON;
 			broker_logger_info("CATCH SENT TO GC");
@@ -325,7 +321,7 @@ static void *handle_connection(void *arg) {
 			}
 			t_message_to_void *message_void = convert_to_void(protocol, loc_rcv);
 			int from = save_on_memory(message_void);
-			save_node_list_memory(from,message_void->size_message,LOCALIZED_QUEUE);
+			save_node_list_memory(from,message_void->size_message,LOCALIZED_QUEUE,loc_rcv->id_correlacional);
 			t_localized_pokemon* loc_snd = get_from_memory(protocol, from, memory);
 			free(message_void->message);
 					free(message_void);
@@ -389,7 +385,7 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol, caught_rcv);
 			int from = save_on_memory(message_void);
-			save_node_list_memory(from,message_void->size_message,CAUGHT_QUEUE);
+			save_node_list_memory(from,message_void->size_message,CAUGHT_QUEUE,caught_rcv->id_correlacional);
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from, memory);
 			free(message_void->message);
 			free(message_void);
@@ -479,42 +475,42 @@ void search_queue(t_subscribe *subscriber) {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola NEW ",
 				subscriber->ip, subscriber->puerto);
 		add_to(new_queue, subscriber);
-		send_message_from_queue(subscriber,NEW_POKEMON);
+		send_message_to_queue(subscriber,NEW_POKEMON);
 		break;
 	}
 	case CATCH_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
 				subscriber->ip, subscriber->puerto);
 		add_to(catch_queue, subscriber);
-		send_message_from_queue(subscriber,CATCH_POKEMON);
+		send_message_to_queue(subscriber,CATCH_POKEMON);
 		break;
 	}
 	case CAUGHT_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
 				subscriber->ip, subscriber->puerto);
 		add_to(caught_queue, subscriber);
-		send_message_from_queue(subscriber,CAUGHT_POKEMON);
+		send_message_to_queue(subscriber,CAUGHT_POKEMON);
 		break;
 	}
 	case GET_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola GET ",
 				subscriber->ip, subscriber->puerto);
 		add_to(get_queue, subscriber);
-		send_message_from_queue(subscriber,GET_POKEMON);
+		send_message_to_queue(subscriber,GET_POKEMON);
 		break;
 	}
 	case LOCALIZED_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(localized_queue, subscriber);
-		send_message_from_queue(subscriber,LOCALIZED_POKEMON);
+		send_message_to_queue(subscriber,LOCALIZED_POKEMON);
 		break;
 	}
 	case APPEARED_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(appeared_queue, subscriber);
-		send_message_from_queue(subscriber,APPEARED_POKEMON);
+		send_message_to_queue(subscriber,APPEARED_POKEMON);
 		break;
 	}
 
@@ -839,15 +835,16 @@ int save_on_memory(t_message_to_void *message_void){
 	return from;
 }
 
-void save_node_list_memory(int pointer, int size,t_cola cola){
+void save_node_list_memory(int pointer, int size,t_cola cola,int id){
 	t_nodo_memory * nodo_mem = malloc(sizeof(t_nodo_memory));
 	nodo_mem->pointer = pointer;
 	nodo_mem->size = size;
 	nodo_mem->cola = cola;
+	nodo_mem->id = id;
 	list_add(list_memory,nodo_mem);
 }
 
-void send_message_from_queue(t_subscribe *subscriber,t_protocol protocol){
+void send_message_to_queue(t_subscribe *subscriber,t_protocol protocol){
 	int cant = list_size(list_memory);
 	for(int i=0 ; i < cant ; i++){
 		t_nodo_memory *nodo_mem = list_get(list_memory,i);
