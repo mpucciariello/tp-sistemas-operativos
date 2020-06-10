@@ -58,6 +58,9 @@ t_list* readPokemonLines(t_list* blocks);
 blockLine* formatStringToBlockLine(char* blockline);
 int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
 void createNewPokemon(t_new_pokemon newPokemon);
+void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation);
+char* formatToBlockLine(int posX, int posY, int cantidad);
+
 
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();

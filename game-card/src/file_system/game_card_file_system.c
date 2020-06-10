@@ -28,8 +28,8 @@ void gcfsCreateStructs(){
 	t_new_pokemon newPokemon;
 	newPokemon.nombre_pokemon = "Pokemon/Electrico/Zapdos";
 	newPokemon.cantidad = 100;
-	newPokemon.pos_x = 0;
-	newPokemon.pos_y = 3;
+	newPokemon.pos_x = 1;
+	newPokemon.pos_y = 1;
 	createNewPokemon(newPokemon);
 	game_card_logger_info("Termino todo OK");
 }
@@ -275,7 +275,6 @@ t_list* readPokemonLines(t_list* blocks) {
 		}
 
 		while((read = getline(&line, &len, blockFile)) != -1) {
-			game_card_logger_info("Line %s", line);
 			blockLine* blockLine = formatStringToBlockLine(line);
 			list_add(retList, blockLine);
 		}
@@ -333,14 +332,59 @@ int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines)
 	return coordinateExist;
 }
 
+// Add or substract if coordinate exist
+void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation) {
+	
+	for (int i=0; i<list_size(pokemonLines); i++) {
+		blockLine* newLineBlock = list_get(pokemonLines, i);
+
+		if (newLineBlock->posX == newPokemon.pos_x && newLineBlock->posY == newPokemon.pos_y) {
+			if (string_contains(operation, "+")) {
+				newLineBlock->cantidad = newLineBlock->cantidad + newPokemon.cantidad;
+			}
+			if (string_contains(operation, "-")) {
+				newLineBlock->cantidad = newLineBlock->cantidad - newPokemon.cantidad;
+			}
+		}
+	}
+}
+
+// Formatea unas coordenadas y cantidad a "1-1=100" string
+char* formatToBlockLine(int intPosX, int intPosY, int intCantidad) {
+	char* posX = string_itoa(intPosX);
+	char* posY = string_itoa(intPosY);
+	char* cantidad = string_itoa(intCantidad);
+	
+	char* pokemonPerPosition = string_new();
+	string_append(&pokemonPerPosition, posX);
+	string_append(&pokemonPerPosition, "-");
+	string_append(&pokemonPerPosition, posY);
+	string_append(&pokemonPerPosition, "=");
+	string_append(&pokemonPerPosition, cantidad);
+	string_append(&pokemonPerPosition, "\n");
+
+	return pokemonPerPosition;
+}
+
+/*
+void writeBlocks(t_list* pokemonLines, t_list* listBlocks) {
+	
+	FILE* fileToWrite;
+	
+	fileToWrite = fopen(newDirectoryMetadata, "wb");
+
+	for(int i=0; i<list_size(l))
+	char* pokemonPerPosition = formatToBlockLine(newPokemon.pos_x, newPokemon.pos_y, newPokemon.cantidad);
+	int pokemonPerPositionLength = strlen(pokemonPerPosition);
+	fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, fileToWrite);
+
+	fclose(blockFile);
+
+} */
 void createNewPokemon(t_new_pokemon newPokemon) {
 	char* super_path = (char*) malloc(strlen(newPokemon.nombre_pokemon) +1);
 	char* pokemonDirectory = (char*) malloc(strlen(newPokemon.nombre_pokemon)+1);
 	split_path(newPokemon.nombre_pokemon, &super_path, &pokemonDirectory);
-	char* posX = string_itoa(newPokemon.pos_x);
-	char* posY = string_itoa(newPokemon.pos_y);
-	char* cantidad = string_itoa(newPokemon.cantidad);
-
 	char* completePath = string_new();
 	string_append(&completePath, struct_paths[FILES]);
 	string_append(&completePath, newPokemon.nombre_pokemon);
@@ -365,7 +409,7 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 		t_list* pokemonLines = readPokemonLines(listBlocks);
 
 		if (coordinateExists(newPokemon.pos_x, newPokemon.pos_y, pokemonLines) == 1) {
-			
+			operatePokemonLine(newPokemon, pokemonLines, "+");
 		}
 
 		config_destroy(metadataFile);
@@ -375,13 +419,7 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 		createRecursiveDirectory(super_path);
 		createFile(newPokemon.nombre_pokemon);
 
-		char* pokemonPerPosition = string_new();
-		string_append(&pokemonPerPosition, posX);
-		string_append(&pokemonPerPosition, "-");
-		string_append(&pokemonPerPosition, posY);
-		string_append(&pokemonPerPosition, "=");
-		string_append(&pokemonPerPosition, cantidad);
-		string_append(&pokemonPerPosition, "\n");
+		char* pokemonPerPosition = formatToBlockLine(newPokemon.pos_x, newPokemon.pos_y, newPokemon.cantidad);
 		int pokemonPerPositionLength = strlen(pokemonPerPosition);
 		game_card_logger_info("Pokemon per position %s", pokemonPerPosition);
 
