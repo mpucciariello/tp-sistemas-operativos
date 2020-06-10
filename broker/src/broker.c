@@ -106,8 +106,24 @@ static void *handle_connection(void *arg) {
 			t_ack *ack_receive = utils_receive_and_deserialize(client_fd,
 					protocol);
 			broker_logger_info("ID recibido: %d", ack_receive->id);
-			broker_logger_info("ID correlacional %d",
-					ack_receive->id_correlacional);
+
+
+			broker_logger_info("IP recibido: %s", ack_receive->ip);
+			broker_logger_info("PUERTO recibido %d",ack_receive->puerto);
+			broker_logger_info("PROTOCOLO %d", ack_receive->protocol);
+
+			for(int i=0;i<list_size(list_message_subscritors);i++){
+				t_subscribe_message_node* node = list_get(list_message_subscritors,i);
+				if(node->id == ack_receive->id && ack_receive->protocol == node->cola){
+					for(int k=0;list_size(node->list);k++){
+						t_subscribe_ack_node* ack_subscriptor = list_get(node->list,k);
+						if((ack_receive->puerto == ack_subscriptor->subscribe->puerto) && (strcmp(ack_subscriptor->subscribe->ip,ack_receive->ip)==0)){
+							ack_subscriptor->ack = true;
+						}
+					}
+				}
+			}
+
 			usleep(100000);
 			break;
 		}
@@ -131,10 +147,14 @@ static void *handle_connection(void *arg) {
 			int from = save_on_memory(message_void);
 			save_node_list_memory(from,message_void->size_message,NEW_QUEUE,new_receive->id_correlacional);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
+			new_snd->id = new_receive->id_correlacional;
+			create_message_ack(new_snd->id,new_queue,NEW_QUEUE);
+
+
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
-			new_snd->id = 28;
+
 			new_protocol = NEW_POKEMON;
 			broker_logger_info("NEW SENT TO GC");
 			for (int i = 0; i < list_size(new_queue); i++) {
@@ -185,6 +205,9 @@ static void *handle_connection(void *arg) {
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
 			broker_logger_info("APPEARED SENT TO TEAM");
+
+			create_message_ack(id,appeared_queue,APPEARED_QUEUE);
+
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
 				if (node->endtime != -1) {
@@ -223,6 +246,11 @@ static void *handle_connection(void *arg) {
 			int from = save_on_memory(message_void);
 			save_node_list_memory(from,message_void->size_message,GET_QUEUE,get_rcv->id_correlacional );
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
+
+			////falta mandar el id generado al team//////
+
+			//esto es para los ack de gamecard
+			create_message_ack(get_rcv->id_correlacional,get_queue,GET_QUEUE);
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
@@ -270,6 +298,10 @@ static void *handle_connection(void *arg) {
 			catch_rcv->id_gen = generar_id();
 			save_node_list_memory(from,message_void->size_message,CATCH_QUEUE,catch_rcv->id_gen);
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from, memory);
+
+			//falta mandar id al team para q lo guarde//
+
+			create_message_ack(catch_rcv->id_gen,catch_queue,CATCH_QUEUE);
 
 			// To GC
 			catch_send->id_gen = generar_id();
@@ -323,6 +355,8 @@ static void *handle_connection(void *arg) {
 			int from = save_on_memory(message_void);
 			save_node_list_memory(from,message_void->size_message,LOCALIZED_QUEUE,loc_rcv->id_correlacional);
 			t_localized_pokemon* loc_snd = get_from_memory(protocol, from, memory);
+
+			create_message_ack(loc_rcv->id_correlacional,localized_queue,LOCALIZED_QUEUE);
 			free(message_void->message);
 					free(message_void);
 			// To team
@@ -387,6 +421,8 @@ static void *handle_connection(void *arg) {
 			int from = save_on_memory(message_void);
 			save_node_list_memory(from,message_void->size_message,CAUGHT_QUEUE,caught_rcv->id_correlacional);
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from, memory);
+			create_message_ack(caught_snd->id_correlacional,caught_queue,CAUGHT_QUEUE);
+
 			free(message_void->message);
 			free(message_void);
 			// To Team
@@ -875,6 +911,23 @@ void send_message_to_queue(t_subscribe *subscriber,t_protocol protocol){
 			}
 
 			}
+
+	}
+}
+
+void create_message_ack(int id,t_list *cola,t_cola unCola){
+	t_subscribe_message_node* message_node = malloc(sizeof(t_subscribe_message_node));
+	message_node->id = id;
+	message_node->cola = cola;
+	message_node->list = list_create();
+	list_add(list_message_subscritors,message_node);
+
+	for(int i=0;i<list_size(cola);i++){
+		t_subscribe_nodo* subscriptor = list_get(cola,i);
+		t_subscribe_ack_node* ack_subscriptor = malloc(sizeof(t_subscribe_ack_node));
+		ack_subscriptor->subscribe =  subscriptor ;
+		ack_subscriptor->ack = false;
+		list_add(message_node->list,ack_subscriptor);
 
 	}
 }

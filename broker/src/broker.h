@@ -32,6 +32,14 @@ int id;
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
 
 t_list *list_memory;
+t_list *list_message_subscritors;
+
+typedef struct {
+	int id;
+	t_cola cola;
+	t_list *list;
+} t_subscribe_message_node;
+
 
 typedef struct {
 	char* ip;
@@ -42,16 +50,21 @@ typedef struct {
 } t_subscribe_nodo;
 
 typedef struct {
+	t_subscribe_nodo* subscribe;
+	bool ack;
+} t_subscribe_ack_node;
+
+
+
+
+typedef struct {
 	int pointer;
 	int size;
 	t_cola cola;
 	int id;
 } t_nodo_memory;
 
-typedef struct {
-	int pointer;
-	t_list *list;
-} t_subscribe_message_node;
+
 
 
 t_subscribe_nodo* check_already_subscribed(char *ip,uint32_t puerto,t_list *list);
@@ -70,4 +83,5 @@ int save_on_memory(t_message_to_void *message_void);
 void save_node_list_memory(int pointer, int size,t_cola cola,int id);
 void send_message_to_queue(t_subscribe *subscriber,t_protocol protocol);
 int generar_id();
-#endif /* BROKER_H_ */
+void create_message_ack(int id,t_list *cola,t_cola unCola);
+#endif  /* BROKER_H_ */

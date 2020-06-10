@@ -278,7 +278,7 @@ void send_ack(void* arg) {
 	t_ack* ack_snd = malloc(sizeof(t_ack));
 	t_protocol ack_protocol = ACK;
 	ack_snd->id = val;
-	ack_snd->id_correlacional = val;
+
 
 	int client_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 	if (client_fd > 0) {

@@ -132,8 +132,12 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		t_package* package = utils_package_create(protocol);
 		utils_package_add(package, &((t_ack*) package_send)->id,
 				sizeof(uint32_t));
-		utils_package_add(package, &((t_ack*) package_send)->id_correlacional,
+		utils_package_add(package, &((t_ack*) package_send)->puerto,
 				sizeof(uint32_t));
+		utils_package_add(package, &((t_ack*) package_send)->protocol,
+					sizeof(t_protocol));
+		utils_package_add(package, ((t_ack*) package_send)->ip,
+							strlen(((t_ack*) package_send)->ip));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 		break;
@@ -317,7 +321,10 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		t_ack *ack_request = malloc(sizeof(t_ack));
 		t_list* list = utils_receive_package(socket);
 		utils_get_from_list_to(&ack_request->id, list, 0);
-		utils_get_from_list_to(&ack_request->id_correlacional, list, 1);
+		utils_get_from_list_to(&ack_request->puerto, list, 1);
+		utils_get_from_list_to(&ack_request->protocol, list, 2);
+		ack_request->ip = malloc(utils_get_buffer_size(list, 3));
+		utils_get_from_list_to(&ack_request->ip, list, 3);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return ack_request;
 	}
