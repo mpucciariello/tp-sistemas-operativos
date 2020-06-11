@@ -255,12 +255,15 @@ void updatePokemonMetadata(const char* fullPath, const char* directory, const ch
 // Dado una lista de bloques t_list 1,2,3 se leen los contenidos de dichos bloques
 // y se retorna una lista con los contenidos leidos 
 // t_list(int) => t_list (blockLine)
+// is_break determina si el contenido fue partido en otro bloque (si es que al grabar no entro todo el contenido y el \n esta en el bloque siguiente)
 t_list* readPokemonLines(t_list* blocks) {
 	t_list* retList = list_create();
 	size_t len = 0;
 	char* line = NULL;
 	ssize_t read;
 	FILE* blockFile;
+	int isBreakFile = 0;
+	char* previousLastLine = string_new();
 
 	for (int i = 0; i < list_size(blocks); i++) {
 		char* blockPath = string_new();
@@ -275,18 +278,31 @@ t_list* readPokemonLines(t_list* blocks) {
 		}
 
 		while((read = getline(&line, &len, blockFile)) != -1) {
-			blockLine* blockLine = formatStringToBlockLine(line);
-			list_add(retList, blockLine);
+			blockLine* blockLine;
+			if(string_contains(line, "\n") == 0) {
+				isBreakFile = 1;
+				string_append(&previousLastLine, line);
+			} else if(isBreakFile == 1) {
+				string_append(&previousLastLine, line);
+				blockLine = formatStringToBlockLine(previousLastLine);
+				isBreakFile = 0;
+				previousLastLine = string_new();
+				list_add(retList, blockLine);
+			} else {
+				blockLine = formatStringToBlockLine(line);
+				list_add(retList, blockLine);
+			}
 		}
 	}
 
 	fclose(blockFile);
 	if (line) free(line);
 
+
 	return retList;
 }
 
-// Dado una linea con formato "1-1=100" se devuelve la estructura correspondiente para poder manipularla
+// Dado una linea con formato "1-1=100/n" se devuelve la estructura correspondiente para poder manipularla
 blockLine* formatStringToBlockLine(char* blockline) {
 	blockLine* newLineBlock = malloc(sizeof(blockLine));
 	char** splittedLine = string_split(blockline, "=");
@@ -310,7 +326,7 @@ t_list* stringBlocksToList(char* blocks) {
 		char** blocksWithoutCommaSeparator = string_split(blocksStrWithoutBraces, ",");
 		int i = 0;
 		while(blocksWithoutCommaSeparator[i] != NULL) {
-			list_add(retList, blocksWithoutCommaSeparator[i]);
+			list_add(retList, atoi(blocksWithoutCommaSeparator[i]));
 			i++;
 		}
 	}
@@ -332,12 +348,19 @@ int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines)
 	return coordinateExist;
 }
 
-// Add or substract if coordinate exist
-void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation) {
-	
+void printListOfPokemonReadedLines(t_list* pokemonLines, char* blocks) {
+	game_card_logger_info("Printeando lista para los bloques %s:", blocks);
 	for (int i=0; i<list_size(pokemonLines); i++) {
 		blockLine* newLineBlock = list_get(pokemonLines, i);
-
+		game_card_logger_info("Size lista %d:", list_size(pokemonLines));
+		game_card_logger_info("Elemento i %d:", i);
+		game_card_logger_info("Pokemon Line %s:", formatToBlockLine(newLineBlock->posX, newLineBlock->posY, newLineBlock->cantidad));
+	}
+}
+// Add or substract if coordinate exist
+void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation) {
+	for (int i=0; i<list_size(pokemonLines); i++) {
+		blockLine* newLineBlock = list_get(pokemonLines, i);
 		if (newLineBlock->posX == newPokemon.pos_x && newLineBlock->posY == newPokemon.pos_y) {
 			if (string_contains(operation, "+")) {
 				newLineBlock->cantidad = newLineBlock->cantidad + newPokemon.cantidad;
@@ -367,20 +390,56 @@ char* formatToBlockLine(int intPosX, int intPosY, int intCantidad) {
 }
 
 /*
-void writeBlocks(t_list* pokemonLines, t_list* listBlocks) {
+// Formatea una lista de blockLines al string final que se va escribir "1-3=10\n1-3=50\n"
+char* formatListToWriteBlock(t_list* pokemonLines) {
+	
+	char* retChar = string_new();
+	for(int j=0; j<list_size(pokemonLines); j++) {
+		blockLine* newLineBlock = list_get(pokemonLines, j);
+		char* posX = string_itoa(newPokemon->pos_x);
+		char* posY = string_itoa(newPokemon->pos_y);
+		char* cantidad = string_itoa(newPokemon->cantidad);
+		string_append(&retChar, posX);
+		string_append(&retChar, "-");
+		string_append(&retChar, posY);
+		string_append(&retChar, "=");
+		string_append(&retChar, cantidad);
+		string_append(&retChar, "\n");
+	}
+
+	return retChar;
+}
+
+*/
+/*
+void writeBlocks(t_list* pokemonLines, t_list* listBlocks, int blocksSize, int coordinatesExist) {
 	
 	FILE* fileToWrite;
-	
-	fileToWrite = fopen(newDirectoryMetadata, "wb");
+	int readNextBlock = 0;
+	//fileToWrite = fopen(newDirectoryMetadata, "wb");
 
-	for(int i=0; i<list_size(l))
-	char* pokemonPerPosition = formatToBlockLine(newPokemon.pos_x, newPokemon.pos_y, newPokemon.cantidad);
-	int pokemonPerPositionLength = strlen(pokemonPerPosition);
-	fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, fileToWrite);
+	if (coordinateExists == 1) {
+		for(int i=0; i<list_size(listBlocks) && readNextBlock != 1; i ++) {
+			char* blockPath = string_new();
+			string_append(&blockPath, struct_paths[BLOCKS]);
+			string_append(&blockPath, string_itoa(list_get(listBlocks, i)));
+			string_append(&blockPath, ".bin");
+
+			fileToWrite = fopen(blockPath, "wb");
+
+			int sumTotalBlock = 0;
+			char* stringToWrite = formatListToWriteBlock(pokemonLines);
+			int pokemonPerPositionLength = strlen(pokemonPerPosition);
+			fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, fileToWrite);
+		}
+
+	}
 
 	fclose(blockFile);
 
-} */
+}
+*/
+
 void createNewPokemon(t_new_pokemon newPokemon) {
 	char* super_path = (char*) malloc(strlen(newPokemon.nombre_pokemon) +1);
 	char* pokemonDirectory = (char*) malloc(strlen(newPokemon.nombre_pokemon)+1);
@@ -407,6 +466,8 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 		t_list* listBlocks = stringBlocksToList(blocks);
 		
 		t_list* pokemonLines = readPokemonLines(listBlocks);
+
+		printListOfPokemonReadedLines(pokemonLines, blocks);
 
 		if (coordinateExists(newPokemon.pos_x, newPokemon.pos_y, pokemonLines) == 1) {
 			operatePokemonLine(newPokemon, pokemonLines, "+");
