@@ -260,9 +260,21 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 
 		  updatePokemonMetadata(newPokemon.nombre_pokemon, "N", stringLength, metadataBlocks, "Y");
 		} else if(lfsMetaData.blockSize < pokemonPerPositionLength) {
-		  // Pido dos bloques
-		  game_card_logger_info("Proximo free block %d", getAndSetFreeBlock(bitmap, lfsMetaData.blocks));
-		  game_card_logger_info("Proximo 2 free block %d", getAndSetFreeBlock(bitmap, lfsMetaData.blocks));
+		  
+		  t_list* pokemonLines = list_create();
+		  blockLine* newNode = createBlockLine(newPokemon.pos_x, newPokemon.pos_y, newPokemon.cantidad);
+		  list_add(pokemonLines, newNode);
+
+		  char* stringToWrite = formatListToStringLine(pokemonLines);
+		  int occupiedBlocks = cuantosBloquesOcupa(stringToWrite);
+		  char* stringLength = string_itoa(strlen(stringToWrite));
+
+		  t_list* listBlocks = retrieveFreeBlocks(occupiedBlocks);
+
+		  writeBlocks(stringToWrite, listBlocks);
+		  char* metadataBlocks = formatToMetadataBlocks(listBlocks);
+		  updatePokemonMetadata(newPokemon.nombre_pokemon, "N", stringLength, metadataBlocks, "Y");
+		  
 	  	}
 	}
 	
