@@ -67,15 +67,6 @@ int _mkpath(char* file_path, mode_t mode)
 }
 
 
-char* crearPathBloque(int bloque, char* montajeBloques) {
-    char* nroBloque = string_duplicate(montajeBloques);
-    char* str_nroBloque = string_itoa(bloque);
-    string_append(&nroBloque, str_nroBloque);
-    string_append(&nroBloque, ".bin");
-
-    return nroBloque;
-}
-
 char* obtenerPathDelNumeroDeBloque(int numeroDeBloque){
 	char* path_del_bloque = malloc(strlen(game_card_config->punto_montaje_tallgrass)+strlen("/Bloques")+20);
 	sprintf(path_del_bloque,"%sBloques/%d.bin",game_card_config->punto_montaje_tallgrass, numeroDeBloque);

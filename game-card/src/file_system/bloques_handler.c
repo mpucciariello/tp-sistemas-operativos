@@ -1,9 +1,7 @@
 #include "bloques_handler.h"
 
 int cuantosBloquesOcupa(char* value) {
-
     int tamanio = string_length(value);
-
     return calcualarBloques(tamanio);
 }
 
@@ -12,33 +10,42 @@ int calcualarBloques(int tamanio) {
     return 1 + ((tamanio - 1) / lfsMetaData.blockSize);
 }
 
-void writeBlocks(char* stringToWrite, t_list* listBlocks, int blocksSize) {
-	
-	FILE* fileToWrite;
+void writeBlocks(char* value, t_list* bloques) {
 
-	//fileToWrite = fopen(newDirectoryMetadata, "wb");
+    int limite = string_length(value);
+    char* valorAGuardar = string_duplicate(value);
 
-	for(int i=0; i<list_size(listBlocks); i ++) {
-		char* blockPath = string_new();
-		string_append(&blockPath, struct_paths[BLOCKS]);
-		string_append(&blockPath, string_itoa(list_get(listBlocks, i)));
-		string_append(&blockPath, ".bin");
+    for(int i = 0; i < list_size(bloques) && limite > 0; i++) {
 
-		/*
-		fileToWrite = fopen(blockPath, "wb");
+        char* pathBloque = obtenerPathDelNumeroDeBloque((int) list_get(bloques, i));
 
-		int sumTotalBlock = 0;
-		char* stringToWrite = formatListToWriteBlock(pokemonLines);
-		int pokemonPerPositionLength = strlen(pokemonPerPosition);
-		fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, fileToWrite);
-	}
+        FILE * bloque = fopen(pathBloque, "w+");
 
+        int limiteSuperior;
 
-	fclose(blockFile);
-*/
-	}
+        if(limite >= lfsMetaData.blockSize) {
+            limiteSuperior = lfsMetaData.blockSize;
+        } else {
+            limiteSuperior = limite;
+        }
+
+        char* take = string_substring(valorAGuardar, 0, limiteSuperior);
+
+        fwrite(take,1,limiteSuperior,bloque);
+
+        limite -= string_length(take);
+
+        if(limite > 0) {
+            valorAGuardar = string_substring_from(valorAGuardar, limiteSuperior);
+        }
+
+        fclose(bloque);
+        free(pathBloque);
+        free(take);
+    }
+
+    free(valorAGuardar);
 }
-
 
 // Dado una lista de bloques t_list 1,2,3 se leen los contenidos de dichos bloques
 // y se retorna una lista con los contenidos leidos 
@@ -151,6 +158,13 @@ char* formatToBlockLine(int intPosX, int intPosY, int intCantidad) {
 	return pokemonPerPosition;
 }
 
+blockLine* createBlockLine(int intPosX, int intPosY, int intCantidad) {
+	blockLine* newLineBlock = malloc(sizeof(blockLine));
+	newLineBlock->posX = intPosX;
+	newLineBlock->posY = intPosY;
+	newLineBlock->cantidad = intCantidad;
+	return newLineBlock;
+}
 
 void printListOfPokemonReadedLines(t_list* pokemonLines, char* blocks) {
 	game_card_logger_info("Printeando lista para los bloques %s:", blocks);
@@ -168,3 +182,4 @@ bool stringFitsInBlocks(char* stringToWrite, t_list* listBlocks) {
 	int spaceToAllocateString = list_size(listBlocks) * lfsMetaData.blockSize;
 	return stringToWriteSize <= spaceToAllocateString;
 }
+

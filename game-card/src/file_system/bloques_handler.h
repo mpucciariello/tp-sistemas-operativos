@@ -26,16 +26,15 @@ typedef struct {
 
 int calcualarBloques(int tamanio);
 int cuantosBloquesOcupa(char* value);
-
+blockLine* createBlockLine(int intPosX, int intPosY, int intCantidad);
 // Formatters
 char* formatListToStringLine(t_list* pokemonLines);
 t_list* stringBlocksToList(char* blocks);
 blockLine* formatStringToBlockLine(char* blockline);
 char* formatToBlockLine(int posX, int posY, int cantidad);
 
-
 bool stringFitsInBlocks(char* stringToWrite, t_list* listBlocks);
 void printListOfPokemonReadedLines(t_list* pokemonLines, char* blocks);
 
-void writeBlocks(char* stringToWrite, t_list* listBlocks, int blocksSize);
+void writeBlocks(char* value, t_list* bloques);
 t_list* readPokemonLines(t_list* blocks);

@@ -18,9 +18,8 @@
 
 #include "./bloques_handler.h"
 #include "./game_card_handler.h"
-#include "./setup.h"
 
-
+char* formatToMetadataBlocks(t_list* blocks);
 void updatePokemonMetadata(const char* fullPath, const char* directory, const char* size, const char* blocks, const char* open);
 int createRecursiveDirectory(const char* path);
 int createFile(const char* fullPath);
@@ -28,6 +27,8 @@ int createFile(const char* fullPath);
 void createNewPokemon(t_new_pokemon newPokemon);
 int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
 void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation);
+t_list* retrieveFreeBlocks(int extraBlocksNeeded);
+
 
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();

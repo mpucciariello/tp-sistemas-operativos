@@ -7,11 +7,79 @@ void gcfsCreateStructs(){
 	setupFilesDirectory();
 
 	t_new_pokemon newPokemon;
-	newPokemon.nombre_pokemon = "Pokemon/Electrico/Zapdos";
+	newPokemon.nombre_pokemon = "Pokemon/Articuno";
+
 	newPokemon.cantidad = 100;
-	newPokemon.pos_x = 1;
+	newPokemon.pos_x = 2;
 	newPokemon.pos_y = 1;
+
+	t_new_pokemon newPokemon2;
+	newPokemon2.nombre_pokemon = "Pokemon/Articuno";
+	
+	newPokemon2.cantidad = 232;
+	newPokemon2.pos_x = 3;
+	newPokemon2.pos_y = 3;
+
+	t_new_pokemon newPokemon3;
+	newPokemon3.nombre_pokemon = "Pokemon/Articuno";
+	
+	newPokemon3.cantidad = 232;
+	newPokemon3.pos_x = 4;
+	newPokemon3.pos_y = 4;
+
+	t_new_pokemon newPokemon4;
+	newPokemon4.nombre_pokemon = "Pokemon/Articuno";
+	
+	newPokemon4.cantidad = 232;
+	newPokemon4.pos_x = 5;
+	newPokemon4.pos_y = 5;
+
+	t_new_pokemon newPokemon6;
+	newPokemon6.nombre_pokemon = "Pokemon/Articuno";
+	
+	newPokemon6.cantidad = 232;
+	newPokemon6.pos_x = 66;
+	newPokemon6.pos_y = 66;
+
+	t_new_pokemon newPokemon7;
+	newPokemon7.nombre_pokemon = "Pokemon/Articuno";
+	
+	newPokemon7.cantidad = 232;
+	newPokemon7.pos_x = 77;
+	newPokemon7.pos_y = 77;
+
+	t_new_pokemon newPokemon8;
+	newPokemon8.nombre_pokemon = "Pokemon/Articuno";
+	
+	newPokemon8.cantidad = 232;
+	newPokemon8.pos_x = 88;
+	newPokemon8.pos_y = 88;
+
+	t_new_pokemon newPokemon9;
+	newPokemon9.nombre_pokemon = "Pokemon/Articuno";
+	
+	newPokemon9.cantidad = 99;
+	newPokemon9.pos_x = 99;
+	newPokemon9.pos_y = 99;
+
+	t_new_pokemon newPokemon10;
+	newPokemon10.nombre_pokemon = "Pokemon/Articuno";
+	
+	newPokemon10.cantidad = 10;
+	newPokemon10.pos_x = 1;
+	newPokemon10.pos_y = 6;
+
 	createNewPokemon(newPokemon);
+	
+	createNewPokemon(newPokemon2);
+	createNewPokemon(newPokemon3);
+	createNewPokemon(newPokemon4);
+	createNewPokemon(newPokemon6);
+	createNewPokemon(newPokemon7);
+	createNewPokemon(newPokemon8);
+	createNewPokemon(newPokemon9);
+	createNewPokemon(newPokemon10);
+
 	game_card_logger_info("Termino todo OK");
 }
 
@@ -141,21 +209,30 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 	    isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
 
 		t_list* listBlocks = stringBlocksToList(blocks);
-		
 		t_list* pokemonLines = readPokemonLines(listBlocks);
-
-		//printListOfPokemonReadedLines(pokemonLines, blocks);
 
 		if (coordinateExists(newPokemon.pos_x, newPokemon.pos_y, pokemonLines) == 1) {
 			operatePokemonLine(newPokemon, pokemonLines, "+");
-			char* stringToWrite = formatListToStringLine(pokemonLines);
-			
-			if (!stringFitsInBlocks(stringToWrite, listBlocks)) {
-
-			} else {
-
-			}
+		} else {
+			blockLine* newNode = createBlockLine(newPokemon.pos_x, newPokemon.pos_y, newPokemon.cantidad);
+			list_add(pokemonLines, newNode);
 		}
+
+		char* stringToWrite = formatListToStringLine(pokemonLines);
+		int occupiedBlocks = cuantosBloquesOcupa(stringToWrite);
+		char* stringLength = string_itoa(strlen(stringToWrite));
+
+		// Necesito pedir bloques
+		if (occupiedBlocks > list_size(listBlocks)) {
+			int extraBlocksNeeded = occupiedBlocks - list_size(listBlocks);
+			t_list* extraBlocks = retrieveFreeBlocks(extraBlocksNeeded);
+			// Agrego los nuevos bloques en la lista original
+			list_add_all(listBlocks, extraBlocks);
+		} 
+
+		writeBlocks(stringToWrite, listBlocks);
+		char* metadataBlocks = formatToMetadataBlocks(listBlocks);
+		updatePokemonMetadata(newPokemon.nombre_pokemon, "N", stringLength, metadataBlocks, "Y");
 
 		config_destroy(metadataFile);
 	} else {
@@ -168,21 +245,20 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 		int pokemonPerPositionLength = strlen(pokemonPerPosition);
 
 		if(lfsMetaData.blockSize >= pokemonPerPositionLength) {
+		  
 		  // Pido un bloque
 		  int freeBlockPosition = getAndSetFreeBlock(bitmap, lfsMetaData.blocks);
-		  char* usedBlocks = string_new();
-		  string_append(&usedBlocks, "[");
-		  string_append(&usedBlocks, string_itoa(freeBlockPosition));
-		  string_append(&usedBlocks, "]");
-		  // Restamos el /n
-		  char* stringToSaveLength = string_itoa(strlen(pokemonPerPosition) - 1);
+		  t_list* freeBlocks = list_create();
+		  list_add(freeBlocks, freeBlockPosition);
+		  char* metadataBlocks = formatToMetadataBlocks(freeBlocks);
+		  char* stringLength = string_itoa(pokemonPerPositionLength);
 
 		  char* pathBloque = obtenerPathDelNumeroDeBloque(freeBlockPosition);
 		  FILE* blockFile = fopen(pathBloque,"wr");
 		  fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, blockFile);
 		  fclose(blockFile);
 
-		  updatePokemonMetadata(newPokemon.nombre_pokemon, "N", stringToSaveLength, usedBlocks, "Y");
+		  updatePokemonMetadata(newPokemon.nombre_pokemon, "N", stringLength, metadataBlocks, "Y");
 		} else if(lfsMetaData.blockSize < pokemonPerPositionLength) {
 		  // Pido dos bloques
 		  game_card_logger_info("Proximo free block %d", getAndSetFreeBlock(bitmap, lfsMetaData.blocks));
@@ -193,6 +269,33 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 
 	//mostrar_bitarray(bitmap);
 	
+}
+
+t_list* retrieveFreeBlocks(int extraBlocksNeeded) {
+	t_list* retList = list_create();
+	for (int i=0; i<extraBlocksNeeded; i++) {
+		int freeBlockPosition = getAndSetFreeBlock(bitmap, lfsMetaData.blocks);
+		list_add(retList, freeBlockPosition);
+	}
+	return retList;
+}
+
+// Formatea una lista de enteros a un string con formato [1, 2, 3] requerido por el Metadata
+char* formatToMetadataBlocks(t_list* blocks) {
+	char* retBlocks = string_new();
+	string_append(&retBlocks, "[");
+
+	if (list_size(blocks) > 1) {
+		for(int i=0; i<list_size(blocks); i++) {
+			string_append(&retBlocks, string_itoa(list_get(blocks, i)));
+			if (i != (list_size(blocks) - 1)) string_append(&retBlocks, ",");
+		}
+	} else {
+		string_append(&retBlocks, string_itoa(list_get(blocks, 0)));
+	}
+
+	string_append(&retBlocks, "]");
+	return retBlocks;
 }
 
 void gcfsFreeBitmaps() {
