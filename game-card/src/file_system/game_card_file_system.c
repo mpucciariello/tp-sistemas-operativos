@@ -6,6 +6,7 @@ void gcfsCreateStructs(){
 	setupMetadata();
 	setupFilesDirectory();
 
+	/*
 	t_new_pokemon newPokemon;
 	newPokemon.nombre_pokemon = "Pokemon/Articuno";
 
@@ -80,6 +81,7 @@ void gcfsCreateStructs(){
 	createNewPokemon(newPokemon9);
 	createNewPokemon(newPokemon10);
 
+	*/
 	game_card_logger_info("Termino todo OK");
 }
 
