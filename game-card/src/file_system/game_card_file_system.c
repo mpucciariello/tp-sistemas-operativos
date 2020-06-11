@@ -463,13 +463,11 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 		t_list* pokemonLines = readPokemonLines(listBlocks);
 
 		//printListOfPokemonReadedLines(pokemonLines, blocks);
-
 		if (coordinateExists(newPokemon.pos_x, newPokemon.pos_y, pokemonLines) == 1) {
 			operatePokemonLine(newPokemon, pokemonLines, "+");
 			char* stringToWrite = formatListToStringLine(pokemonLines);
 			
 			if (!stringFitsInBlocks(stringToWrite, listBlocks)) {
-
 			} else {
 
 			}
@@ -516,4 +514,25 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 void gcfsFreeBitmaps() {
 	free(bitmap->bitarray);
 	bitarray_destroy(bitmap);
+}
+
+int cuantosBloquesOcupa(char* value) {
+
+    int tamanio = string_length(value);
+
+    return calcualarBloques(tamanio);
+}
+
+int calcualarBloques(int tamanio) {
+    // Redondea hacia arriba
+    return 1 + ((tamanio - 1) / lfsMetaData.blockSize);
+}
+
+char* crearPathBloque(int bloque, char* montajeBloques) {
+    char* nroBloque = string_duplicate(montajeBloques);
+    char* str_nroBloque = string_itoa(bloque);
+    string_append(&nroBloque, str_nroBloque);
+    string_append(&nroBloque, ".bin");
+
+    return nroBloque;
 }

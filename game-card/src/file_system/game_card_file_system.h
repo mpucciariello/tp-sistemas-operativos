@@ -14,7 +14,6 @@
 #include "../config/game_card_config.h"
 #include "../shared-common/common/utils.h"
 #include "./bitmap.h"
-#include "./utils.h"
 
 typedef enum
 {
@@ -68,6 +67,9 @@ t_list* readPokemonLines(t_list* blocks);
 int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
 void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation);
 
+int calcualarBloques(int tamanio);
+int cuantosBloquesOcupa(char* value);
+char* crearPathBloque(int bloque, char* montajeBloques);
 
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();
