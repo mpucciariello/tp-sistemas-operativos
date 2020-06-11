@@ -374,11 +374,11 @@ void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* op
 
 // Formatea unas coordenadas y cantidad a "1-1=100" string
 char* formatToBlockLine(int intPosX, int intPosY, int intCantidad) {
+	char* pokemonPerPosition = string_new();
 	char* posX = string_itoa(intPosX);
 	char* posY = string_itoa(intPosY);
 	char* cantidad = string_itoa(intCantidad);
 	
-	char* pokemonPerPosition = string_new();
 	string_append(&pokemonPerPosition, posX);
 	string_append(&pokemonPerPosition, "-");
 	string_append(&pokemonPerPosition, posY);
@@ -389,56 +389,51 @@ char* formatToBlockLine(int intPosX, int intPosY, int intCantidad) {
 	return pokemonPerPosition;
 }
 
-/*
+
 // Formatea una lista de blockLines al string final que se va escribir "1-3=10\n1-3=50\n"
-char* formatListToWriteBlock(t_list* pokemonLines) {
-	
+char* formatListToStringLine(t_list* pokemonLines) {
 	char* retChar = string_new();
 	for(int j=0; j<list_size(pokemonLines); j++) {
 		blockLine* newLineBlock = list_get(pokemonLines, j);
-		char* posX = string_itoa(newPokemon->pos_x);
-		char* posY = string_itoa(newPokemon->pos_y);
-		char* cantidad = string_itoa(newPokemon->cantidad);
-		string_append(&retChar, posX);
-		string_append(&retChar, "-");
-		string_append(&retChar, posY);
-		string_append(&retChar, "=");
-		string_append(&retChar, cantidad);
-		string_append(&retChar, "\n");
+		string_append(&retChar, formatToBlockLine(newLineBlock->posX, newLineBlock->posY, newLineBlock->cantidad));
 	}
-
 	return retChar;
 }
 
-*/
-/*
-void writeBlocks(t_list* pokemonLines, t_list* listBlocks, int blocksSize, int coordinatesExist) {
+
+void writeBlocks(char* stringToWrite, t_list* listBlocks, int blocksSize) {
 	
 	FILE* fileToWrite;
-	int readNextBlock = 0;
+
 	//fileToWrite = fopen(newDirectoryMetadata, "wb");
 
-	if (coordinateExists == 1) {
-		for(int i=0; i<list_size(listBlocks) && readNextBlock != 1; i ++) {
-			char* blockPath = string_new();
-			string_append(&blockPath, struct_paths[BLOCKS]);
-			string_append(&blockPath, string_itoa(list_get(listBlocks, i)));
-			string_append(&blockPath, ".bin");
+	for(int i=0; i<list_size(listBlocks); i ++) {
+		char* blockPath = string_new();
+		string_append(&blockPath, struct_paths[BLOCKS]);
+		string_append(&blockPath, string_itoa(list_get(listBlocks, i)));
+		string_append(&blockPath, ".bin");
 
-			fileToWrite = fopen(blockPath, "wb");
+		/*
+		fileToWrite = fopen(blockPath, "wb");
 
-			int sumTotalBlock = 0;
-			char* stringToWrite = formatListToWriteBlock(pokemonLines);
-			int pokemonPerPositionLength = strlen(pokemonPerPosition);
-			fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, fileToWrite);
-		}
-
+		int sumTotalBlock = 0;
+		char* stringToWrite = formatListToWriteBlock(pokemonLines);
+		int pokemonPerPositionLength = strlen(pokemonPerPosition);
+		fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, fileToWrite);
 	}
 
-	fclose(blockFile);
 
-}
+	fclose(blockFile);
 */
+	}
+}
+
+//Chequea si el string a escribir entra en los bloques
+bool stringFitsInBlocks(char* stringToWrite, t_list* listBlocks) {
+	int stringToWriteSize = strlen(stringToWrite);
+	int spaceToAllocateString = list_size(listBlocks) * lfsMetaData.blockSize;
+	return stringToWriteSize <= spaceToAllocateString;
+}
 
 void createNewPokemon(t_new_pokemon newPokemon) {
 	char* super_path = (char*) malloc(strlen(newPokemon.nombre_pokemon) +1);
@@ -467,10 +462,17 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 		
 		t_list* pokemonLines = readPokemonLines(listBlocks);
 
-		printListOfPokemonReadedLines(pokemonLines, blocks);
+		//printListOfPokemonReadedLines(pokemonLines, blocks);
 
 		if (coordinateExists(newPokemon.pos_x, newPokemon.pos_y, pokemonLines) == 1) {
 			operatePokemonLine(newPokemon, pokemonLines, "+");
+			char* stringToWrite = formatListToStringLine(pokemonLines);
+			
+			if (!stringFitsInBlocks(stringToWrite, listBlocks)) {
+
+			} else {
+
+			}
 		}
 
 		config_destroy(metadataFile);
@@ -482,7 +484,6 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 
 		char* pokemonPerPosition = formatToBlockLine(newPokemon.pos_x, newPokemon.pos_y, newPokemon.cantidad);
 		int pokemonPerPositionLength = strlen(pokemonPerPosition);
-		game_card_logger_info("Pokemon per position %s", pokemonPerPosition);
 
 		if(lfsMetaData.blockSize >= pokemonPerPositionLength) {
 		  // Pido un bloque

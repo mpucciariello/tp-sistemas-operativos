@@ -14,6 +14,7 @@
 #include "../config/game_card_config.h"
 #include "../shared-common/common/utils.h"
 #include "./bitmap.h"
+#include "./utils.h"
 
 typedef enum
 {
@@ -53,13 +54,19 @@ void updatePokemonMetadata(const char* fullPath, const char* directory, const ch
 int createRecursiveDirectory(const char* path);
 int createFile(const char* fullPath);
 
-t_list* stringBlocksToList(char* blocks);
-t_list* readPokemonLines(t_list* blocks);
-blockLine* formatStringToBlockLine(char* blockline);
-int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
 void createNewPokemon(t_new_pokemon newPokemon);
-void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation);
+
+
+// Formatters
+char* formatListToStringLine(t_list* pokemonLines);
+t_list* stringBlocksToList(char* blocks);
+blockLine* formatStringToBlockLine(char* blockline);
 char* formatToBlockLine(int posX, int posY, int cantidad);
+
+void writeBlocks(char* stringToWrite, t_list* listBlocks, int blocksSize);
+t_list* readPokemonLines(t_list* blocks);
+int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
+void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation);
 
 
 void gcfsCreateStructs();
