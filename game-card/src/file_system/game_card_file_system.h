@@ -27,7 +27,7 @@ int createFile(const char* fullPath);
 void createNewPokemon(t_new_pokemon newPokemon);
 int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
 void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation);
-t_list* retrieveFreeBlocks(int extraBlocksNeeded);
+t_list* requestFreeBlocks(int extraBlocksNeeded);
 
 
 void gcfsCreateStructs();

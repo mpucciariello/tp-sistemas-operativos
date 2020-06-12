@@ -111,7 +111,7 @@ void createMetaDataFile(char* metadataBin){
 	FILE* metadata = fopen(metadataBin, "w+b");
 	config_metadata = config_create(metadataBin);
 	config_set_value(config_metadata, "BLOCK_SIZE", "64");
-	config_set_value(config_metadata, "BLOCKS", "15"); // asi no tengo 5492 bloques :P
+	config_set_value(config_metadata, "BLOCKS", "4096"); // asi no tengo 5492 bloques :P
 	config_set_value(config_metadata, "MAGIC_NUMBER", "TALL_GRASS");
 	config_save(config_metadata);
 	fclose(metadata);
