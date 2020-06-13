@@ -430,30 +430,104 @@ void team_planner_set_algorithm() {
 	}
 }
 
+t_pokemon* team_planner_get_pokemon_by_trainner(t_entrenador_pokemon* entrenador) {
+	char* pokemon_needed = entrenador->blocked_info->pokemon_needed;
+	int i;
+	for (i = 0; i < list_size(target_pokemons); i++) {
+		t_pokemon* p = list_get(target_pokemons, i);
+		if (entrenador->id == p->trainner_id && string_equals_ignore_case(pokemon_needed, p->name)) {
+			return p;
+		}
+	}
+	return NULL;
+}
+
+t_list* team_planner_get_id_entrenadores_deadlock(t_entrenador_pokemon* entrenador) {
+	t_list* lista = list_create();
+
+	t_pokemon* pokemon_necesita_entrenador_bloqueante = NULL;
+	t_pokemon* pokemon_necesita_entrenador = team_planner_get_pokemon_by_trainner(entrenador);
+
+	if (pokemon_necesita_entrenador->state == FREE)
+		return NULL;
+
+	// Este es el entrenador que esta bloqueando a mi entrenador original
+	t_entrenador_pokemon* entrenador_bloqueante = pokemon_necesita_entrenador->blocking_trainner;
+
+	// Si no hay entrenador bloqueante => retorno
+	if (entrenador_bloqueante == NULL)
+		return NULL;
+
+	list_add(lista, &entrenador_bloqueante->id);
+
+	while (true) {
+		if (entrenador_bloqueante->state == BLOCKED) {
+			// Este es el pokemon que necesita el entrenador bloqueante para continuar
+			pokemon_necesita_entrenador_bloqueante = team_planner_get_pokemon_by_trainner(entrenador_bloqueante);
+
+			// Si el pokemon que necesita el entrenador bloqueante esta bloqueado por el entrenador original => hay deadlock
+			if (pokemon_necesita_entrenador_bloqueante->blocking_trainner->id == entrenador->id) {
+				list_add(lista, &entrenador->id);
+				return lista;
+			}
+
+			if (entrenador_bloqueante->id == pokemon_necesita_entrenador_bloqueante->blocking_trainner->id)
+				return lista;
+
+			// No estaba bloqueado por el original => guardo la info
+			list_add(lista, &pokemon_necesita_entrenador_bloqueante->blocking_trainner->id);
+
+			// Evaluo al entrenador que bloquea a mi entrenador bloqueante
+			entrenador_bloqueante = pokemon_necesita_entrenador_bloqueante->blocking_trainner;
+		} else {
+			// El entrenador bloqueante no esta bloqueado
+			return NULL;
+		}
+	}
+}
+
 void team_planner_check_deadlocks() {
+	t_list* ids_bloqueados = list_create();
+
+	int _get_id(t_entrenador_pokemon* entrenador) {
+		return entrenador->id;
+	}
+	ids_bloqueados = list_map(block_queque, (void*) _get_id);
+
 	int i;
 	for (i = 0; i < list_size(block_queque); i++) {
-		t_entrenador_pokemon* e = list_get(block_queque, i);
-		t_list* objetivos = e->targets;
-		int j;
-		for (j = 0; j < list_size(objetivos); j++) {
-			t_pokemon* p = list_get(objetivos, j);
-			int k;
-			for (k = 0; k < list_size(block_queque); k++) {
-				t_entrenador_pokemon* en = list_get(block_queque, k);
-				t_list* pokemons = en->pokemons;
-				int l;
-				for (l = 0; l < list_size(pokemons); l++) {
-					t_pokemon* po = list_get(pokemons, l);
-					if (e->id != en->id &&
-						string_equals_ignore_case(en->blocked_info->pokemon_needed, p->name) &&
-						string_equals_ignore_case(e->blocked_info->pokemon_needed, po->name)) {
-							team_logger_info("Ocurrio un deadlock entre los entrenadores %d y %d!", e->id, en->id);
+		t_entrenador_pokemon *trainner = list_get(block_queque, i);
+
+		bool _es_el_mismo(int id) {
+			return trainner->id == id;
+		}
+		if (!list_any_satisfy(ids_bloqueados, (void*)_es_el_mismo))
+			continue;
+
+		t_list* entrenadores_deadlock = team_planner_get_id_entrenadores_deadlock(trainner);
+
+		if (entrenadores_deadlock != NULL) {
+			if (!list_is_empty(entrenadores_deadlock)) {
+				team_logger_info("Los siguientes entrenadores estan en deadlock:");
+				team_logger_info("Entrenador %d", trainner->id);
+				int j;
+				for (j = 0; j < list_size(entrenadores_deadlock) ; j++) {
+					int* aux = list_get(entrenadores_deadlock, j);
+					int k;
+					for (k = 0; k < list_size(ids_bloqueados); k++) {
+						int id_aux = (int) list_get(ids_bloqueados, k);
+						if (id_aux == *aux)
+							list_remove(ids_bloqueados, k);
 					}
+					team_logger_info("Bloqueado por %d", *aux);
 				}
+				list_clean(entrenadores_deadlock);
+			} else {
+				team_logger_warn("No se ha detectado deadlock");
 			}
 		}
 	}
+	list_destroy(ids_bloqueados);
 }
 
 void team_planner_print_fullfill_target() {
