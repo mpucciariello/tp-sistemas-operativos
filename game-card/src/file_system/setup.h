@@ -19,7 +19,8 @@ typedef enum {
 	METADATA,
 	FILES,
 	BLOCKS,
-	POKEMON
+	POKEMON,
+	TALL_GRASS
 } e_paths_structure;
 
 typedef struct {
@@ -33,7 +34,7 @@ t_config* config_metadata;
 t_config* config_table_metadata;
 t_bitarray* bitmap;
 FILE* bitmap_file;
-char* struct_paths[4];
+char* struct_paths[5];
 
 
 void createRootFiles();

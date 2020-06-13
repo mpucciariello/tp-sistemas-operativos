@@ -1,6 +1,9 @@
 #include "setup.h"
 
 void createRootFiles() {
+	char* dir_tallGrass = string_new();
+	string_append(&dir_tallGrass, game_card_config->punto_montaje_tallgrass);
+
 	char* dir_metadata = string_new();
 	string_append(&dir_metadata, game_card_config->punto_montaje_tallgrass);
 	string_append(&dir_metadata, "Metadata/");
@@ -29,6 +32,7 @@ void createRootFiles() {
 	struct_paths[METADATA] = dir_metadata;
 	struct_paths[FILES] = archivos;
 	struct_paths[BLOCKS] = dir_bloques;
+	struct_paths[TALL_GRASS] = dir_tallGrass;
 }
 
 void setupMetadata() {

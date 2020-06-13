@@ -31,9 +31,8 @@ void writeBlocks(char* value, t_list* bloques) {
 
         char* take = string_substring(valorAGuardar, 0, limiteSuperior);
 
-        fwrite(take,1,limiteSuperior,bloque);
-
-        limite -= string_length(take);
+        int write = fwrite(take,1,limiteSuperior,bloque);
+         limite -= string_length(take);
 
         if(limite > 0) {
             valorAGuardar = string_substring_from(valorAGuardar, limiteSuperior);
