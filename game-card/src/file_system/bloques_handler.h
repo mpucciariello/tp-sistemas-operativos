@@ -34,7 +34,7 @@ blockLine* formatStringToBlockLine(char* blockline);
 char* formatToBlockLine(int posX, int posY, int cantidad);
 
 bool stringFitsInBlocks(char* stringToWrite, t_list* listBlocks);
-void printListOfPokemonReadedLines(t_list* pokemonLines, char* blocks);
+void printListOfPokemonReadedLines(t_list* pokemonLines);
 
 void writeBlocks(char* value, t_list* bloques);
 t_list* readPokemonLines(t_list* blocks);

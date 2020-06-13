@@ -165,11 +165,10 @@ blockLine* createBlockLine(int intPosX, int intPosY, int intCantidad) {
 	return newLineBlock;
 }
 
-void printListOfPokemonReadedLines(t_list* pokemonLines, char* blocks) {
-	game_card_logger_info("Printeando lista para los bloques %s:", blocks);
+void printListOfPokemonReadedLines(t_list* pokemonLines) {
+	game_card_logger_info("Size lista %d:", list_size(pokemonLines));
 	for (int i=0; i<list_size(pokemonLines); i++) {
 		blockLine* newLineBlock = list_get(pokemonLines, i);
-		game_card_logger_info("Size lista %d:", list_size(pokemonLines));
 		game_card_logger_info("Elemento i %d:", i);
 		game_card_logger_info("Pokemon Line %s:", formatToBlockLine(newLineBlock->posX, newLineBlock->posY, newLineBlock->cantidad));
 	}

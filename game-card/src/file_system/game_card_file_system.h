@@ -25,6 +25,9 @@ int createRecursiveDirectory(const char* path);
 int createFile(const char* fullPath);
 
 void createNewPokemon(t_new_pokemon newPokemon);
+t_list* getAPokemon(t_get_pokemon getPokemon);
+int catchAPokemon(t_catch_pokemon catchPokemon);
+
 int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
 void addTotalPokemonIfCoordinateExist(t_new_pokemon newPokemon, t_list* pokemonLines);
 void deletePokemonTotalIfCoordinateExist(t_catch_pokemon catchPokemon, t_list* pokemonLines);
