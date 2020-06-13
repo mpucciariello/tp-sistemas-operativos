@@ -45,3 +45,51 @@ int split_path(const char* path, char** super_path, char** name){
 
 	return 0;
 }
+
+int _mkpath(char* file_path, mode_t mode)
+{
+	assert(file_path && *file_path);
+	char* p;
+	for(p = strchr(file_path + 1, '/'); p; p = strchr(p + 1, '/'))
+	{
+		*p = '\0';
+		if(mkdir(file_path, mode) == -1)
+		{
+			if (errno != EEXIST)
+			{
+				*p = '/';
+				return -1;
+			}
+		}
+		*p = '/';
+	}
+	return 0;
+}
+
+
+char* obtenerPathDelNumeroDeBloque(int numeroDeBloque){
+	char* path_del_bloque = malloc(strlen(game_card_config->punto_montaje_tallgrass)+strlen("/Bloques")+20);
+	sprintf(path_del_bloque,"%sBloques/%d.bin",game_card_config->punto_montaje_tallgrass, numeroDeBloque);
+	return path_del_bloque;
+}
+
+
+pokemonMetadata readPokemonMetadata(char* pokemonPath) {
+	char* existingPokemonMetadata = string_new();
+	char* existingPokemonBlocks = string_new();
+
+	pokemonMetadata metadata;
+
+	metadata.blocks = string_new();
+	metadata.isOpen = string_new();
+	
+	string_append(&existingPokemonMetadata, pokemonPath);
+	string_append(&existingPokemonMetadata, "/Metadata.bin");
+
+	t_config* metadataFile = config_create(existingPokemonMetadata);
+	metadata.blockSize = config_get_int_value(metadataFile, "SIZE");
+	metadata.blocks = string_duplicate(config_get_string_value(metadataFile, "BLOCKS"));
+	metadata.isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
+	config_destroy(metadataFile);
+	return metadata;
+}

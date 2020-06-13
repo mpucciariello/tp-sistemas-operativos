@@ -21,9 +21,23 @@ bool testear_bloque_libre_en_posicion(t_bitarray* bitmap, int pos){
 int getAndSetFreeBlock(t_bitarray* bitmap, unsigned int blocks){
 	int j;
 	for(j =0; testear_bloque_libre_en_posicion(bitmap, j); j++); // Hasta un bloque lbre
-	if(j>blocks) {
-		printf("cantidad insuficiente de espacio o bloques ");
-	}
 	setear_bloque_ocupado_en_posicion(bitmap, j);
 	return j;
+}
+
+// Retorna la cantidad de bloques libres
+int getFreeBlocks(int metadataBlocks, t_bitarray* bitmap){
+
+    int bloques_libres = 0;
+    int bloque_libre;
+    int bit = 0;
+    int tamMaximo = metadataBlocks;
+    while(bit < tamMaximo)
+    {
+        bloque_libre = bitarray_test_bit(bitmap,bit);
+        if(bloque_libre == 0)bloques_libres ++;
+        bit++;
+    }
+
+    return bloques_libres;
 }

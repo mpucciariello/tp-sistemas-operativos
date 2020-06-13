@@ -10,62 +10,25 @@
 #include <commons/config.h>
 #include <commons/bitarray.h>
 #include <commons/collections/list.h>
+
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
 #include "../shared-common/common/utils.h"
-#include "./bitmap.h"
 
-typedef enum
-{
-	METADATA, FILES, BLOCKS, POKEMON
-} e_paths_structure;
 
-typedef struct {
-	unsigned int blockSize, blocks;
-	char* magicNumber;
-}Metadata_LFS;
+#include "./bloques_handler.h"
+#include "./game_card_handler.h"
 
-Metadata_LFS lfsMetaData;
-
-t_config* config_metadata;
-t_config* config_table_metadata;
-t_bitarray* bitmap;
-FILE* bitmap_file;
-char* struct_paths[4];
-
-typedef struct {
-	uint32_t cantidad;
-	uint32_t posX;
-	uint32_t posY;
-} blockLine;
-
-void createBlocks();
-void createMetaDataFile(char* metadataBin);
-void createBitmap(char* bitmapBin);
-void createRootFiles();
-char* obtenerPathDelNumeroDeBloque(int numeroDeBloque);
-void readBitmap(char* bitmapBin);
-void readMetaData(char* metadataPath);
-
-void setupFilesDirectory();
-void setupMetadata();
+char* formatToMetadataBlocks(t_list* blocks);
 void updatePokemonMetadata(const char* fullPath, const char* directory, const char* size, const char* blocks, const char* open);
 int createRecursiveDirectory(const char* path);
 int createFile(const char* fullPath);
 
 void createNewPokemon(t_new_pokemon newPokemon);
-
-
-// Formatters
-char* formatListToStringLine(t_list* pokemonLines);
-t_list* stringBlocksToList(char* blocks);
-blockLine* formatStringToBlockLine(char* blockline);
-char* formatToBlockLine(int posX, int posY, int cantidad);
-
-void writeBlocks(char* stringToWrite, t_list* listBlocks, int blocksSize);
-t_list* readPokemonLines(t_list* blocks);
 int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
-void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation);
+void addTotalPokemonIfCoordinateExist(t_new_pokemon newPokemon, t_list* pokemonLines);
+void deletePokemonTotalIfCoordinateExist(t_catch_pokemon catchPokemon, t_list* pokemonLines);
+t_list* requestFreeBlocks(int extraBlocksNeeded);
 
 int calcualarBloques(int tamanio);
 int cuantosBloquesOcupa(char* value);

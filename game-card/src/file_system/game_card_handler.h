@@ -13,6 +13,15 @@
 #include "../config/game_card_config.h"
 #include "../shared-common/common/utils.h"
 
+typedef struct {
+	int blockSize;
+	char* blocks;
+	char* isOpen;
+} pokemonMetadata;
 
 int lastchar(const char* str, char chr);
 int split_path(const char* path, char** super_path, char** name);
+int _mkpath(char* file_path, mode_t mode);
+char* obtenerPathDelNumeroDeBloque(int numeroDeBloque);
+pokemonMetadata readPokemonMetadata(char* pokemonPath);
+
