@@ -30,6 +30,9 @@ void addTotalPokemonIfCoordinateExist(t_new_pokemon newPokemon, t_list* pokemonL
 void deletePokemonTotalIfCoordinateExist(t_catch_pokemon catchPokemon, t_list* pokemonLines);
 t_list* requestFreeBlocks(int extraBlocksNeeded);
 
+int calcualarBloques(int tamanio);
+int cuantosBloquesOcupa(char* value);
+char* crearPathBloque(int bloque, char* montajeBloques);
 
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();

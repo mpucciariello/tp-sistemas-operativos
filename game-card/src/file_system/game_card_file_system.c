@@ -18,7 +18,7 @@ void gcfsCreateStructs(){
 
 	//Prueba 2
 	t_new_pokemon newPokemon2;
-	newPokemon2.nombre_pokemon = "Pikachu";
+	newPokemon2.nombre_pokemon = "Bulbasour";
 	
 	newPokemon2.cantidad = 3;
 	newPokemon2.pos_x = 1;
@@ -82,7 +82,7 @@ void gcfsCreateStructs(){
 
 	catchAPokemon(catchPokemon);
 	
-	//createNewPokemon(newPokemon2);
+	createNewPokemon(newPokemon2);
 	
 	/*
 	createNewPokemon(newPokemon3);
@@ -244,7 +244,7 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 				// Agrego los nuevos bloques en la lista original
 				list_add_all(listBlocks, extraBlocks);
 			} 
-∑
+
 		} else {
 			game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
 		}
