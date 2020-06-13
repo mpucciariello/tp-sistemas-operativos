@@ -91,5 +91,5 @@ void test() {
 	//createNewPokemon(newPokemon11);
 	// t_list* list = getAPokemon(getPokemon);
 	// printListOfPokemonReadedLines(list);
-	game_card_logger_info("Termino todo OK");*/
+	//game_card_logger_info("Termino todo OK");
 }

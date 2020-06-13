@@ -171,7 +171,9 @@ void *recv_game_card(int fd, int respond_to) {
 			game_card_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
 			game_card_logger_info("Posicion X: %d", new_receive->pos_x);
 			game_card_logger_info("Posicion Y: %d", new_receive->pos_y);
+			createNewPokemon(new_receive);
 			usleep(100000);
+
 
 			pthread_attr_t attrs;
 			pthread_attr_init(&attrs);
@@ -199,6 +201,7 @@ void *recv_game_card(int fd, int respond_to) {
 			game_card_logger_info("ID correlacional: %d", get_rcv->id_correlacional);
 			game_card_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			game_card_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
+			getAPokemon(get_rcv);
 			usleep(50000);
 
 			// To broker
@@ -231,6 +234,7 @@ void *recv_game_card(int fd, int respond_to) {
 			game_card_logger_info("Largo nombre: %d",catch_rcv->tamanio_nombre);
 			game_card_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			game_card_logger_info("Posicion Y: %d", catch_rcv->pos_y);
+			catchAPokemon(catch_rcv);
 			usleep(50000);
 
 			// To Broker
