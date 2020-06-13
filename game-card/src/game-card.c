@@ -26,7 +26,6 @@ void game_card_init() {
 	game_card_logger_info("Inicando GAMECARD..");
 	gcfsCreateStructs();
 
-	/*
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -66,7 +65,7 @@ void game_card_init() {
 			"Creando un hilo para poner al GAMECARD en modo Servidor");
 	game_card_init_as_server();
 	usleep(500000);
-	for (;;);*/
+	for (;;);
 }
 
 void game_card_retry_connect(void* arg) {
@@ -164,16 +163,12 @@ void *recv_game_card(int fd, int respond_to) {
 		// From Broker or GB
 		case NEW_POKEMON: {
 			game_card_logger_info("NEW received");
-			t_new_pokemon *new_receive = utils_receive_and_deserialize(
-					client_fd, protocol);
+			t_new_pokemon *new_receive = utils_receive_and_deserialize(client_fd, protocol);
 			game_card_logger_info("ID recibido: %d", new_receive->id);
-			game_card_logger_info("ID Correlacional: %d",
-					new_receive->id_correlacional);
+			game_card_logger_info("ID Correlacional: %d", new_receive->id_correlacional);
 			game_card_logger_info("Cantidad: %d", new_receive->cantidad);
-			game_card_logger_info("Nombre Pokemon: %s",
-					new_receive->nombre_pokemon);
-			game_card_logger_info("Largo Nombre: %d",
-					new_receive->tamanio_nombre);
+			game_card_logger_info("Nombre Pokemon: %s", new_receive->nombre_pokemon);
+			game_card_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
 			game_card_logger_info("Posicion X: %d", new_receive->pos_x);
 			game_card_logger_info("Posicion Y: %d", new_receive->pos_y);
 			usleep(100000);
@@ -200,12 +195,9 @@ void *recv_game_card(int fd, int respond_to) {
 			// From broker or GB
 		case GET_POKEMON: {
 			game_card_logger_info("GET received");
-			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd,
-					protocol);
-			game_card_logger_info("ID correlacional: %d",
-					get_rcv->id_correlacional);
-			game_card_logger_info("Nombre Pokemon: %s",
-					get_rcv->nombre_pokemon);
+			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd, protocol);
+			game_card_logger_info("ID correlacional: %d", get_rcv->id_correlacional);
+			game_card_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			game_card_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
 			usleep(50000);
 
@@ -232,15 +224,11 @@ void *recv_game_card(int fd, int respond_to) {
 			// From broker or GB
 		case CATCH_POKEMON: {
 			game_card_logger_info("CATCH received");
-			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(
-					client_fd, protocol);
-			game_card_logger_info("ID correlacional: %d",
-					catch_rcv->id_correlacional);
+			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(client_fd, protocol);
+			game_card_logger_info("ID correlacional: %d", catch_rcv->id_correlacional);
 			game_card_logger_info("ID Generado: %d", catch_rcv->id_gen);
-			game_card_logger_info("Nombre Pokemon: %s",
-					catch_rcv->nombre_pokemon);
-			game_card_logger_info("Largo nombre: %d",
-					catch_rcv->tamanio_nombre);
+			game_card_logger_info("Nombre Pokemon: %s", catch_rcv->nombre_pokemon);
+			game_card_logger_info("Largo nombre: %d",catch_rcv->tamanio_nombre);
 			game_card_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			game_card_logger_info("Posicion Y: %d", catch_rcv->pos_y);
 			usleep(50000);
