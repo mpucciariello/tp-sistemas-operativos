@@ -7,6 +7,7 @@ void gcfsCreateStructs(){
 	// mostrar_bitarray(bitmap);
 	// game_card_logger_info("cantidad %d", getFreeBlocks(lfsMetaData.blocks, bitmap));
 	
+	
 	//Prueba 1
 	t_new_pokemon newPokemon;
 	newPokemon.nombre_pokemon = "Pikachu";
@@ -72,17 +73,25 @@ void gcfsCreateStructs(){
 	newPokemon10.pos_x = 129;
 	newPokemon10.pos_y = 547;
 
-	//createNewPokemon(newPokemon);
+
+	
+	t_catch_pokemon catchPokemon;
+	catchPokemon.nombre_pokemon = "Pikachu";
+	catchPokemon.pos_x = 2;
+	catchPokemon.pos_y = 5;
+
+	catchAPokemon(catchPokemon);
 	
 	//createNewPokemon(newPokemon2);
 	
+	/*
 	createNewPokemon(newPokemon3);
 	createNewPokemon(newPokemon4);
 	createNewPokemon(newPokemon6);
 	createNewPokemon(newPokemon7);
 	createNewPokemon(newPokemon8);
 	createNewPokemon(newPokemon9);
-	createNewPokemon(newPokemon10);
+	createNewPokemon(newPokemon10); */
 	
 	game_card_logger_info("Termino todo OK");
 }
@@ -173,27 +182,36 @@ int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines)
 }
 
 
-// Add or substract if coordinate exist
-void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation) {
+// Add pokemon total if coordinate exists
+void addTotalPokemonIfCoordinateExist(t_new_pokemon newPokemon, t_list* pokemonLines) {
 	for (int i=0; i<list_size(pokemonLines); i++) {
-		blockLine* newLineBlock = list_get(pokemonLines, i);
-		if (newLineBlock->posX == newPokemon.pos_x && newLineBlock->posY == newPokemon.pos_y) {
-			if (string_contains(operation, "+")) {
-				newLineBlock->cantidad = newLineBlock->cantidad + newPokemon.cantidad;
-			}
-			if (string_contains(operation, "-")) {
-				newLineBlock->cantidad = newLineBlock->cantidad - newPokemon.cantidad;
-			}
+		blockLine* pokemonLineBlock = list_get(pokemonLines, i);
+		if (pokemonLineBlock->posX == newPokemon.pos_x && pokemonLineBlock->posY == newPokemon.pos_y) {
+			pokemonLineBlock->cantidad = pokemonLineBlock->cantidad + newPokemon.cantidad;
 		}
 	}
 }
 
+// Delete pokemon total if coordinate exists
+void deletePokemonTotalIfCoordinateExist(t_catch_pokemon catchPokemon, t_list* pokemonLines) {
+	for (int i=0; i<list_size(pokemonLines); i++) {
+		blockLine* pokemonLineBlock = list_get(pokemonLines, i);
+		if (pokemonLineBlock->posX == catchPokemon.pos_x && pokemonLineBlock->posY == catchPokemon.pos_y) {
+			if (pokemonLineBlock->cantidad != 1) {
+				pokemonLineBlock->cantidad = pokemonLineBlock->cantidad - 1;	
+			} else {
+				list_remove(pokemonLines, i);
+			}
+		}
+	}
+}
 
 // ToDO
 // 1) Liberar memoria 
 // 2) Esperar cantidad de segundos definidos 
 // 3) Verificar si se puede abrir el archivo (si no lo esta abriendo otro) y reintentar luego de un tiempo
 void createNewPokemon(t_new_pokemon newPokemon) {
+	game_card_logger_info("New Pokemon: %s", newPokemon.nombre_pokemon);
 	char* completePath = string_new();
 	string_append(&completePath, struct_paths[FILES]);
 	string_append(&completePath, newPokemon.nombre_pokemon);
@@ -202,23 +220,13 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 	// Existe Pokemon
 	if (access(completePath, F_OK) != -1) {
 		game_card_logger_info("Ya existe ese Pokemon. Se leen las estructuras");
-		char* existingPokemonMetadata = string_new();
-		char* existingPokemonBlocks = string_new();
-		char* blocks = string_new();
-		char* isOpen = string_new();
-		
-		string_append(&existingPokemonMetadata, completePath);
-		string_append(&existingPokemonMetadata, "/Metadata.bin");
-		t_config* metadataFile = config_create(existingPokemonMetadata);
-		int blockSize = config_get_int_value(metadataFile, "SIZE");
-	    blocks = string_duplicate(config_get_string_value(metadataFile, "BLOCKS"));
-	    isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
+		pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
 
-		t_list* listBlocks = stringBlocksToList(blocks);
+		t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
 		t_list* pokemonLines = readPokemonLines(listBlocks);
 
 		if (coordinateExists(newPokemon.pos_x, newPokemon.pos_y, pokemonLines) == 1) {
-			operatePokemonLine(newPokemon, pokemonLines, "+");
+			addTotalPokemonIfCoordinateExist(newPokemon, pokemonLines);
 		} else {
 			blockLine* newNode = createBlockLine(newPokemon.pos_x, newPokemon.pos_y, newPokemon.cantidad);
 			list_add(pokemonLines, newNode);
@@ -236,10 +244,7 @@ void createNewPokemon(t_new_pokemon newPokemon) {
 				// Agrego los nuevos bloques en la lista original
 				list_add_all(listBlocks, extraBlocks);
 			} 
-			writeBlocks(stringToWrite, listBlocks);
-			char* metadataBlocks = formatToMetadataBlocks(listBlocks);
-			updatePokemonMetadata(newPokemon.nombre_pokemon, "N", stringLength, metadataBlocks, "Y");
-			config_destroy(metadataFile);
+∑
 		} else {
 			game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
 		}
@@ -338,3 +343,43 @@ void gcfsFreeBitmaps() {
 	free(bitmap->bitarray);
 	bitarray_destroy(bitmap);
 }
+
+
+int catchAPokemon(t_catch_pokemon catchPokemon) {
+	game_card_logger_info("Catch Pokemon: %s", catchPokemon.nombre_pokemon);
+	char* completePath = string_new();
+	int res = 0;
+	string_append(&completePath, struct_paths[FILES]);
+	string_append(&completePath, catchPokemon.nombre_pokemon);
+
+	if (access(completePath, F_OK) != -1) {
+		game_card_logger_info("Existe el pokemon, se leen las estructuras");
+		pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
+		t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
+		t_list* pokemonLines = readPokemonLines(listBlocks);
+
+		if (coordinateExists(catchPokemon.pos_x, catchPokemon.pos_y, pokemonLines) == 1) {
+			deletePokemonTotalIfCoordinateExist(catchPokemon, pokemonLines);
+			char* stringToWrite = formatListToStringLine(pokemonLines);
+			int blocksRequired = cuantosBloquesOcupa(stringToWrite);
+			char* stringLength = string_itoa(strlen(stringToWrite));
+
+			if (blocksRequired == list_size(listBlocks)) {
+				writeBlocks(stringToWrite, listBlocks);
+				char* metadataBlocks = formatToMetadataBlocks(listBlocks);
+				updatePokemonMetadata(catchPokemon.nombre_pokemon, "N", stringLength, metadataBlocks, "Y");
+			}
+
+			if (blocksRequired < list_size(listBlocks)) {
+				// libero un bloque en el bitmap
+				// dejo limpio el ultimo bloque
+			}
+		} else {
+			game_card_logger_error("No existen las coordenadas para ese pokemon, no se puede completar la operacion.");
+		}
+
+	} else {
+		game_card_logger_error("No existe ese Pokemon en el filesystem.");
+	}
+}
+

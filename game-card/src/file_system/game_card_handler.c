@@ -72,3 +72,24 @@ char* obtenerPathDelNumeroDeBloque(int numeroDeBloque){
 	sprintf(path_del_bloque,"%sBloques/%d.bin",game_card_config->punto_montaje_tallgrass, numeroDeBloque);
 	return path_del_bloque;
 }
+
+
+pokemonMetadata readPokemonMetadata(char* pokemonPath) {
+	char* existingPokemonMetadata = string_new();
+	char* existingPokemonBlocks = string_new();
+
+	pokemonMetadata metadata;
+
+	metadata.blocks = string_new();
+	metadata.isOpen = string_new();
+	
+	string_append(&existingPokemonMetadata, pokemonPath);
+	string_append(&existingPokemonMetadata, "/Metadata.bin");
+
+	t_config* metadataFile = config_create(existingPokemonMetadata);
+	metadata.blockSize = config_get_int_value(metadataFile, "SIZE");
+	metadata.blocks = string_duplicate(config_get_string_value(metadataFile, "BLOCKS"));
+	metadata.isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
+	config_destroy(metadataFile);
+	return metadata;
+}

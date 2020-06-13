@@ -26,7 +26,8 @@ int createFile(const char* fullPath);
 
 void createNewPokemon(t_new_pokemon newPokemon);
 int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines);
-void operatePokemonLine(t_new_pokemon newPokemon, t_list* pokemonLines, char* operation);
+void addTotalPokemonIfCoordinateExist(t_new_pokemon newPokemon, t_list* pokemonLines);
+void deletePokemonTotalIfCoordinateExist(t_catch_pokemon catchPokemon, t_list* pokemonLines);
 t_list* requestFreeBlocks(int extraBlocksNeeded);
 
 
