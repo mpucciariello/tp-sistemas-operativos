@@ -277,7 +277,6 @@ void send_ack(void* arg) {
 	t_ack* ack_snd = malloc(sizeof(t_ack));
 	t_protocol ack_protocol = ACK;
 	ack_snd->id = id;
-	ack_snd->id_correlacional = id;
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
 			game_card_config->puerto_broker);
 	if (client_fd > 0) {
@@ -350,7 +349,6 @@ void process_catch_and_send_caught(void* arg) {
 	// Process Catch and send Caught to broker
 	t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
 	caught_snd->id_correlacional = catch_rcv->id_correlacional;
-	caught_snd->id_msg = catch_rcv->id_gen;
 	caught_snd->result = 1;
 	t_protocol caught_protocol = CAUGHT_POKEMON;
 

@@ -22,8 +22,24 @@ void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
 void add_to(t_list *list, t_subscribe* sub);
 
+pthread_mutex_t mpointer,mid;
 
+char *memory;
+
+int pointer;
+
+int id;
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
+
+t_list *list_memory;
+t_list *list_msg_subscribers;
+
+typedef struct {
+	int id;
+	t_cola cola;
+	t_list *list;
+} t_subscribe_message_node;
+
 
 typedef struct {
 	char* ip;
@@ -33,6 +49,39 @@ typedef struct {
 	uint32_t f_desc;
 } t_subscribe_nodo;
 
+typedef struct {
+	t_subscribe_nodo* subscribe;
+	bool ack;
+} t_subscribe_ack_node;
+
+
+
+
+typedef struct {
+	int pointer;
+	int size;
+	t_cola cola;
+	int id;
+} t_nodo_memory;
+
+
+
+
 t_subscribe_nodo* check_already_subscribed(char *ip,uint32_t puerto,t_list *list);
 
-#endif /* BROKER_H_ */
+typedef struct {
+	void* message;
+	uint32_t size_message;
+} t_message_to_void;
+
+
+t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
+
+
+void *get_from_memory(t_protocol protocol, int posicion, void *message);
+int save_on_memory(t_message_to_void *message_void);
+void save_node_list_memory(int pointer, int size,t_cola cola,int id);
+void send_message_to_queue(t_subscribe *subscriber,t_protocol protocol);
+int generar_id();
+void create_message_ack(int id,t_list *cola,t_cola unCola);
+#endif  /* BROKER_H_ */

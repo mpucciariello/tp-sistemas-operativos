@@ -65,7 +65,9 @@ typedef struct {
 
 typedef struct {
 	uint32_t id;
-	uint32_t id_correlacional;
+	int puerto;
+	char *ip;
+	t_protocol protocol;
 } t_ack;
 
 typedef struct {
@@ -102,7 +104,6 @@ typedef struct {
 
 typedef struct {
 	uint32_t id_correlacional;
-	uint32_t id_msg;
 	uint32_t result;
 } t_caught_pokemon;
 

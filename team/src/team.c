@@ -179,9 +179,10 @@ void *receive_msg(int fd, int send_to) {
 		switch (protocol) {
 		case CAUGHT_POKEMON: {
 			team_logger_info("Caught received");
-			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
-			team_logger_info("ID correlacional: %d", caught_rcv->id_correlacional);
-			team_logger_info("ID mensaje: %d", caught_rcv->id_msg);
+			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd,
+					protocol);
+			team_logger_info("ID correlacional: %d",
+					caught_rcv->id_correlacional);
 			team_logger_info("Resultado (0/1): %d", caught_rcv->result);
 			usleep(50000);
 			break;
@@ -278,7 +279,7 @@ void send_ack(void* arg) {
 	t_ack* ack_snd = malloc(sizeof(t_ack));
 	t_protocol ack_protocol = ACK;
 	ack_snd->id = val;
-	ack_snd->id_correlacional = val;
+
 
 	int client_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 	if (client_fd > 0) {
