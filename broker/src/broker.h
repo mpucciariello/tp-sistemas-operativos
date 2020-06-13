@@ -32,7 +32,7 @@ int id;
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
 
 t_list *list_memory;
-t_list *list_message_subscritors;
+t_list *list_msg_subscribers;
 
 typedef struct {
 	int id;

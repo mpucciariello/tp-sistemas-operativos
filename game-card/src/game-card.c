@@ -349,7 +349,6 @@ void process_catch_and_send_caught(void* arg) {
 	// Process Catch and send Caught to broker
 	t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
 	caught_snd->id_correlacional = catch_rcv->id_correlacional;
-	caught_snd->id_msg = catch_rcv->id_gen;
 	caught_snd->result = 1;
 	t_protocol caught_protocol = CAUGHT_POKEMON;
 

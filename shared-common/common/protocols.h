@@ -104,7 +104,6 @@ typedef struct {
 
 typedef struct {
 	uint32_t id_correlacional;
-	uint32_t id_msg;
 	uint32_t result;
 } t_caught_pokemon;
 

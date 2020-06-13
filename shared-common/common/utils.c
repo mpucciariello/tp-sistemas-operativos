@@ -230,8 +230,6 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package,
 				&((t_caught_pokemon*) package_send)->id_correlacional,
 				sizeof(uint32_t));
-		utils_package_add(package, &((t_caught_pokemon*) package_send)->id_msg,
-				sizeof(uint32_t));
 		utils_package_add(package, &((t_caught_pokemon*) package_send)->result,
 				sizeof(uint32_t));
 		utils_package_send_to(package, socket);
@@ -436,8 +434,7 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		t_caught_pokemon* caught_req = malloc(sizeof(t_caught_pokemon));
 		t_list* list = utils_receive_package(socket);
 		utils_get_from_list_to(&caught_req->id_correlacional, list, 0);
-		utils_get_from_list_to(&caught_req->id_msg, list, 1);
-		utils_get_from_list_to(&caught_req->result, list, 2);
+		utils_get_from_list_to(&caught_req->result, list, 1);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return caught_req;
 	}

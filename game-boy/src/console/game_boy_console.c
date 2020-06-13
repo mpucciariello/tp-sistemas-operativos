@@ -71,7 +71,7 @@ void broker_caught_pokemon_command(char** arguments, int arguments_size) {
 	game_boy_logger_info("BROKER CAUGHT_POKEMON");
 	t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
 	caught_snd->id_correlacional = atoi(arguments[2]);
-	char* ok_fail = strcat(string_duplicate(arguments[2]), "\0");
+	char* ok_fail = strcat(string_duplicate(arguments[3]), "\0");
 	int result = 0;
 	if (string_equals_ignore_case(ok_fail, "ok")) {
 		result = 1;
@@ -83,7 +83,7 @@ void broker_caught_pokemon_command(char** arguments, int arguments_size) {
 }
 
 void broker_get_pokemon_command(char** arguments, int arguments_size) {
-	if (arguments_size != 4) {
+	if (arguments_size != 3) {
 		game_boy_logger_error("Comando o parametros invalidos");
 		game_boy_logger_warn("BROKER GET_POKEMON [POKEMON]");
 		return;
@@ -272,7 +272,6 @@ void suscriptor_command(char** arguments, int arguments_size) {
 					protocol);
 			game_boy_logger_info("ID correlacional: %d",
 					caught_rcv->id_correlacional);
-			game_boy_logger_info("ID mensaje: %d", caught_rcv->id_msg);
 			game_boy_logger_info("Resultado (0/1): %d", caught_rcv->result);
 			usleep(50000);
 			break;
