@@ -32,6 +32,7 @@ void connect_to_broker() {
 		socket_close_conection(game_boy_broker_fd);
 	} else {
 		game_boy_logger_info("Conexion con BROKER establecida correctamente!");
+		connected = true;
 	}
 }
 
@@ -43,6 +44,7 @@ void connect_to_team() {
 		socket_close_conection(game_boy_team_fd);
 	} else {
 		game_boy_logger_info("Conexion con TEAM establecida correctamente!");
+		connected = true;
 	}
 }
 
@@ -55,6 +57,7 @@ void connect_to_game_card() {
 	} else {
 		game_boy_logger_info(
 				"Conexion con GAME CARD establecida correctamente!");
+		connected = true;
 	}
 }
 
@@ -71,7 +74,6 @@ void game_boy_init(int argcount, char* arguments[]) {
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
-	pthread_t tid;
 
 	char* option = arguments[1];
 	char* match = "";
@@ -91,21 +93,18 @@ void game_boy_init(int argcount, char* arguments[]) {
 	else {
 		if (string_equals_ignore_case(match, "TEAM")) {
 			game_boy_logger_info("Creando un hilo para enviar al team");
-			pthread_create(&tid, NULL, (void*) connect_to_team, NULL);
-			pthread_detach(tid);
+			pthread_create(&tid[0], NULL, (void*) connect_to_team, NULL);
 		}
 
 		if (string_equals_ignore_case(match, "GAMECARD")) {
 			game_boy_logger_info("Creando un hilo para enviar al game card");
-			pthread_create(&tid, NULL, (void*) connect_to_game_card, NULL);
-			pthread_detach(tid);
+			pthread_create(&tid[0], NULL, (void*) connect_to_game_card, NULL);
 		}
 
 		if (string_equals_ignore_case(match, "BROKER")
 				|| string_equals_ignore_case(match, "SUBSCRIBE")) {
 			game_boy_logger_info("Creando un hilo para enviar al broker %d");
-			pthread_create(&tid, NULL, (void*) connect_to_broker, NULL);
-			pthread_detach(tid);
+			pthread_create(&tid[0], NULL, (void*) connect_to_broker, NULL);
 		}
 
 		struct t_console_args args;
@@ -126,9 +125,17 @@ void game_boy_init(int argcount, char* arguments[]) {
 
 		args.argcount = argcount;
 
+		while(!connected){
+			sleep(1);
+		}
+
 		game_boy_logger_info("Creando un hilo para consola");
-		pthread_create(&tid, NULL, (void*) game_boy_console, &args);
-		pthread_detach(tid);
+		pthread_create(&tid[1], NULL, (void*) game_boy_console, &args);
+		for(int i=0; i<2; i++) {
+			pthread_join(tid[i], NULL);
+		}
+
+		game_boy_logger_info("All threads finished");
 	}
 }
 
