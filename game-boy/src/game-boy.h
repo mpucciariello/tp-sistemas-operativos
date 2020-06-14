@@ -18,4 +18,11 @@ int game_boy_load();
 void game_boy_init();
 void game_boy_exit();
 
+char* valid_options[4] = {"BROKER", "GAMECARD", "TEAM", "SUB"};
+
+struct t_console_args {
+	char* arguments[20];
+	int argcount;
+};
+
 #endif /* GAME_BOY_H_ */

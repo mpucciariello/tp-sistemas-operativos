@@ -842,7 +842,6 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
-		fprintf(stderr, "POKEMONARDO: %s", catch_rcv->nombre_pokemon);
 		broker_logger_info("Pokemon: %s", catch_rcv->nombre_pokemon);
 		broker_logger_info("Name length: %d", catch_rcv->tamanio_nombre);
 		broker_logger_info("X Position: %d", catch_rcv->pos_x);
