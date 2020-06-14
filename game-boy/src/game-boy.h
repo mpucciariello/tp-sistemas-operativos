@@ -18,7 +18,7 @@ int game_boy_load();
 void game_boy_init();
 void game_boy_exit();
 
-char* valid_options[4] = {"BROKER", "GAMECARD", "TEAM", "SUB"};
+char* valid_options[4] = {"BROKER", "GAMECARD", "TEAM", "SUBSCRIBE"};
 _Bool connected = false;
 pthread_t tid[2];
 

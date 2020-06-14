@@ -87,7 +87,7 @@ void game_boy_init(int argcount, char* arguments[]) {
 	if (string_is_empty(match)) {
 		game_boy_logger_warn("Opcion %s no valida!", option);
 		game_boy_logger_info(
-				"Opciones disponibles: BROKER, GAMECARD, TEAM, SUBSCRIBER");
+				"Opciones disponibles: BROKER, GAMECARD, TEAM, SUBSCRIBE");
 	}
 
 	else {
