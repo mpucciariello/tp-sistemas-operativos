@@ -1,9 +1,10 @@
 #include "game-boy.h"
 
 int main(int argc, char *argv[]) {
+
 	if (game_boy_load() < 0)
 		return EXIT_FAILURE;
-	game_boy_init();
+	game_boy_init(argc, argv);
 	game_boy_exit();
 
 	return EXIT_SUCCESS;
@@ -31,6 +32,7 @@ void connect_to_broker() {
 		socket_close_conection(game_boy_broker_fd);
 	} else {
 		game_boy_logger_info("Conexion con BROKER establecida correctamente!");
+		connected = true;
 	}
 }
 
@@ -42,6 +44,7 @@ void connect_to_team() {
 		socket_close_conection(game_boy_team_fd);
 	} else {
 		game_boy_logger_info("Conexion con TEAM establecida correctamente!");
+		connected = true;
 	}
 }
 
@@ -54,44 +57,87 @@ void connect_to_game_card() {
 	} else {
 		game_boy_logger_info(
 				"Conexion con GAME CARD establecida correctamente!");
+		connected = true;
 	}
 }
 
-void game_boy_console(){
+void game_boy_console(void* _args_) {
+	struct t_console_args* args = _args_;
+
 	command_actions = game_boy_get_command_actions();
-	while (game_boy_console_read(command_actions) == 0)
-		;
+	game_boy_console_read(command_actions, args->arguments, args->argcount);
 }
 
-void game_boy_init() {
+void game_boy_init(int argcount, char* arguments[]) {
 	game_boy_logger_info("Inicando GAME BOY..");
 
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
-	pthread_t tid;
 
-	game_boy_logger_info(
-				"Creando un hilo para enviar al broker %d");
-	pthread_create(&tid, NULL, (void*) connect_to_game_card, NULL);
-	pthread_detach(tid);
+	char* option = arguments[1];
+	char* match = "";
+	int arraylen = sizeof(valid_options) / sizeof(valid_options[0]);
+	for (int i = 0; i < arraylen; i++) {
+		if (strcmp(valid_options[i], option)) {
+			match = option;
+		}
+	}
 
-	game_boy_logger_info(
-				"Creando un hilo para enviar al team");
-	pthread_create(&tid, NULL, (void*) connect_to_team, NULL);
-	pthread_detach(tid);
+	if (string_is_empty(match)) {
+		game_boy_logger_warn("Opcion %s no valida!", option);
+		game_boy_logger_info(
+				"Opciones disponibles: BROKER, GAMECARD, TEAM, SUBSCRIBER");
+	}
 
-	game_boy_logger_info(
-				"Creando un hilo para enviar al game card");
-	pthread_create(&tid, NULL, (void*) connect_to_broker, NULL );
-	pthread_detach(tid);
+	else {
+		if (string_equals_ignore_case(match, "TEAM")) {
+			game_boy_logger_info("Creando un hilo para enviar al team");
+			pthread_create(&tid[0], NULL, (void*) connect_to_team, NULL);
+		}
 
-	game_boy_logger_info("Creando un hilo para consola");
-	pthread_create(&tid, NULL, (void*) game_boy_console, NULL);
-	pthread_detach(tid);
-	for(;;);
+		if (string_equals_ignore_case(match, "GAMECARD")) {
+			game_boy_logger_info("Creando un hilo para enviar al game card");
+			pthread_create(&tid[0], NULL, (void*) connect_to_game_card, NULL);
+		}
+
+		if (string_equals_ignore_case(match, "BROKER")
+				|| string_equals_ignore_case(match, "SUBSCRIBE")) {
+			game_boy_logger_info("Creando un hilo para enviar al broker %d");
+			pthread_create(&tid[0], NULL, (void*) connect_to_broker, NULL);
+		}
+
+		struct t_console_args args;
+		int arraylen = argcount;
+		int argsarrsize = sizeof(args.arguments) / sizeof(args.arguments[0]);
+
+		for (int i = 0; i < arraylen; i++) {
+			args.arguments[i] = arguments[i];
+		}
+
+		int to_pad = argsarrsize - arraylen;
+		int from = argsarrsize - to_pad;
+		int to = argsarrsize - 1;
+
+		for (int i = from; i <= to; i++) {
+			args.arguments[i] = 0;
+		}
+
+		args.argcount = argcount;
+
+		while(!connected){
+			sleep(1);
+		}
+
+		game_boy_logger_info("Creando un hilo para consola");
+		pthread_create(&tid[1], NULL, (void*) game_boy_console, &args);
+		for(int i=0; i<2; i++) {
+			pthread_join(tid[i], NULL);
+		}
+
+		game_boy_logger_info("All threads finished");
+	}
 }
-
 
 void game_boy_exit() {
 	socket_close_conection(game_boy_broker_fd);

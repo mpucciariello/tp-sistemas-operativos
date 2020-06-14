@@ -186,14 +186,14 @@ t_cola get_queue_by_name(char* cola) {
 	}
 }
 
-void suscriptor_command(char** arguments, int arguments_size) {
+void subscriber_command(char** arguments, int arguments_size) {
 	if (arguments_size != 3 || get_queue_by_name(arguments[1]) == -1) {
 		game_boy_logger_error("Comando o parametros invalidos");
-		game_boy_logger_warn("SUSCRIPTOR [COLA_DE_MENSAJES] [TIEMPO]");
+		game_boy_logger_warn("SUBSCRIBE [COLA_DE_MENSAJES] [TIEMPO]");
 		return;
 	}
 
-	game_boy_logger_info("SUSCRIPTOR");
+	game_boy_logger_info("SUBSCRIBE");
 	t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
 	t_protocol subscribe_protocol = SUBSCRIBE;
 	sub_snd->proceso = GAME_BOY;
@@ -328,8 +328,8 @@ void suscriptor_command(char** arguments, int arguments_size) {
 
 }
 
-int game_boy_console_read(t_dictionary* command_actions) {
-	char* input = game_boy_get_input();
+int game_boy_console_read(t_dictionary* command_actions, char* args[], int argcount) {
+	char* input = game_boy_get_input(args, argcount);
 	if (input == NULL)
 		return 0;
 
@@ -339,19 +339,25 @@ int game_boy_console_read(t_dictionary* command_actions) {
 	char** arguments = game_boy_get_arguments_from_input(input, arguments_size);
 
 	char *concated_key = string_new();
-	string_append(&concated_key, arguments[0]);
-	if (!string_equals_ignore_case(concated_key, "SUSCRIPTOR")) {
+	string_append(&concated_key, arguments[1]);
+	if (!string_equals_ignore_case(concated_key, "SUBSCRIBE")) {
 		string_append(&concated_key, " ");
-		string_append(&concated_key, arguments[1]);
+		string_append(&concated_key, arguments[2]);
 	}
 
 	char* key = concated_key;
 
+	char* to_send[argcount -1];
+
+	for (int i=1; i<argcount; i++){
+		to_send[i-1] = arguments[i];
+	}
+
 	if (string_equals_ignore_case(key, EXIT_KEY))
 		return -1;
 	else
-		game_boy_command_execute(key, command_actions, arguments,
-				arguments_size);
+		game_boy_command_execute(key, command_actions, to_send,
+				arguments_size-1);
 
 	free(arguments);
 	free(input);
@@ -359,11 +365,16 @@ int game_boy_console_read(t_dictionary* command_actions) {
 	return 0;
 }
 
-char* game_boy_get_input() {
+char* game_boy_get_input(char* args[], int argcount) {
 	char *input = malloc(INPUT_SIZE);
-	fgets(input, INPUT_SIZE, stdin);
+
+	for(int i=0; i < argcount; i++) {
+		input = strcat(input, " ");
+		input = strcat(input, args[i]);
+	}
 
 	string_trim(&input);
+	string_append(&input, "\0");
 
 	if (string_is_empty(input)) {
 		free(input);
@@ -454,10 +465,10 @@ t_dictionary* game_boy_get_command_actions() {
 	game_card_get_command->action = game_card_get_pokemon_command;
 	dictionary_put(command_actions, GAMECARD_GET, game_card_get_command);
 
-	t_command* suscript_command = malloc(sizeof(t_command));
-	suscript_command->key = SUSCRIPTOR;
-	suscript_command->action = suscriptor_command;
-	dictionary_put(command_actions, SUSCRIPTOR, suscript_command);
+	t_command* subscribe_command = malloc(sizeof(t_command));
+	subscribe_command->key = SUBSCRIBER;
+	subscribe_command->action = subscriber_command;
+	dictionary_put(command_actions, SUBSCRIBER, subscribe_command);
 
 	return command_actions;
 }
