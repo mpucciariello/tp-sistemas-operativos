@@ -24,17 +24,15 @@ int broker_load() {
 		return response;
 	}
 	broker_print_config();
-    //create mutex for pointer
-	if (pthread_mutex_init(&mpointer, NULL) != 0)
-    {
-        printf("\n mutex init failed\n");
-        return 1;
-    }
-	if (pthread_mutex_init(&mid, NULL) != 0)
-	    {
-	        printf("\n mutex init failed\n");
-	        return 1;
-	   }
+	//create mutex for pointer
+	if (pthread_mutex_init(&mpointer, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
+	if (pthread_mutex_init(&mid, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
 
 	return 0;
 }
@@ -108,22 +106,21 @@ static void *handle_connection(void *arg) {
 					protocol);
 			broker_logger_info("ID recibido: %d", ack_receive->id);
 
+			/*			broker_logger_info("IP recibido: %s", ack_receive->ip);
+			 broker_logger_info("PUERTO recibido %d",ack_receive->puerto);
+			 broker_logger_info("PROTOCOLO %d", ack_receive->protocol);
 
-/*			broker_logger_info("IP recibido: %s", ack_receive->ip);
-			broker_logger_info("PUERTO recibido %d",ack_receive->puerto);
-			broker_logger_info("PROTOCOLO %d", ack_receive->protocol);
-
-			for(int i=0;i<list_size(list_message_subscritors);i++){
-				t_subscribe_message_node* node = list_get(list_message_subscritors,i);
-				if(node->id == ack_receive->id && ack_receive->protocol == node->cola){
-					for(int k=0;list_size(node->list);k++){
-						t_subscribe_ack_node* ack_subscriptor = list_get(node->list,k);
-						if((ack_receive->puerto == ack_subscriptor->subscribe->puerto) && (strcmp(ack_subscriptor->subscribe->ip,ack_receive->ip)==0)){
-							ack_subscriptor->ack = true;
-						}
-					}
-				}
-			}*/
+			 for(int i=0;i<list_size(list_message_subscritors);i++){
+			 t_subscribe_message_node* node = list_get(list_message_subscritors,i);
+			 if(node->id == ack_receive->id && ack_receive->protocol == node->cola){
+			 for(int k=0;list_size(node->list);k++){
+			 t_subscribe_ack_node* ack_subscriptor = list_get(node->list,k);
+			 if((ack_receive->puerto == ack_subscriptor->subscribe->puerto) && (strcmp(ack_subscriptor->subscribe->ip,ack_receive->ip)==0)){
+			 ack_subscriptor->ack = true;
+			 }
+			 }
+			 }
+			 }*/
 
 			usleep(100000);
 			break;
@@ -144,14 +141,15 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Posicion X: %d", new_receive->pos_x);
 			broker_logger_info("Posicion Y: %d", new_receive->pos_y);
 			usleep(100000);
-			t_message_to_void *message_void = convert_to_void(protocol, new_receive);
+			t_message_to_void *message_void = convert_to_void(protocol,
+					new_receive);
 			int from = save_on_memory(message_void);
 			broker_logger_info("POINTER VALUE AFTER NEW_POKEMON: %d", from);
-			save_node_list_memory(from,message_void->size_message,NEW_QUEUE,new_receive->id_correlacional);
+			save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
+					new_receive->id_correlacional);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			new_snd->id = new_receive->id_correlacional;
-			create_message_ack(new_snd->id,new_queue,NEW_QUEUE);
-
+			create_message_ack(new_snd->id, new_queue, NEW_QUEUE);
 
 			//free(message_void->message);
 			//free(message_void);
@@ -165,7 +163,8 @@ static void *handle_connection(void *arg) {
 					if (time(NULL) >= node->endtime) {
 						t_empty* noop = malloc(sizeof(t_empty));
 						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
+						utils_serialize_and_send(node->f_desc, noop_protocol,
+								noop);
 						list_remove(new_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc, new_protocol,
@@ -200,16 +199,19 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
 			int from = save_on_memory(message_void);
-			broker_logger_info("POINTER VALUE AFTER APPEARED_POKEMON: %d", from);
-			save_node_list_memory(from,message_void->size_message,APPEARED_QUEUE,appeared_rcv->id_correlacional);
-			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from, memory);
+			broker_logger_info("POINTER VALUE AFTER APPEARED_POKEMON: %d",
+					from);
+			save_node_list_memory(from, message_void->size_message,
+					APPEARED_QUEUE, appeared_rcv->id_correlacional);
+			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
+					memory);
 			//free(message_void->message);
 			//			free(message_void);
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
 			broker_logger_info("APPEARED SENT TO TEAM");
 
-			create_message_ack(id,appeared_queue,APPEARED_QUEUE);
+			create_message_ack(id, appeared_queue, APPEARED_QUEUE);
 
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
@@ -217,7 +219,8 @@ static void *handle_connection(void *arg) {
 					if (time(NULL) >= node->endtime) {
 						t_empty* noop = malloc(sizeof(t_empty));
 						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
+						utils_serialize_and_send(node->f_desc, noop_protocol,
+								noop);
 						list_remove(appeared_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc,
@@ -245,16 +248,18 @@ static void *handle_connection(void *arg) {
 
 			usleep(50000);
 			get_rcv->id_correlacional = generar_id();
-			t_message_to_void *message_void = convert_to_void(protocol, get_rcv);
+			t_message_to_void *message_void = convert_to_void(protocol,
+					get_rcv);
 			int from = save_on_memory(message_void);
 			broker_logger_info("POINTER VALUE AFTER GET_POKEMON: %d", from);
-			save_node_list_memory(from,message_void->size_message,GET_QUEUE,get_rcv->id_correlacional );
+			save_node_list_memory(from, message_void->size_message, GET_QUEUE,
+					get_rcv->id_correlacional);
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 
 			////falta mandar el id generado al team//////
 
 			//esto es para los ack de gamecard
-			create_message_ack(get_rcv->id_correlacional,get_queue,GET_QUEUE);
+			create_message_ack(get_rcv->id_correlacional, get_queue, GET_QUEUE);
 			//free(message_void->message);
 			//free(message_void);
 			// To GC
@@ -266,7 +271,8 @@ static void *handle_connection(void *arg) {
 					if (time(NULL) >= node->endtime) {
 						t_empty* noop = malloc(sizeof(t_empty));
 						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
+						utils_serialize_and_send(node->f_desc, noop_protocol,
+								noop);
 						list_remove(get_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc, get_protocol,
@@ -297,16 +303,19 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
 
 			usleep(50000);
-			t_message_to_void *message_void = convert_to_void(protocol, catch_rcv);
+			t_message_to_void *message_void = convert_to_void(protocol,
+					catch_rcv);
 			int from = save_on_memory(message_void);
 			broker_logger_info("POINTER VALUE AFTER CATCH_POKEMON: %d", from);
 			catch_rcv->id_gen = generar_id();
-			save_node_list_memory(from,message_void->size_message,CATCH_QUEUE,catch_rcv->id_gen);
-			t_catch_pokemon* catch_send = get_from_memory(protocol, from, memory);
+			save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
+					catch_rcv->id_gen);
+			t_catch_pokemon* catch_send = get_from_memory(protocol, from,
+					memory);
 
 			//falta mandar id al team para q lo guarde//
 
-			create_message_ack(catch_rcv->id_gen,catch_queue,CATCH_QUEUE);
+			create_message_ack(catch_rcv->id_gen, catch_queue, CATCH_QUEUE);
 
 			// To GC
 			catch_send->id_gen = generar_id();
@@ -319,7 +328,8 @@ static void *handle_connection(void *arg) {
 					if (time(NULL) >= node->endtime) {
 						t_empty* noop = malloc(sizeof(t_empty));
 						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
+						utils_serialize_and_send(node->f_desc, noop_protocol,
+								noop);
 						list_remove(catch_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc, catch_protocol,
@@ -356,15 +366,20 @@ static void *handle_connection(void *arg) {
 				broker_logger_info("Position is (%d, %d)", pos->pos_x,
 						pos->pos_y);
 			}
-			t_message_to_void *message_void = convert_to_void(protocol, loc_rcv);
+			t_message_to_void *message_void = convert_to_void(protocol,
+					loc_rcv);
 			int from = save_on_memory(message_void);
-			broker_logger_info("POINTER VALUE AFTER LOCALIZED_POKEMON: %d", from);
-			save_node_list_memory(from,message_void->size_message,LOCALIZED_QUEUE,loc_rcv->id_correlacional);
-			t_localized_pokemon* loc_snd = get_from_memory(protocol, from, memory);
+			broker_logger_info("POINTER VALUE AFTER LOCALIZED_POKEMON: %d",
+					from);
+			save_node_list_memory(from, message_void->size_message,
+					LOCALIZED_QUEUE, loc_rcv->id_correlacional);
+			t_localized_pokemon* loc_snd = get_from_memory(protocol, from,
+					memory);
 
-			create_message_ack(loc_rcv->id_correlacional,localized_queue,LOCALIZED_QUEUE);
+			create_message_ack(loc_rcv->id_correlacional, localized_queue,
+					LOCALIZED_QUEUE);
 			free(message_void->message);
-					free(message_void);
+			free(message_void);
 			// To team
 			localized_protocol = LOCALIZED_POKEMON;
 			broker_logger_info("LOCALIZED SENT TO TEAM");
@@ -375,7 +390,8 @@ static void *handle_connection(void *arg) {
 					if (time(NULL) >= node->endtime) {
 						t_empty* noop = malloc(sizeof(t_empty));
 						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
+						utils_serialize_and_send(node->f_desc, noop_protocol,
+								noop);
 						list_remove(localized_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc,
@@ -422,12 +438,16 @@ static void *handle_connection(void *arg) {
 					caught_rcv->id_correlacional);
 			broker_logger_info("Resultado (0/1): %d", caught_rcv->result);
 			usleep(50000);
-			t_message_to_void *message_void = convert_to_void(protocol, caught_rcv);
+			t_message_to_void *message_void = convert_to_void(protocol,
+					caught_rcv);
 			int from = save_on_memory(message_void);
 			broker_logger_info("POINTER VALUE AFTER CAUGHT_POKEMON: %d", from);
-			save_node_list_memory(from,message_void->size_message,CAUGHT_QUEUE,caught_rcv->id_correlacional);
-			t_caught_pokemon* caught_snd = get_from_memory(protocol, from, memory);
-			create_message_ack(caught_snd->id_correlacional,caught_queue,CAUGHT_QUEUE);
+			save_node_list_memory(from, message_void->size_message,
+					CAUGHT_QUEUE, caught_rcv->id_correlacional);
+			t_caught_pokemon* caught_snd = get_from_memory(protocol, from,
+					memory);
+			create_message_ack(caught_snd->id_correlacional, caught_queue,
+					CAUGHT_QUEUE);
 
 			free(message_void->message);
 			free(message_void);
@@ -440,7 +460,8 @@ static void *handle_connection(void *arg) {
 					if (time(NULL) >= node->endtime) {
 						t_empty* noop = malloc(sizeof(t_empty));
 						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol, noop);
+						utils_serialize_and_send(node->f_desc, noop_protocol,
+								noop);
 						list_remove(caught_queue, i);
 					} else {
 						utils_serialize_and_send(node->f_desc, caught_protocol,
@@ -518,42 +539,42 @@ void search_queue(t_subscribe *subscriber) {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola NEW ",
 				subscriber->ip, subscriber->puerto);
 		add_to(new_queue, subscriber);
-		send_message_to_queue(subscriber,NEW_POKEMON);
+		send_message_to_queue(subscriber, NEW_POKEMON);
 		break;
 	}
 	case CATCH_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
 				subscriber->ip, subscriber->puerto);
 		add_to(catch_queue, subscriber);
-		send_message_to_queue(subscriber,CATCH_POKEMON);
+		send_message_to_queue(subscriber, CATCH_POKEMON);
 		break;
 	}
 	case CAUGHT_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
 				subscriber->ip, subscriber->puerto);
 		add_to(caught_queue, subscriber);
-		send_message_to_queue(subscriber,CAUGHT_POKEMON);
+		send_message_to_queue(subscriber, CAUGHT_POKEMON);
 		break;
 	}
 	case GET_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola GET ",
 				subscriber->ip, subscriber->puerto);
 		add_to(get_queue, subscriber);
-		send_message_to_queue(subscriber,GET_POKEMON);
+		send_message_to_queue(subscriber, GET_POKEMON);
 		break;
 	}
 	case LOCALIZED_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(localized_queue, subscriber);
-		send_message_to_queue(subscriber,LOCALIZED_POKEMON);
+		send_message_to_queue(subscriber, LOCALIZED_POKEMON);
 		break;
 	}
 	case APPEARED_QUEUE: {
 		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(appeared_queue, subscriber);
-		send_message_to_queue(subscriber,APPEARED_POKEMON);
+		send_message_to_queue(subscriber, APPEARED_POKEMON);
 		break;
 	}
 
@@ -632,9 +653,13 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		offset += sizeof(uint32_t);
 		memcpy(message_to_void->message + offset, &appeared_rcv->pos_y,
 				sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(message_to_void->message + offset, &appeared_rcv->cantidad,
+				sizeof(uint32_t));
+
 
 		message_to_void->size_message = appeared_rcv->tamanio_nombre
-				+ sizeof(uint32_t) * 3;
+				+ sizeof(uint32_t) * 4;
 		break;
 	}
 		// From team
@@ -682,8 +707,8 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		broker_logger_info("LOCALIZED RECEIVED, CONVERTING TO VOID*..");
 		t_localized_pokemon *loc_rcv = (t_localized_pokemon*) package_recv;
 		message_to_void->message = malloc(
-				loc_rcv->tamanio_nombre + sizeof(uint32_t)
-				+sizeof(uint32_t)+ sizeof(uint32_t) * 2 * loc_rcv->cant_elem);
+				loc_rcv->tamanio_nombre + sizeof(uint32_t) + sizeof(uint32_t)
+						+ sizeof(uint32_t) * 2 * loc_rcv->cant_elem);
 
 		memcpy(message_to_void->message + offset, &loc_rcv->tamanio_nombre,
 				sizeof(uint32_t));
@@ -704,7 +729,8 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
 		}
 		message_to_void->size_message = loc_rcv->tamanio_nombre
-				+ sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) * 2 * loc_rcv->cant_elem;
+				+ sizeof(uint32_t) + sizeof(uint32_t)
+				+ sizeof(uint32_t) * 2 * loc_rcv->cant_elem;
 		break;
 	}
 
@@ -780,13 +806,13 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 		t_appeared_pokemon *appeared_rcv = malloc(sizeof(t_appeared_pokemon));
 
-
 		memcpy(&appeared_rcv->tamanio_nombre, message + offset,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 
 		appeared_rcv->nombre_pokemon = malloc(appeared_rcv->tamanio_nombre);
-		memset(appeared_rcv->nombre_pokemon, 0, appeared_rcv->tamanio_nombre + 1);
+		memset(appeared_rcv->nombre_pokemon, 0,
+				appeared_rcv->tamanio_nombre + 1);
 		memcpy(appeared_rcv->nombre_pokemon, message + offset,
 				appeared_rcv->tamanio_nombre);
 
@@ -794,6 +820,8 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		memcpy(&appeared_rcv->pos_x, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 		memcpy(&appeared_rcv->pos_y, message + offset, sizeof(uint32_t));
+		offset += sizeof(uint32_t);
+		memcpy(&appeared_rcv->cantidad, message + offset, sizeof(uint32_t));
 
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
@@ -801,6 +829,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("Name length: %d", appeared_rcv->tamanio_nombre);
 		broker_logger_info("X Axis position: %d", appeared_rcv->pos_x);
 		broker_logger_info("Y Axis position: %d", appeared_rcv->pos_y);
+		broker_logger_info("Quantity: %d", appeared_rcv->cantidad);
 
 		return appeared_rcv;
 	}
@@ -808,7 +837,6 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 	case GET_POKEMON: {
 		broker_logger_info("GETING \"GET\" MESSAGE FROM  MEMORY..");
 		t_get_pokemon* get_rcv = malloc(sizeof(t_get_pokemon));
-
 
 		memcpy(&get_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -877,8 +905,8 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 			offset += sizeof(uint32_t);
 			memcpy(&pos->pos_y, message + offset, sizeof(uint32_t));
 			list_add(loc_rcv->posiciones, pos);
-			broker_logger_info("X Axis Position: %d",pos->pos_x);
-			broker_logger_info("Y Axis Position: %d",pos->pos_y);
+			broker_logger_info("X Axis Position: %d", pos->pos_x);
+			broker_logger_info("Y Axis Position: %d", pos->pos_y);
 
 		}
 		return loc_rcv;
@@ -891,10 +919,9 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		memcpy(&caught_rcv->result, message, sizeof(uint32_t));
-		if (caught_rcv->result){
+		if (caught_rcv->result) {
 			broker_logger_info("Result: Caught");
-		}
-		else{
+		} else {
 			broker_logger_info("Result: Failed");
 		}
 
@@ -905,12 +932,11 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 }
 
-
-int save_on_memory(t_message_to_void *message_void){
+int save_on_memory(t_message_to_void *message_void) {
 	pthread_mutex_lock(&mpointer);
 	int from = pointer;
 
-	if(message_void->size_message < broker_config->tamano_minimo_particion) {
+	if (message_void->size_message < broker_config->tamano_minimo_particion) {
 		pointer += broker_config->tamano_minimo_particion;
 	}
 
@@ -918,12 +944,12 @@ int save_on_memory(t_message_to_void *message_void){
 		pointer += message_void->size_message;
 	}
 
-	memcpy(memory + from,message_void->message,message_void->size_message);
+	memcpy(memory + from, message_void->message, message_void->size_message);
 	pthread_mutex_unlock(&mpointer);
 	return from;
 }
 
-void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id){
+void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 	t_nodo_memory * nodo_mem = malloc(sizeof(t_nodo_memory));
 
 	nodo_mem->pointer = pointer;
@@ -938,65 +964,72 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id){
 
 	nodo_mem->cola = cola;
 	nodo_mem->id = id;
-	list_add(list_memory,nodo_mem);
+	list_add(list_memory, nodo_mem);
 }
 
-void send_message_to_queue(t_subscribe *subscriber,t_protocol protocol){
+void send_message_to_queue(t_subscribe *subscriber, t_protocol protocol) {
 	int cant = list_size(list_memory);
-	for(int i=0 ; i < cant ; i++){
-		t_nodo_memory *nodo_mem = list_get(list_memory,i);
+	for (int i = 0; i < cant; i++) {
+		t_nodo_memory *nodo_mem = list_get(list_memory, i);
 		switch (subscriber->cola) {
-			case NEW_QUEUE: {
-				t_new_pokemon* new_snd = get_from_memory(protocol, nodo_mem->pointer, memory);
-				break;
-			}
-			case CATCH_QUEUE: {
-				t_catch_pokemon* catch_snd = get_from_memory(protocol, nodo_mem->pointer, memory);
-				break;
-			}
-			case CAUGHT_QUEUE: {
-				t_caught_pokemon* caught_snd = get_from_memory(protocol, nodo_mem->pointer, memory);
-				break;
-			}
-			case GET_QUEUE: {
-				t_get_pokemon* get_snd = get_from_memory(protocol, nodo_mem->pointer, memory);
-				break;
-			}
-			case LOCALIZED_QUEUE: {
-				t_localized_pokemon* localized_snd = get_from_memory(protocol, nodo_mem->pointer, memory);
-				break;
-			}
-			case APPEARED_QUEUE: {
-				t_appeared_pokemon* new_snd = get_from_memory(protocol, nodo_mem->pointer, memory);
-				break;
-			}
+		case NEW_QUEUE: {
+			t_new_pokemon* new_snd = get_from_memory(protocol,
+					nodo_mem->pointer, memory);
+			break;
+		}
+		case CATCH_QUEUE: {
+			t_catch_pokemon* catch_snd = get_from_memory(protocol,
+					nodo_mem->pointer, memory);
+			break;
+		}
+		case CAUGHT_QUEUE: {
+			t_caught_pokemon* caught_snd = get_from_memory(protocol,
+					nodo_mem->pointer, memory);
+			break;
+		}
+		case GET_QUEUE: {
+			t_get_pokemon* get_snd = get_from_memory(protocol,
+					nodo_mem->pointer, memory);
+			break;
+		}
+		case LOCALIZED_QUEUE: {
+			t_localized_pokemon* localized_snd = get_from_memory(protocol,
+					nodo_mem->pointer, memory);
+			break;
+		}
+		case APPEARED_QUEUE: {
+			t_appeared_pokemon* new_snd = get_from_memory(protocol,
+					nodo_mem->pointer, memory);
+			break;
+		}
 
-			}
+		}
 
 	}
 }
 
-void create_message_ack(int id, t_list *cola, t_cola unCola){
-	t_subscribe_message_node* message_node = malloc(sizeof(t_subscribe_message_node));
+void create_message_ack(int id, t_list *cola, t_cola unCola) {
+	t_subscribe_message_node* message_node = malloc(
+			sizeof(t_subscribe_message_node));
 	message_node->id = id;
 	message_node->cola = unCola;
 	message_node->list = list_create();
-	list_add(list_msg_subscribers,message_node);
+	list_add(list_msg_subscribers, message_node);
 
-	for(int i=0;i<list_size(cola);i++){
-		t_subscribe_nodo* subscriptor = list_get(cola,i);
-		t_subscribe_ack_node* ack_subscriptor = malloc(sizeof(t_subscribe_ack_node));
-		ack_subscriptor->subscribe =  subscriptor ;
+	for (int i = 0; i < list_size(cola); i++) {
+		t_subscribe_nodo* subscriptor = list_get(cola, i);
+		t_subscribe_ack_node* ack_subscriptor = malloc(
+				sizeof(t_subscribe_ack_node));
+		ack_subscriptor->subscribe = subscriptor;
 		ack_subscriptor->ack = false;
-		list_add(message_node->list,ack_subscriptor);
+		list_add(message_node->list, ack_subscriptor);
 
 	}
 }
 
-
-int generar_id(){
+int generar_id() {
 	pthread_mutex_lock(&mid);
-	id ++;
+	id++;
 	pthread_mutex_unlock(&mid);
 	return id;
 }

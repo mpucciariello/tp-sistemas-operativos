@@ -34,7 +34,7 @@ void team_init() {
 	pthread_t tid;
 	pthread_t tid2;
 	pthread_t tid3;
-	pthread_t tid4;
+	// pthread_t tid4;
 
 	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
 	t_cola cola_appeared = APPEARED_QUEUE;
@@ -53,8 +53,8 @@ void team_init() {
 	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
 	pthread_detach(tid3);
 
-	pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
-	pthread_detach(tid4);
+	// pthread_create(&tid4, NULL, (void*) send_message_test, NULL);
+	// pthread_detach(tid4);
 
 	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
 	team_server_init();
