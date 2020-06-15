@@ -5,6 +5,14 @@ void gcfsCreateStructs(){
 	createRootFiles();
 	setupMetadata();
 
+	t_new_pokemon* newPokemon = malloc(sizeof(t_new_pokemon));
+	newPokemon->nombre_pokemon = string_new();
+	newPokemon->nombre_pokemon = "PIKACHU";
+	newPokemon->cantidad = 10;
+	newPokemon->pos_x = 55;
+	newPokemon->pos_y = 5;
+
+	createNewPokemon(newPokemon);
 }
 
 int createRecursiveDirectory(const char* path) {
@@ -81,14 +89,24 @@ void updatePokemonMetadata(const char* fullPath, const char* directory, const ch
 void updateOpenFileState(const char* fullPath, const char* open) {
 	char* completePath = string_new();
 	char* newDirectoryMetadata = string_new();
+	char* blockSize = string_new();
+	char* blocks = string_new();
+
 	string_append(&completePath, struct_paths[FILES]);
 	string_append(&completePath, fullPath);
-
 	string_append(&newDirectoryMetadata, completePath);
 	string_append(&newDirectoryMetadata, "/Metadata.bin");
+
+	t_config* readMetadataFile = config_create(newDirectoryMetadata);
+	blockSize = string_duplicate(config_get_string_value(readMetadataFile, "SIZE"));
+	blocks = string_duplicate(config_get_string_value(readMetadataFile, "BLOCKS"));
+	config_destroy(readMetadataFile);
 	
 	FILE* metadata = fopen(newDirectoryMetadata, "w+b");
 	config_metadata = config_create(newDirectoryMetadata);
+	config_set_value(config_metadata, "SIZE", blockSize);
+	config_set_value(config_metadata, "DIRECTORY", "N");
+	config_set_value(config_metadata, "BLOCKS", blocks);
 	config_set_value(config_metadata, "OPEN", open);
 	config_save(config_metadata);
 	config_destroy(config_metadata);
@@ -155,7 +173,6 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 			updateOpenFileState(newPokemon->nombre_pokemon, "Y");
 			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
 			t_list* pokemonLines = readPokemonLines(listBlocks);
-
 			if (coordinateExists(newPokemon->pos_x, newPokemon->pos_y, pokemonLines) == 1) {
 				addTotalPokemonIfCoordinateExist(newPokemon, pokemonLines);
 			} else {
@@ -220,7 +237,7 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 			FILE* blockFile = fopen(pathBloque,"wr");
 			fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, blockFile);
 			fclose(blockFile);
-			updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "Y");
+			updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
 			game_card_logger_info("Operacion NEW_POKEMON terminada correctamente");
 		  } else {
 			game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
@@ -239,7 +256,7 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 			t_list* listBlocks = requestFreeBlocks(blocksRequired);
 			writeBlocks(stringToWrite, listBlocks);
 			char* metadataBlocks = formatToMetadataBlocks(listBlocks);
-			updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "Y");
+			updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
 			game_card_logger_info("Operacion NEW_POKEMON terminada correctamente");
 		  } else {
 			  game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
@@ -301,7 +318,7 @@ int catchAPokemon(t_catch_pokemon* catchPokemon) {
 		
 		if (string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
 			game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
-			updateOpenFileState(newPokemon->nombre_pokemon, "Y");
+			updateOpenFileState(catchPokemon->nombre_pokemon, "Y");
 			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
 			t_list* pokemonLines = readPokemonLines(listBlocks);
 
@@ -376,10 +393,10 @@ t_list* getAPokemon(t_get_pokemon* getPokemon) {
 		
 		if (string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
 			game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
-			updateOpenFileState(newPokemon->nombre_pokemon, "Y");
+			updateOpenFileState(getPokemon->nombre_pokemon, "Y");
 			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
 			res = readPokemonLines(listBlocks);
-			updateOpenFileState(newPokemon->nombre_pokemon, "N");
+			updateOpenFileState(getPokemon->nombre_pokemon, "N");
 			game_card_logger_info("Operacion GET_POKEMON terminada correctamente");
 		} else {
 			game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);

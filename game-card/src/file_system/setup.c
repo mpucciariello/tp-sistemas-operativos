@@ -131,6 +131,7 @@ void readMetaData(char* metadataPath) {
 }
 
 void readBitmap(char* bitmapBin) {
+	game_card_logger_info("Leyendo Bitmap.bin");
 	bitmap_file = fopen(bitmapBin, "rb+");
 	fseek(bitmap_file, 0, SEEK_END);
 	int file_size = ftell(bitmap_file);

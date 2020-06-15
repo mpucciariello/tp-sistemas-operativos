@@ -37,6 +37,7 @@ void game_card_init() {
 	t_cola catch_queue;
 	t_cola get_queue;
 
+	/*
 	game_card_logger_info(
 			"Creando un hilo para subscribirse a la cola NEW del broker %d");
 	new_queue = NEW_QUEUE;
@@ -61,11 +62,13 @@ void game_card_init() {
 	pthread_detach(tid3);
 	usleep(500000);
 
+
 	game_card_logger_info(
 			"Creando un hilo para poner al GAMECARD en modo Servidor");
 	game_card_init_as_server();
 	usleep(500000);
 	for (;;);
+	*/
 }
 
 void game_card_retry_connect(void* arg) {
