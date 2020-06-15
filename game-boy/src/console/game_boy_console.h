@@ -20,7 +20,7 @@
 #define GAMECARD_NEW "GAMECARD NEW_POKEMON"
 #define GAMECARD_CATCH "GAMECARD CATCH_POKEMON"
 #define GAMECARD_GET "GAMECARD GET_POKEMON"
-#define SUSCRIPTOR "SUSCRIPTOR"
+#define SUBSCRIBER "SUBSCRIBE"
 #define EXIT_KEY "EXIT"
 #define SPLIT_CHAR " "
 #define INPUT_SIZE 100
@@ -35,7 +35,7 @@ typedef struct {
 	void (*action)(char**, int);
 } t_command;
 
-int game_boy_console_read(t_dictionary*);
+int game_boy_console_read(t_dictionary*, char*[], int);
 t_dictionary* game_boy_get_command_actions();
 void game_boy_free_command_actions(t_dictionary*);
 
