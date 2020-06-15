@@ -36,6 +36,7 @@ t_list* requestFreeBlocks(int extraBlocksNeeded);
 int calcualarBloques(int tamanio);
 int cuantosBloquesOcupa(char* value);
 char* crearPathBloque(int bloque, char* montajeBloques);
+void updateOpenFileState(const char* fullPath, const char* directory, const char* open);
 
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();
