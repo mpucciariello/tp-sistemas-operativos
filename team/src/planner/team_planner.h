@@ -43,6 +43,7 @@ typedef struct {
 	char* name;
 	t_pokemon_state state;
 	t_entrenador_pokemon* blocking_trainner;
+	t_position* position;
 } t_pokemon;
 
 pthread_mutex_t planner_mutex;
