@@ -65,10 +65,10 @@ void game_card_init() {
 
 	game_card_logger_info(
 			"Creando un hilo para poner al GAMECARD en modo Servidor");
+	*/
 	game_card_init_as_server();
 	usleep(500000);
 	for (;;);
-	*/
 }
 
 void game_card_retry_connect(void* arg) {
@@ -359,7 +359,12 @@ void process_catch_and_send_caught(void* arg) {
 
 void game_card_exit() {
 	socket_close_conection(game_card_fd);
-	gcfsFreeBitmaps();
+	//gcfsFreeBitmaps();
 	game_card_config_free();
 	game_card_logger_destroy();
+	
+	free(struct_paths[METADATA]);
+	free(struct_paths[FILES]);
+	free(struct_paths[BLOCKS]);
+	free(struct_paths[TALL_GRASS]);
 }

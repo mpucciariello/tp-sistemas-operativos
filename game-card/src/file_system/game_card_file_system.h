@@ -40,5 +40,5 @@ void updateOpenFileState(const char* fullPath, const char* open);
 
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();
-
+void freeBlockLine(blockLine* newLineBlock);
 #endif /* FILE_SYSTEM_GAME_CARD_FILE_SYSTEM_H_ */

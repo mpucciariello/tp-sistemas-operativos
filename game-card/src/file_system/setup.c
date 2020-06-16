@@ -85,19 +85,19 @@ void setupFilesDirectory() {
 	config_save(pokemonConfigMetadata);
 	game_card_logger_info("Creado directorio base /Pokemon y su Metadata.bin");
 	fclose(pokemonMetadata);
+
+	free(pokemonBasePath);
+	free(pokemonBaseBin);
 }
 
 void createBlocks(){
 	game_card_logger_info("Creando bloques en el path /Bloques");
-	FILE * newBloque;
+	FILE* newBloque;
 	for(int i=0; i <= lfsMetaData.blocks-1; i++){
-        char* nroBloque = string_new();
-        string_append(&nroBloque, struct_paths[BLOCKS]);
-        string_append(&nroBloque, string_itoa(i));
-        string_append(&nroBloque, ".bin");
-        newBloque = fopen(nroBloque,"w+b");
+        char* pathBloque = obtenerPathDelNumeroDeBloque(i);
+        newBloque = fopen(pathBloque,"w+b");
         fclose(newBloque);
-        free(nroBloque);
+		free(pathBloque);
     }
 }
 
@@ -118,6 +118,7 @@ void createMetaDataFile(char* metadataBin){
 	config_set_value(config_metadata, "BLOCKS", "4096"); // asi no tengo 5492 bloques :P
 	config_set_value(config_metadata, "MAGIC_NUMBER", "TALL_GRASS");
 	config_save(config_metadata);
+	config_destroy(config_metadata);
 	fclose(metadata);
 }
 

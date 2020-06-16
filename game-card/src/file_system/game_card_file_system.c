@@ -4,15 +4,6 @@
 void gcfsCreateStructs(){
 	createRootFiles();
 	setupMetadata();
-
-	t_new_pokemon* newPokemon = malloc(sizeof(t_new_pokemon));
-	newPokemon->nombre_pokemon = string_new();
-	newPokemon->nombre_pokemon = "PIKACHU";
-	newPokemon->cantidad = 10;
-	newPokemon->pos_x = 55;
-	newPokemon->pos_y = 5;
-
-	createNewPokemon(newPokemon);
 }
 
 int createRecursiveDirectory(const char* path) {
@@ -47,6 +38,7 @@ int createRecursiveDirectory(const char* path) {
     };
 
 	free(completePath);
+	free(newDirectoryMetadata);
 	free(super_path);
 	free(nombre);
 	return 0;
@@ -64,6 +56,8 @@ int createFile(const char* fullPath) {
 		mkdir(completePath, 0777);
 		updatePokemonMetadata(fullPath, "N", "0", "[]", "Y");
 	}
+
+	free(completePath);
 }
 
 void updatePokemonMetadata(const char* fullPath, const char* directory, const char* size, const char* blocks, const char* open) {
@@ -82,8 +76,11 @@ void updatePokemonMetadata(const char* fullPath, const char* directory, const ch
 	config_set_value(config_metadata, "BLOCKS", blocks);
 	config_set_value(config_metadata, "OPEN", open);
 	config_save(config_metadata);
+	
 	config_destroy(config_metadata);
 	fclose(metadata);
+	free(completePath);
+	free(newDirectoryMetadata);
 }
 
 void updateOpenFileState(const char* fullPath, const char* open) {
@@ -100,7 +97,6 @@ void updateOpenFileState(const char* fullPath, const char* open) {
 	t_config* readMetadataFile = config_create(newDirectoryMetadata);
 	blockSize = string_duplicate(config_get_string_value(readMetadataFile, "SIZE"));
 	blocks = string_duplicate(config_get_string_value(readMetadataFile, "BLOCKS"));
-	config_destroy(readMetadataFile);
 	
 	FILE* metadata = fopen(newDirectoryMetadata, "w+b");
 	config_metadata = config_create(newDirectoryMetadata);
@@ -109,8 +105,15 @@ void updateOpenFileState(const char* fullPath, const char* open) {
 	config_set_value(config_metadata, "BLOCKS", blocks);
 	config_set_value(config_metadata, "OPEN", open);
 	config_save(config_metadata);
+	
+
 	config_destroy(config_metadata);
 	fclose(metadata);
+	config_destroy(readMetadataFile);
+	free(completePath);
+	free(newDirectoryMetadata);
+	free(blockSize);
+	free(blocks);
 }
 
 int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines) {
@@ -191,18 +194,26 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 					t_list* extraBlocks = requestFreeBlocks(extraBlocksNeeded);
 					// Agrego los nuevos bloques en la lista original
 					list_add_all(listBlocks, extraBlocks);
+					list_destroy(extraBlocks);
 				} 
 				writeBlocks(stringToWrite, listBlocks);
 				char* metadataBlocks = formatToMetadataBlocks(listBlocks);
 				updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
 				game_card_logger_info("Operacion NEW_POKEMON terminada correctamente");
+				free(metadataBlocks);
 			} else {
 				game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
 			}
+
+			list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
+			free(stringToWrite);
+			free(stringLength);
 		} else {
 			game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
 		}
 
+		free(pokemonMetadata.blocks);
+		free(pokemonMetadata.isOpen);
 	} else {
 		game_card_logger_info("No existe ese Pokemon. Se crean y escriben las estructuras.");
 		char* super_path = (char*) malloc(strlen(newPokemon->nombre_pokemon) +1);
@@ -214,6 +225,7 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 			string_append(&filePath, "Files/");
 			string_append(&filePath, super_path);
 			createRecursiveDirectory(filePath);
+			free(filePath);
 		}
 
 		createFile(newPokemon->nombre_pokemon);
@@ -236,9 +248,15 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 			char* pathBloque = obtenerPathDelNumeroDeBloque(freeBlockPosition);
 			FILE* blockFile = fopen(pathBloque,"wr");
 			fwrite(pokemonPerPosition, 1 , pokemonPerPositionLength, blockFile);
-			fclose(blockFile);
 			updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
 			game_card_logger_info("Operacion NEW_POKEMON terminada correctamente");
+			
+			fclose(blockFile);
+			free(metadataBlocks);
+			free(stringLength);
+			free(pathBloque);
+			list_destroy(freeBlocks);
+
 		  } else {
 			game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
 		  }
@@ -258,13 +276,23 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 			char* metadataBlocks = formatToMetadataBlocks(listBlocks);
 			updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
 			game_card_logger_info("Operacion NEW_POKEMON terminada correctamente");
+
+			list_destroy(listBlocks);
+			free(metadataBlocks);
 		  } else {
 			  game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
 		  }
 		  
+		  list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
+		  free(stringToWrite);
 	  	}
+
+		free(super_path);
+		free(pokemonDirectory);
+		free(pokemonPerPosition);
 	}
 	
+	free(completePath);
 }
 
 t_list* requestFreeBlocks(int extraBlocksNeeded) {
@@ -333,6 +361,7 @@ int catchAPokemon(t_catch_pokemon* catchPokemon) {
 						writeBlocks(stringToWrite, listBlocks);
 						char* metadataBlocks = formatToMetadataBlocks(listBlocks);
 						updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
+						free(metadataBlocks);
 					}
 
 					if (blocksRequired < list_size(listBlocks)) {
@@ -345,6 +374,7 @@ int catchAPokemon(t_catch_pokemon* catchPokemon) {
 						// Limpio estructuras que ya no uso
 						setear_bloque_libre_en_posicion(bitmap, lastBlockUsing);
 						fclose(fopen(obtenerPathDelNumeroDeBloque(lastBlockUsing), "w"));
+						free(metadataBlocks);
 					}
 				} 
 
@@ -358,19 +388,31 @@ int catchAPokemon(t_catch_pokemon* catchPokemon) {
 						
 					// Limpio estructuras que ya no uso
 					fclose(fopen(obtenerPathDelNumeroDeBloque(blockUsed), "w"));
+					free(zeroLength);
+					free(metadataBlocks);
 				}
 				res = 1;
 				game_card_logger_info("Operacion CATCH_POKEMON terminada correctamente");
+
+				free(stringToWrite);
+				free(stringLength);
 			} else {
 				game_card_logger_error("No existen las coordenadas para ese pokemon, no se puede completar la operacion.");
 			}
+
+			list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
 		} else {
 			game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
 		}
 
+		free(pokemonMetadata.blocks);
+		free(pokemonMetadata.isOpen);
 	} else {
 		game_card_logger_error("No existe ese Pokemon en el filesystem.");
 	}
+
+
+	free(completePath);
 
 	return res;
 }
@@ -401,10 +443,19 @@ t_list* getAPokemon(t_get_pokemon* getPokemon) {
 		} else {
 			game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
 		}
+
+		free(pokemonMetadata.blocks);
+		free(pokemonMetadata.isOpen);
 	} else {
 		game_card_logger_error("No existe ese Pokemon en el filesystem.");
 		
 	}
 
+	free(completePath);
 	return res;
+}
+
+
+void freeBlockLine(blockLine* newLineBlock) {
+	free(newLineBlock);
 }
