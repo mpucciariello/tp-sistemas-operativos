@@ -4,8 +4,14 @@ int main(int argc, char *argv[]) {
 
 	if (game_boy_load() < 0)
 		return EXIT_FAILURE;
-	game_boy_init(argc, argv);
-	game_boy_exit();
+	if (argc > 3) {
+		game_boy_init(argc, argv);
+		game_boy_exit();
+	}
+	else {
+		game_boy_logger_error("Error al iniciar GameBoy. Faltan parametros");
+		return EXIT_FAILURE;
+	}
 
 	return EXIT_SUCCESS;
 }
@@ -79,15 +85,16 @@ void game_boy_init(int argcount, char* arguments[]) {
 	char* match = "";
 	int arraylen = sizeof(valid_options) / sizeof(valid_options[0]);
 	for (int i = 0; i < arraylen; i++) {
-		if (strcmp(valid_options[i], option)) {
+		if (strcmp(valid_options[i], option) == 0) {
 			match = option;
 		}
 	}
 
 	if (string_is_empty(match)) {
 		game_boy_logger_warn("Opcion %s no valida!", option);
-		game_boy_logger_info(
+		game_boy_logger_warn(
 				"Opciones disponibles: BROKER, GAMECARD, TEAM, SUBSCRIBE");
+		exit(EXIT_FAILURE);
 	}
 
 	else {
