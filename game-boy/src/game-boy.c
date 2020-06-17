@@ -4,7 +4,7 @@ int main(int argc, char *argv[]) {
 
 	if (game_boy_load() < 0)
 		return EXIT_FAILURE;
-	if (argc > 1) {
+	if (argc > 3) {
 		game_boy_init(argc, argv);
 		game_boy_exit();
 	}
