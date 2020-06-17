@@ -91,5 +91,8 @@ pokemonMetadata readPokemonMetadata(char* pokemonPath) {
 	metadata.blocks = string_duplicate(config_get_string_value(metadataFile, "BLOCKS"));
 	metadata.isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
 	config_destroy(metadataFile);
+
+	free(existingPokemonMetadata);
+	free(existingPokemonBlocks);
 	return metadata;
 }

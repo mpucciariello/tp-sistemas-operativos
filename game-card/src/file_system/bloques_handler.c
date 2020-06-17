@@ -87,6 +87,8 @@ t_list* readPokemonLines(t_list* blocks) {
 				list_add(retList, blockLine);
 			}
 		}
+
+		free(blockPath);
 	}
 
 	fclose(blockFile);
@@ -154,6 +156,9 @@ char* formatToBlockLine(int intPosX, int intPosY, int intCantidad) {
 	string_append(&pokemonPerPosition, cantidad);
 	string_append(&pokemonPerPosition, "\n");
 
+	free(posX);
+	free(posY);
+	free(cantidad);
 	return pokemonPerPosition;
 }
 
