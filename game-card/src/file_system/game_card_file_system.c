@@ -162,10 +162,46 @@ void deletePokemonTotalIfCoordinateExist(t_catch_pokemon* catchPokemon, t_list* 
 	}
 }
 
-// ToDO
-// 1) Liberar memoria 
-// 2) Esperar cantidad de segundos definidos 
-// 3) Verificar si se puede abrir el archivo (si no lo esta abriendo otro) y reintentar luego de un tiempo
+t_list* requestFreeBlocks(int extraBlocksNeeded) {
+	t_list* retList = list_create();
+	for (int i=0; i<extraBlocksNeeded; i++) {
+		int freeBlockPosition = getAndSetFreeBlock(bitmap, lfsMetaData.blocks);
+		list_add(retList, freeBlockPosition);
+	}
+	return retList;
+}
+
+// Formatea una lista de enteros a un string con formato [1, 2, 3] requerido por el Metadata
+char* formatToMetadataBlocks(t_list* blocks) {
+	char* retBlocks = string_new();
+	string_append(&retBlocks, "[");
+
+	if (list_size(blocks) > 1) {
+		for(int i=0; i<list_size(blocks); i++) {
+			string_append(&retBlocks, string_itoa(list_get(blocks, i)));
+			if (i != (list_size(blocks) - 1)) string_append(&retBlocks, ",");
+		}
+	} 
+	
+	if (list_size(blocks) == 1) {
+		string_append(&retBlocks, string_itoa(list_get(blocks, 0)));
+	}
+
+	string_append(&retBlocks, "]");
+	return retBlocks;
+}
+
+void gcfsFreeBitmaps() {
+	free(bitmap->bitarray);
+	bitarray_destroy(bitmap);
+}
+
+
+void freeBlockLine(blockLine* newLineBlock) {
+	free(newLineBlock);
+}
+
+
 void createNewPokemon(t_new_pokemon* newPokemon) {
 	game_card_logger_info("New Pokemon: %s", newPokemon->nombre_pokemon);
 	char* completePath = string_new();
@@ -258,45 +294,6 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 	free(completePath);
 }
 
-t_list* requestFreeBlocks(int extraBlocksNeeded) {
-	t_list* retList = list_create();
-	for (int i=0; i<extraBlocksNeeded; i++) {
-		int freeBlockPosition = getAndSetFreeBlock(bitmap, lfsMetaData.blocks);
-		list_add(retList, freeBlockPosition);
-	}
-	return retList;
-}
-
-// Formatea una lista de enteros a un string con formato [1, 2, 3] requerido por el Metadata
-char* formatToMetadataBlocks(t_list* blocks) {
-	char* retBlocks = string_new();
-	string_append(&retBlocks, "[");
-
-	if (list_size(blocks) > 1) {
-		for(int i=0; i<list_size(blocks); i++) {
-			string_append(&retBlocks, string_itoa(list_get(blocks, i)));
-			if (i != (list_size(blocks) - 1)) string_append(&retBlocks, ",");
-		}
-	} 
-	
-	if (list_size(blocks) == 1) {
-		string_append(&retBlocks, string_itoa(list_get(blocks, 0)));
-	}
-
-	string_append(&retBlocks, "]");
-	return retBlocks;
-}
-
-void gcfsFreeBitmaps() {
-	free(bitmap->bitarray);
-	bitarray_destroy(bitmap);
-}
-
-
-// ToDO
-// 1) Liberar memoria 
-// 2) Esperar cantidad de segundos definidos 
-// 3) Verificar si se puede abrir el archivo (si no lo esta abriendo otro) y reintentar luego de un tiempo
 int catchAPokemon(t_catch_pokemon* catchPokemon) {
 	game_card_logger_info("Catch Pokemon: %s", catchPokemon->nombre_pokemon);
 	char* completePath = string_new();
@@ -318,10 +315,7 @@ int catchAPokemon(t_catch_pokemon* catchPokemon) {
 }
 
 
-// ToDO
-// 1) Liberar memoria 
-// 2) Esperar cantidad de segundos definidos 
-// 3) Verificar si se puede abrir el archivo (si no lo esta abriendo otro) y reintentar luego de un tiempo
+
 t_list* getAPokemon(t_get_pokemon* getPokemon) {
 	game_card_logger_info("Get Pokemon: %s", getPokemon->nombre_pokemon);
 	char* completePath = string_new();
@@ -340,12 +334,6 @@ t_list* getAPokemon(t_get_pokemon* getPokemon) {
 	free(completePath);
 	return res;
 }
-
-
-void freeBlockLine(blockLine* newLineBlock) {
-	free(newLineBlock);
-}
-
 
 void operateNewPokemonFile(t_new_pokemon* newPokemon, char* completePath, int freeBlocks) {
 	pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
