@@ -65,10 +65,10 @@ void game_card_init() {
 
 	game_card_logger_info(
 			"Creando un hilo para poner al GAMECARD en modo Servidor");
-	*/
 	game_card_init_as_server();
 	usleep(500000);
 	for (;;);
+	*/
 }
 
 void game_card_retry_connect(void* arg) {
@@ -102,6 +102,7 @@ void subscribe_to(void *arg) {
 		sub_snd->cola = cola;
 		utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
 		recv_game_card(new_broker_fd, 0);
+		is_connected = true;
 	}
 }
 

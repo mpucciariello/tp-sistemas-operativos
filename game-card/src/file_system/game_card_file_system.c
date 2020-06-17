@@ -4,6 +4,11 @@
 void gcfsCreateStructs(){
 	createRootFiles();
 	setupMetadata();
+	initSemaphore();
+}
+
+void initSemaphore() {
+	pthread_mutex_init(&MUTEX_METADATA, NULL);
 }
 
 int createRecursiveDirectory(const char* path) {
@@ -94,6 +99,7 @@ void updateOpenFileState(const char* fullPath, const char* open) {
 	string_append(&newDirectoryMetadata, completePath);
 	string_append(&newDirectoryMetadata, "/Metadata.bin");
 
+
 	t_config* readMetadataFile = config_create(newDirectoryMetadata);
 	blockSize = string_duplicate(config_get_string_value(readMetadataFile, "SIZE"));
 	blocks = string_duplicate(config_get_string_value(readMetadataFile, "BLOCKS"));
@@ -110,6 +116,7 @@ void updateOpenFileState(const char* fullPath, const char* open) {
 	config_destroy(config_metadata);
 	fclose(metadata);
 	config_destroy(readMetadataFile);
+	
 	free(completePath);
 	free(newDirectoryMetadata);
 	free(blockSize);
@@ -169,51 +176,7 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 	// Existe Pokemon
 	if (access(completePath, F_OK) != -1) {
 		game_card_logger_info("Pokemon existe dentro del FS!.");
-		pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
-
-		if(string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
-			game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
-			updateOpenFileState(newPokemon->nombre_pokemon, "Y");
-			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
-			t_list* pokemonLines = readPokemonLines(listBlocks);
-			if (coordinateExists(newPokemon->pos_x, newPokemon->pos_y, pokemonLines) == 1) {
-				addTotalPokemonIfCoordinateExist(newPokemon, pokemonLines);
-			} else {
-				blockLine* newNode = createBlockLine(newPokemon->pos_x, newPokemon->pos_y, newPokemon->cantidad);
-				list_add(pokemonLines, newNode);
-			}
-			
-			char* stringToWrite = formatListToStringLine(pokemonLines);
-			int blocksRequired = cuantosBloquesOcupa(stringToWrite);
-			char* stringLength = string_itoa(strlen(stringToWrite));
-
-			if (freeBlocks > blocksRequired) {
-				// Necesito pedir bloques
-				if (blocksRequired > list_size(listBlocks)) {
-					int extraBlocksNeeded = blocksRequired - list_size(listBlocks);
-					t_list* extraBlocks = requestFreeBlocks(extraBlocksNeeded);
-					// Agrego los nuevos bloques en la lista original
-					list_add_all(listBlocks, extraBlocks);
-					list_destroy(extraBlocks);
-				} 
-				writeBlocks(stringToWrite, listBlocks);
-				char* metadataBlocks = formatToMetadataBlocks(listBlocks);
-				updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
-				game_card_logger_info("Operacion NEW_POKEMON terminada correctamente");
-				free(metadataBlocks);
-			} else {
-				game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
-			}
-
-			list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
-			free(stringToWrite);
-			free(stringLength);
-		} else {
-			game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
-		}
-
-		free(pokemonMetadata.blocks);
-		free(pokemonMetadata.isOpen);
+		operateNewPokemonFile(newPokemon, completePath, freeBlocks);
 	} else {
 		game_card_logger_info("No existe ese Pokemon. Se crean y escriben las estructuras.");
 		char* super_path = (char*) malloc(strlen(newPokemon->nombre_pokemon) +1);
@@ -335,78 +298,15 @@ void gcfsFreeBitmaps() {
 // 2) Esperar cantidad de segundos definidos 
 // 3) Verificar si se puede abrir el archivo (si no lo esta abriendo otro) y reintentar luego de un tiempo
 int catchAPokemon(t_catch_pokemon* catchPokemon) {
+	game_card_logger_info("Catch Pokemon: %s", catchPokemon->nombre_pokemon);
 	char* completePath = string_new();
-	int res = 0;
+	int res;
 	string_append(&completePath, struct_paths[FILES]);
 	string_append(&completePath, catchPokemon->nombre_pokemon);
 
 	if (access(completePath, F_OK) != -1) {
 		game_card_logger_info("Existe el pokemon, se leen las estructuras");
-		pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
-		
-		if (string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
-			game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
-			updateOpenFileState(catchPokemon->nombre_pokemon, "Y");
-			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
-			t_list* pokemonLines = readPokemonLines(listBlocks);
-
-			if (coordinateExists(catchPokemon->pos_x, catchPokemon->pos_y, pokemonLines) == 1) {
-				deletePokemonTotalIfCoordinateExist(catchPokemon, pokemonLines);
-				char* stringToWrite = formatListToStringLine(pokemonLines);
-				int blocksRequired = cuantosBloquesOcupa(stringToWrite);
-				char* stringLength = string_itoa(strlen(stringToWrite));
-
-				if (strlen(stringToWrite) != 0) {
-					if (blocksRequired == list_size(listBlocks)) {
-						writeBlocks(stringToWrite, listBlocks);
-						char* metadataBlocks = formatToMetadataBlocks(listBlocks);
-						updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
-						free(metadataBlocks);
-					}
-
-					if (blocksRequired < list_size(listBlocks)) {
-						int lastBlockUsing = list_get(listBlocks, list_size(listBlocks) - 1 );
-						list_remove(listBlocks, list_size(listBlocks) - 1);
-						writeBlocks(stringToWrite, listBlocks);
-						char* metadataBlocks = formatToMetadataBlocks(listBlocks);
-						updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
-						
-						// Limpio estructuras que ya no uso
-						setear_bloque_libre_en_posicion(bitmap, lastBlockUsing);
-						fclose(fopen(obtenerPathDelNumeroDeBloque(lastBlockUsing), "w"));
-						free(metadataBlocks);
-					}
-				} 
-
-				// Edge case donde el pokemon tiene una sola linea, un solo bloque asignado y la unica coordenada es == 1
-				// Asumo que el bloque se queda ocupado pero con size = 0
-				if (strlen(stringToWrite) == 0 && list_size(pokemonLines) == 0) {
-					int blockUsed = list_get(listBlocks, 0);
-					char* metadataBlocks = formatToMetadataBlocks(listBlocks);
-					char* zeroLength = string_itoa(0);
-					updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", zeroLength, metadataBlocks, "N");
-						
-					// Limpio estructuras que ya no uso
-					fclose(fopen(obtenerPathDelNumeroDeBloque(blockUsed), "w"));
-					free(zeroLength);
-					free(metadataBlocks);
-				}
-				res = 1;
-				game_card_logger_info("Operacion CATCH_POKEMON terminada correctamente");
-
-				free(stringToWrite);
-				free(stringLength);
-			} else {
-				game_card_logger_error("No existen las coordenadas para ese pokemon, no se puede completar la operacion.");
-			}
-
-			list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
-		} else {
-			game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
-		}
-
-		free(pokemonMetadata.blocks);
-		free(pokemonMetadata.isOpen);
+		res = operateCatchPokemonFile(catchPokemon, completePath);
 	} else {
 		game_card_logger_error("No existe ese Pokemon en el filesystem.");
 	}
@@ -431,21 +331,7 @@ t_list* getAPokemon(t_get_pokemon* getPokemon) {
 
 	if (access(completePath, F_OK) != -1) {
 		game_card_logger_info("Existe el pokemon, se leen las estructuras");
-		pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
-		
-		if (string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
-			game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
-			updateOpenFileState(getPokemon->nombre_pokemon, "Y");
-			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
-			res = readPokemonLines(listBlocks);
-			updateOpenFileState(getPokemon->nombre_pokemon, "N");
-			game_card_logger_info("Operacion GET_POKEMON terminada correctamente");
-		} else {
-			game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
-		}
-
-		free(pokemonMetadata.blocks);
-		free(pokemonMetadata.isOpen);
+		res = operateGetPokemonFile(getPokemon, completePath);
 	} else {
 		game_card_logger_error("No existe ese Pokemon en el filesystem.");
 		
@@ -458,4 +344,181 @@ t_list* getAPokemon(t_get_pokemon* getPokemon) {
 
 void freeBlockLine(blockLine* newLineBlock) {
 	free(newLineBlock);
+}
+
+
+void operateNewPokemonFile(t_new_pokemon* newPokemon, char* completePath, int freeBlocks) {
+	pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
+
+	if(string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
+		game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
+		
+		pthread_mutex_lock(&MUTEX_METADATA);
+		updateOpenFileState(newPokemon->nombre_pokemon, "Y");
+		pthread_mutex_unlock(&MUTEX_METADATA);
+		
+		t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
+		t_list* pokemonLines = readPokemonLines(listBlocks);
+		if (coordinateExists(newPokemon->pos_x, newPokemon->pos_y, pokemonLines) == 1) {
+			addTotalPokemonIfCoordinateExist(newPokemon, pokemonLines);
+		} else {
+			blockLine* newNode = createBlockLine(newPokemon->pos_x, newPokemon->pos_y, newPokemon->cantidad);
+			list_add(pokemonLines, newNode);
+		}
+		
+		char* stringToWrite = formatListToStringLine(pokemonLines);
+		int blocksRequired = cuantosBloquesOcupa(stringToWrite);
+		char* stringLength = string_itoa(strlen(stringToWrite));
+
+		if (freeBlocks > blocksRequired) {
+			// Necesito pedir bloques
+			if (blocksRequired > list_size(listBlocks)) {
+				int extraBlocksNeeded = blocksRequired - list_size(listBlocks);
+				t_list* extraBlocks = requestFreeBlocks(extraBlocksNeeded);
+				// Agrego los nuevos bloques en la lista original
+				list_add_all(listBlocks, extraBlocks);
+				list_destroy(extraBlocks);
+			} 
+			writeBlocks(stringToWrite, listBlocks);
+			char* metadataBlocks = formatToMetadataBlocks(listBlocks);
+			
+			pthread_mutex_lock(&MUTEX_METADATA);
+			updatePokemonMetadata(newPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
+			pthread_mutex_unlock(&MUTEX_METADATA);
+
+			game_card_logger_info("Operacion NEW_POKEMON terminada correctamente");
+			free(metadataBlocks);
+		} else {
+			game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
+		}
+
+		list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
+		free(stringToWrite);
+		free(stringLength);
+	} else {
+		game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
+		sleep(game_card_config->tiempo_de_reintento_operacion);
+		operateNewPokemonFile(newPokemon, completePath, freeBlocks);
+	}
+
+	free(pokemonMetadata.blocks);
+	free(pokemonMetadata.isOpen);
+}
+
+
+t_list* operateGetPokemonFile(t_get_pokemon* getPokemon, char* completePath) {
+	pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
+	t_list* res;
+
+	if (string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
+		game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
+		
+		pthread_mutex_lock(&MUTEX_METADATA);
+		updateOpenFileState(getPokemon->nombre_pokemon, "Y");
+		pthread_mutex_unlock(&MUTEX_METADATA);
+
+		t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
+		res = readPokemonLines(listBlocks);
+		
+		pthread_mutex_lock(&MUTEX_METADATA);
+		updateOpenFileState(getPokemon->nombre_pokemon, "N");
+		pthread_mutex_unlock(&MUTEX_METADATA);
+
+		game_card_logger_info("Operacion GET_POKEMON terminada correctamente");
+	} else {
+		game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
+		sleep(game_card_config->tiempo_de_reintento_operacion);
+		operateGetPokemonFile(getPokemon, completePath);
+	}
+
+	free(pokemonMetadata.blocks);
+	free(pokemonMetadata.isOpen);
+	return res;
+}
+
+int operateCatchPokemonFile(t_catch_pokemon* catchPokemon, char* completePath) {
+	pokemonMetadata pokemonMetadata = readPokemonMetadata(completePath);
+	int res = 0;
+
+	if (string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
+		game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
+		
+		pthread_mutex_lock(&MUTEX_METADATA);
+		updateOpenFileState(catchPokemon->nombre_pokemon, "Y");
+		pthread_mutex_unlock(&MUTEX_METADATA);
+
+		t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
+		t_list* pokemonLines = readPokemonLines(listBlocks);
+
+		if (coordinateExists(catchPokemon->pos_x, catchPokemon->pos_y, pokemonLines) == 1) {
+			deletePokemonTotalIfCoordinateExist(catchPokemon, pokemonLines);
+			char* stringToWrite = formatListToStringLine(pokemonLines);
+			int blocksRequired = cuantosBloquesOcupa(stringToWrite);
+			char* stringLength = string_itoa(strlen(stringToWrite));
+
+			if (strlen(stringToWrite) != 0) {
+				if (blocksRequired == list_size(listBlocks)) {
+					writeBlocks(stringToWrite, listBlocks);
+					char* metadataBlocks = formatToMetadataBlocks(listBlocks);
+					
+					pthread_mutex_lock(&MUTEX_METADATA);
+					updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
+					pthread_mutex_unlock(&MUTEX_METADATA);
+					free(metadataBlocks);
+				}
+
+				if (blocksRequired < list_size(listBlocks)) {
+					int lastBlockUsing = list_get(listBlocks, list_size(listBlocks) - 1 );
+					list_remove(listBlocks, list_size(listBlocks) - 1);
+					writeBlocks(stringToWrite, listBlocks);
+					char* metadataBlocks = formatToMetadataBlocks(listBlocks);
+					
+					
+					pthread_mutex_lock(&MUTEX_METADATA);
+					updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", stringLength, metadataBlocks, "N");
+					pthread_mutex_unlock(&MUTEX_METADATA);
+					
+					// Limpio estructuras que ya no uso
+					setear_bloque_libre_en_posicion(bitmap, lastBlockUsing);
+					fclose(fopen(obtenerPathDelNumeroDeBloque(lastBlockUsing), "w"));
+					free(metadataBlocks);
+				}
+			} 
+
+			// Edge case donde el pokemon tiene una sola linea, un solo bloque asignado y la unica coordenada es == 1
+			// Asumo que el bloque se queda ocupado pero con size = 0
+			if (strlen(stringToWrite) == 0 && list_size(pokemonLines) == 0) {
+				int blockUsed = list_get(listBlocks, 0);
+				char* metadataBlocks = formatToMetadataBlocks(listBlocks);
+				char* zeroLength = string_itoa(0);
+
+				pthread_mutex_lock(&MUTEX_METADATA);
+				updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", zeroLength, metadataBlocks, "N");
+				pthread_mutex_unlock(&MUTEX_METADATA);
+					
+				// Limpio estructuras que ya no uso
+				fclose(fopen(obtenerPathDelNumeroDeBloque(blockUsed), "w"));
+				free(zeroLength);
+				free(metadataBlocks);
+			}
+			res = 1;
+			game_card_logger_info("Operacion CATCH_POKEMON terminada correctamente");
+
+			free(stringToWrite);
+			free(stringLength);
+		} else {
+			game_card_logger_error("No existen las coordenadas para ese pokemon, no se puede completar la operacion.");
+		}
+
+		list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
+	} else {
+		game_card_logger_info("Archivo abierto, se procede a reintentar luego de %d segundos", game_card_config->tiempo_de_reintento_operacion);
+		sleep(game_card_config->tiempo_de_reintento_operacion);
+		operateCatchPokemonFile(catchPokemon, completePath);
+	}
+
+	free(pokemonMetadata.blocks);
+	free(pokemonMetadata.isOpen);
+
+	return res;
 }
