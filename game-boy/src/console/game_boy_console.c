@@ -255,7 +255,6 @@ void subscriber_command(char** arguments, int arguments_size) {
 					game_boy_broker_fd, protocol);
 			game_boy_logger_info("ID correlacional: %d",
 					catch_rcv->id_correlacional);
-			game_boy_logger_info("ID Generado: %d", catch_rcv->id_gen);
 			game_boy_logger_info("Nombre Pokemon: %s",
 					catch_rcv->nombre_pokemon);
 			game_boy_logger_info("Largo nombre: %d", catch_rcv->tamanio_nombre);

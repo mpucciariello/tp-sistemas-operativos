@@ -307,18 +307,18 @@ static void *handle_connection(void *arg) {
 					catch_rcv);
 			int from = save_on_memory(message_void);
 			broker_logger_info("POINTER VALUE AFTER CATCH_POKEMON: %d", from);
-			catch_rcv->id_gen = generar_id();
+			catch_rcv->id_correlacional = generar_id();
 			save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
-					catch_rcv->id_gen);
+					catch_rcv->id_correlacional);
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from,
 					memory);
 
 			//falta mandar id al team para q lo guarde//
 
-			create_message_ack(catch_rcv->id_gen, catch_queue, CATCH_QUEUE);
+			create_message_ack(catch_rcv->id_correlacional, catch_queue, CATCH_QUEUE);
 
 			// To GC
-			catch_send->id_gen = generar_id();
+			catch_send->id_correlacional = generar_id();
 			uuid++;
 			catch_protocol = CATCH_POKEMON;
 			broker_logger_info("CATCH SENT TO GC");
@@ -600,9 +600,6 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	case SUBSCRIBE: {
 		break;
 	}
-	case ID_GENERATE: {
-		break;
-	}
 	case ACK: {
 		break;
 	}
@@ -758,9 +755,6 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		break;
 	}
 	case SUBSCRIBE: {
-		break;
-	}
-	case ID_GENERATE: {
 		break;
 	}
 	case ACK: {

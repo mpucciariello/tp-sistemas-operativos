@@ -36,7 +36,6 @@ typedef enum {
 	CATCH_POKEMON,
 	CAUGHT_POKEMON,
 	GET_POKEMON,
-	ID_GENERATE,
 	LOCALIZED_POKEMON,
 	SUBSCRIBE,
 	NOOP
@@ -95,12 +94,7 @@ typedef struct {
 	uint32_t tamanio_nombre;
 	uint32_t pos_x;
 	uint32_t pos_y;
-	uint32_t id_gen;
 } t_catch_pokemon;
-
-typedef struct {
-	uint32_t id_generado;
-} t_generate;
 
 typedef struct {
 	uint32_t id_correlacional;

@@ -209,17 +209,6 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package,
 				&((t_catch_pokemon*) package_send)->tamanio_nombre,
 				sizeof(uint32_t));
-		utils_package_add(package, &((t_catch_pokemon*) package_send)->id_gen,
-				sizeof(uint32_t));
-		utils_package_send_to(package, socket);
-		utils_package_destroy(package);
-		break;
-	}
-
-	case ID_GENERATE: {
-		t_package* package = utils_package_create(protocol);
-		utils_package_add(package, &((t_generate*) package_send)->id_generado,
-				sizeof(uint32_t));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 		break;
@@ -368,7 +357,6 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		utils_get_from_list_to(&catch_req->pos_x, list, 2);
 		utils_get_from_list_to(&catch_req->pos_y, list, 3);
 		utils_get_from_list_to(&catch_req->tamanio_nombre, list, 4);
-		utils_get_from_list_to(&catch_req->id_gen, list, 5);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return catch_req;
 	}
@@ -402,14 +390,7 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		return subscribe_req;
 	}
 
-	case ID_GENERATE: {
-		t_generate* id_gen_req = malloc(sizeof(t_generate));
-		t_list* list = utils_receive_package(socket);
-		utils_get_from_list_to(&id_gen_req->id_generado, list, 0);
-		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
-		return id_gen_req;
-	}
-
+	
 	case LOCALIZED_POKEMON: {
 		t_localized_pokemon* localized_req = malloc(
 				sizeof(t_localized_pokemon));

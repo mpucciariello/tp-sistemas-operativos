@@ -7,7 +7,7 @@ int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_set_algorithm();
 
-void team_planner_run_planification(t_list* trainers_list) {
+void team_planner_run_planification() {
 	sem_wait(&sem_message_on_queue);
 	sem_wait(&sem_entrenadores); //en NEW_QUEUE
 	sem_wait(&sem_planification);

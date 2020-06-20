@@ -73,7 +73,7 @@ t_list* pokemon_to_catch;
 
 void team_planner_init();
 void team_planner_destroy();
-void team_planner_run_planification(t_list* trainers_list);
+void team_planner_run_planification();
 void move_trainers(t_entrenador_pokemon* entrenador);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

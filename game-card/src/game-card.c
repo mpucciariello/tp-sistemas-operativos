@@ -233,7 +233,6 @@ void *recv_game_card(int fd, int respond_to) {
 			game_card_logger_info("CATCH received");
 			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(client_fd, protocol);
 			game_card_logger_info("ID correlacional: %d", catch_rcv->id_correlacional);
-			game_card_logger_info("ID Generado: %d", catch_rcv->id_gen);
 			game_card_logger_info("Nombre Pokemon: %s", catch_rcv->nombre_pokemon);
 			game_card_logger_info("Largo nombre: %d",catch_rcv->tamanio_nombre);
 			game_card_logger_info("Posicion X: %d", catch_rcv->pos_x);

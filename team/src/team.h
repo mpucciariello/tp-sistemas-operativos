@@ -21,6 +21,7 @@ bool is_connected;
 pthread_t planner_thread;
 t_list* get_id_corr;
 t_list* keys_list;
+t_list* message_catch_sended;
 
 int team_load();
 void team_init();
