@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <pthread.h>
-
+#include <commons/collections/list.h>
 #include "config/team_config.h"
 #include "logger/team_logger.h"
 #include "planner/team_planner.h"
@@ -18,7 +18,6 @@
 
 int team_socket;
 bool is_connected;
-pthread_mutex_t planner_mutex;
 pthread_t planner_thread;
 t_list* get_id_corr;
 t_list* keys_list;
@@ -26,7 +25,7 @@ t_list* keys_list;
 int team_load();
 void team_init();
 void team_server_init();
-static void *handle_connection(void *arg);
+void *handle_connection(void *arg);
 void team_exit();
 void *receive_msg(int broker_fd, int send_to);
 void send_ack(void* arg);

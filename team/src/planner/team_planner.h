@@ -54,10 +54,26 @@ typedef struct {
 } t_pokemon_received;
 
 sem_t sem_entrenadores;
+sem_t sem_message_on_queue;
+sem_t sem_planification;
+pthread_mutex_t planner_mutex;
+
+t_entrenador_pokemon* exec_entrenador;
+t_list* new_queue;
+t_list* ready_queue;
+t_list* block_queue;
+t_list* exit_queue;
+t_list* pokemon_to_catch;
+
+t_list* keys_list;
+t_list* target_pokemons;
+
 t_dictionary* team_planner_global_targets;
 t_list* pokemon_to_catch;
 
 void team_planner_init();
 void team_planner_destroy();
+void team_planner_run_planification(t_list* trainers_list);
+void move_trainers(t_entrenador_pokemon* entrenador);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
