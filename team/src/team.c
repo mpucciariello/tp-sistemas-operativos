@@ -27,14 +27,29 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
-	team_planner_init();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 	pthread_t tid;
 	pthread_t tid2;
 	pthread_t tid3;
+  pthread_t planificator;
+	team_planner_init();
+	sem_wait(&sem_entrenadores);
+
+	for(int i = 0; i < list_size(new_queque); i++){
+		t_entrenador_pokemon* entrenador;
+		entrenador = list_get(new_queque, i);
+		pthread_t thread_entrenadores;
+		pthread_create(&thread_entrenadores, NULL, (void*) move_trainers, entrenador);
+			
+	}
 	// pthread_t tid4;
+
+	sem_t sem_message_on_queue;
+	sem_init(&sem_message_on_queue, 0, 0);
+
+	phtread_create(&planificator, NULL, (void*) team_planner_run_planification, new_queque);
 
 	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
 	t_cola cola_appeared = APPEARED_QUEUE;
@@ -91,14 +106,22 @@ void send_message_test() {
 
 		// To broker
 		t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
-		get_send->id_correlacional = 19;
-		get_send->nombre_pokemon = string_duplicate("Aerodactyl");
-		get_send->tamanio_nombre = strlen(get_send->nombre_pokemon) + 1;
-		get_protocol = GET_POKEMON;
-		team_logger_info("Get sent");
-		utils_serialize_and_send(broker_fd_send, get_protocol, get_send);
 
-		usleep(500000);
+		for(int i = 0, i < list_size(keys_list), i++){
+			char* nombre = list_get(keys_list, i);
+			//TODO
+			get_send->id_correlacional = 19;
+			get_send->nombre_pokemon = string_duplicate(nombre);
+			get_send->tamanio_nombre = strlen(get_send->nombre_pokemon) + 1;
+			get_protocol = GET_POKEMON;
+			team_logger_info("Get sent");
+			utils_serialize_and_send(broker_fd_send, get_protocol, get_send);
+
+			//t *id_corr = utils_receive_and_deserialize(fd, protocol);
+			list_add(get_id_corr, 1);
+
+			usleep(500000);
+		}
 	}
 }
 
@@ -202,6 +225,23 @@ void *receive_msg(int fd, int send_to) {
 			}
 			usleep(500000);
 			break;
+
+			bool _es_el_mismo(uint_32t id) {
+				return loc_rcv->id_correlacional == id;
+			}
+
+			if(list_any_satisfy(get_id_corr, (void*)_es_el_mismo)) && pokemon_required(loc_rcv->nombre_pokemon)){
+				t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
+				pokemon -> name = malloc(sizeof(loc_rcv->tamanio_nombre));
+				pokemon -> name = loc_rcv->nombre_pokemon;
+				pokemon -> pos = list_create();
+				pokemon -> pos = loc_rcv->posiciones;
+				list_add(pokemon_to_catch, pokemon);
+				sem_post(&message_on_queue);
+			}
+
+
+
 		}
 
 		case APPEARED_POKEMON: {
@@ -214,6 +254,7 @@ void *receive_msg(int fd, int send_to) {
 			team_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			team_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
 			usleep(50000);
+			t_pokemon* pokemon_appeared = team_planner_pokemon_appeared_create(appeared_rcv->nombre_pokemon, appeared_rcv->pos_x, appeared_rcv->pos_y, FREE);
 
 			if (is_server == 0) {
 				pthread_t tid;
@@ -227,8 +268,36 @@ void *receive_msg(int fd, int send_to) {
 		default:
 			break;
 		}
+
+		if(pokemon_required(appeared_rcv->nombre_pokemon)){
+			t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
+			pokemon -> name = malloc(sizeof(appeared_rcv->tamanio_nombre));
+			pokemon -> name = appeared_rcv->nombre_pokemon;
+			pokemon -> pos = list_create();
+			pokemon -> pos = appeared_rcv->posiciones;
+			list_add(pokemon_to_catch, pokemon);
+			sem_post(&message_on_queue);
+		}
 	}
 	return NULL;
+}
+
+bool pokemon_required(char* pokemon_name){
+	t_list* pokemon_to_catch_name;
+
+	bool _es_el_mismo(char* name) {
+		return  string_equals_ignore_case(pokemon_name,name);
+	}
+
+	int _get_name(t_pokemon_received* pokemon) {
+		return pokemon->name;
+	}
+	pokemon_to_catch_name = list_map(pokemon_to_catch, (void*) _get_name);
+
+	if(list_any_satisfy(pokemon_to_catch_name, (void*) _es_el_mismo){
+		return false;
+	}
+	return true;
 }
 
 void team_server_init() {

@@ -5,6 +5,7 @@ t_list* new_queque;
 t_list* ready_queque;
 t_list* block_queque;
 t_list* exit_queque;
+t_list* pokemon_to_catch;
 
 t_list* keys_list;
 t_list* target_pokemons;
@@ -13,6 +14,29 @@ bool preemptive;
 int fifo_index = 0;
 char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
+
+void team_planner_run_planification(t_list* trainers_list){
+		sem_wait(&sem_message_on_queue);
+		sem_wait(&sem_entrenadores); //en NEW_QUEUE
+		sem_wait(&sem_planification);
+
+		team_planner_set_algorithm();
+
+		//TODO
+		//trainer es el que decido planificar
+		sem_post(&trainer->sem_trainer);
+
+}
+
+void move_trainers(t_entrenador_pokemon* entrenador){
+	sem_wait(&entrenador->sem_trainer)
+		int aux_x;
+		int aux_y;
+		int steps;
+
+
+	sem_post(sem_planification);
+}
 
 t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_position* posicion, t_list* pokemons, t_list* targets) {
 	t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
@@ -27,6 +51,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->wait_time = 0;
 	entrenador->current_burst_time = 0;
 	entrenador->estimated_time = 0;
+	sem_init(&entrenador->sem_trainer, 0, 0);
 
 	return entrenador;
 }
@@ -37,6 +62,17 @@ t_pokemon* team_planner_pokemon_create(int id, int entrenador_id, char* nombre, 
 	pokemon->trainner_id = entrenador_id;
 	pokemon->name = nombre;
 	pokemon->state = estado;
+	return pokemon;
+}
+
+t_pokemon* team_planner_pokemon_appeared_create(char* nombre, int x, int y, t_pokemon_state estado) {
+	t_pokemon* pokemon = malloc(sizeof(t_pokemon));
+	pokemon->name = nombre;
+	pokemon->state = estado;
+	t_position* pos = malloc(sizeof(t_position));
+	pos->x = x;
+	pos->y = y;
+	pokemon->position = pos;
 	return pokemon;
 }
 
@@ -446,7 +482,7 @@ t_pokemon* team_planner_get_pokemon_by_trainner(t_entrenador_pokemon* entrenador
 void team_planner_solve_deadlock(t_entrenador_pokemon* bloqueado, t_entrenador_pokemon* bloqueante) {
 	team_logger_info("Se ha procedera a resolver deadlock!");
 	deadlocks_resolved++;
-	
+
 	team_logger_info("El deadlock ha sido resuelto!");
 }
 
@@ -577,8 +613,9 @@ void team_planner_init() {
 	planner_init_quees();
 	planner_load_entrenadores();
 	sem_init(&sem_entrenadores, 0, 0);
-	team_planner_set_algorithm();
+	sem_init(&sem_planification, 0, 1); //empieza en uno pero cambia cada vez que un entrenador termina
 }
+
 
 void planner_destroy_pokemons(t_pokemon* pokemon) {
 	free(pokemon->name);

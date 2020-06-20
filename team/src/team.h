@@ -18,6 +18,10 @@
 
 int team_socket;
 bool is_connected;
+pthread_mutex_t planner_mutex;
+pthread_t planner_thread;
+t_list* get_id_corr;
+t_list* keys_list;
 
 int team_load();
 void team_init();
@@ -29,5 +33,7 @@ void send_ack(void* arg);
 void subscribe_to(void *arg);
 void send_message_test();
 void team_retry_connect(void* arg);
+bool pokemon_required(char* name);
+
 
 #endif /* TEAM_H_ */

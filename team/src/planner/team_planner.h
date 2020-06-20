@@ -10,6 +10,7 @@
 #include "../config/team_config.h"
 #include "../../../shared-common/common/utils.h"
 
+
 typedef enum {
 	NEW, READY, BLOCK, EXEC, EXIT
 } e_state;
@@ -29,6 +30,7 @@ typedef struct {
 	int current_burst_time;
 	int estimated_time;
 	t_entrenador_info_bloqueo* blocked_info;
+	sem_t sem_trainer;
 } t_entrenador_pokemon;
 
 typedef enum {
@@ -46,9 +48,14 @@ typedef struct {
 	t_position* position;
 } t_pokemon;
 
-pthread_mutex_t planner_mutex;
+typedef struct {
+	char* name;
+	t_list* pos;
+} t_pokemon_received;
+
 sem_t sem_entrenadores;
 t_dictionary* team_planner_global_targets;
+t_list* pokemon_to_catch;
 
 void team_planner_init();
 void team_planner_destroy();
