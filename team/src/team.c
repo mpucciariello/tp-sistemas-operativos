@@ -95,33 +95,27 @@ void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 	}
 }
 
-void send_message_catch() {
-		t_protocol catch_protocol;
+void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entrenador) {
+	t_protocol catch_protocol;
 
-		// To broker
-		/*t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
-		catch_send->id_correlacional = 0;
-		catch_send->nombre_pokemon = string_duplicate("Weepinbell");
-		catch_send->pos_x = 17;
-		catch_send->pos_y = 8;
-		catch_send->tamanio_nombre = 11;
-		catch_protocol = CATCH_POKEMON;*/
-		
-		int i = send_message(catch_send, catch_protocol, NULL);
+	int i = send_message(catch_send, catch_protocol, NULL);
 
-		if (i == 0) {
-			team_logger_info("Catch sent!");
-			list_add(message_catch_sended, catch_send);
+	if (i == 0) {
+		team_logger_info("Catch sent!");
+		team_planner_block_current_trainner(catch_send->pokemon_name, 1); 
+		//TODO
+		//cuando recibo un caught vuelvo a poner en 0 al status
+		list_add(message_catch_sended, catch_send);
+		list_add(entrenador->list_id_catch, catch_send->id_correlacional);
 
-		} else {
-			remove_pokemon_from_catch (catch_send);
-			//TODO
-			//chequear si el estrenador está completo. si está terminado.
-		}
-
-		usleep(500000);
-		// To broker
+	} else {
+		remove_pokemon_from_catch (catch_send);
+		//TODO
+		//chequear si el estrenador está completo. si está terminado. bloquear al pokemon
 	}
+
+	usleep(500000);
+	// To broker
 }
 
 void send_get_message() {
@@ -166,6 +160,30 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		}
 	}
 	return 0;
+}
+
+void move_trainers(t_entrenador_pokemon* entrenador) {
+	sem_wait(&entrenador->sem_trainer);
+	int aux_x;
+	int aux_y;
+	int steps;
+
+	aux_x = entrenador->position->pos_x - pokemon_temporal->position->pos_x;
+	aux_y = entrenador->position->pos_y - pokemon_temporal->position->pos_y;
+
+	//TODO
+	//muevo, cuento tiempo, logueo movimiento
+
+	t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
+	catch_send->id_correlacional = 0;
+	catch_send->nombre_pokemon = string_duplicate("Weepinbell");
+	catch_send->pos_x = 17;
+	catch_send->pos_y = 8;
+	catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
+	catch_protocol = CATCH_POKEMON;
+	send_message_catch(catch_send, entrenador); 
+
+	sem_post(&sem_planification);
 }
 
 void subscribe_to(void *arg) {
@@ -250,6 +268,9 @@ void *receive_msg(int fd, int send_to) {
 				team_logger_info("Resultado (0/1): %d", caught_rcv->result);
 				usleep(50000);
 				break;
+
+				team_planner_change_block_status(0, caught_rcv->id_correlacional)//no tiene mensajes pendientes 
+				//TODO
 			}
 
 			case LOCALIZED_POKEMON: {

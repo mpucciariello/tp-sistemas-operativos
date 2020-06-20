@@ -16,19 +16,12 @@ void team_planner_run_planification() {
 
 	//TODO
 	//trainer es el que decido planificar
-	t_entrenador_pokemon* trainer = list_get(trainers_list, 0);
-	sem_post(&trainer->sem_trainer);
+	
+	
+	
 
 }
 
-void move_trainers(t_entrenador_pokemon* entrenador) {
-	sem_wait(&entrenador->sem_trainer);
-	int aux_x;
-	int aux_y;
-	int steps;
-
-	sem_post(&sem_planification);
-}
 
 t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_position* posicion, t_list* pokemons, t_list* targets) {
 	t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
@@ -44,6 +37,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->current_burst_time = 0;
 	entrenador->estimated_time = 0;
 	sem_init(&entrenador->sem_trainer, 0, 0);
+	entrenador->targets = list_create();
 
 	return entrenador;
 }
@@ -174,18 +168,40 @@ void team_planner_finish_current_trainner() {
 	exec_entrenador = NULL;
 }
 
-void team_planner_block_current_trainner(char* pokemon_name) {
+void team_planner_block_current_trainner(char* pokemon_name, int status) {
 	// Creo la informacion de bloqueo
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo));
 	info_bloqueo->pokemon_needed = malloc(sizeof(pokemon_name));
 	strcpy(info_bloqueo->pokemon_needed, pokemon_name);
 	info_bloqueo->blocked_time = 0;
+	info_bloqueo->status = status;
 
 	exec_entrenador->state = BLOCK;
 	exec_entrenador->blocked_info = info_bloqueo;
 	// Encolo el entrenador en la lista de bloqueados
 	list_add(block_queue, exec_entrenador);
 	exec_entrenador = NULL;
+}
+
+
+t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t id) { //para el caught
+	int _id_match(t_entrenador_pokemon *entrenador) {
+		return list_contains(entrenador->list_id_catch, id);
+	}
+
+	return list_find(block_queue, (void*) _id_match);
+}
+
+
+void team_planner_change_block_status(int status, int32_t id_corr) {
+	// Creo la informacion de bloqueo
+
+	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo));
+	info_bloqueo->blocked_time = 0;
+	info_bloqueo->status = status;
+
+	t_entrenador_pokemon* entrenador = find_trainer_by_id_corr(id_corr);
+	entrenador->blocked_info = info_bloqueo;
 }
 
 bool team_planner_has_config_trainners(int i) {
@@ -294,6 +310,12 @@ void team_planner_admit_new_trainers() {
 	}
 }
 
+void team_planner_exec_trainer(){ //permite moverme a atrapar
+	sem_post(&exec_entrenador->sem_trainer);
+	exec_entrenador->wait_time = 0;
+	exec_entrenador->current_burst_time = 0;
+}
+
 bool team_planner_is_SJF_algorithm() {
 	return team_config->algoritmo_planificacion == SJF_CD || team_config->algoritmo_planificacion == SJF_SD;
 }
@@ -366,6 +388,13 @@ void team_planner_run_checks() {
 	}
 }
 
+t_list* filter_block_list() {
+	bool _is_available(t_entrenador_pokemon* trainner) {
+		return trainner->blocked_info->status == 0;
+	}
+	t_list* blocked_but_to_exec = list_filter(block_queue, (void*) _is_available);
+}
+
 void team_planner_apply_SJF(bool is_preemptive) {
 	preemptive = is_preemptive;
 	pthread_mutex_lock(&planner_mutex);
@@ -388,6 +417,7 @@ void team_planner_apply_SJF(bool is_preemptive) {
 					exec_entrenador = entrenador_menor_estimacion;
 					list_remove(ready_queue, least_estimate_index);
 				}
+				team_planner_exec_trainer();
 			}
 		}
 	} else {
@@ -395,9 +425,9 @@ void team_planner_apply_SJF(bool is_preemptive) {
 			exec_entrenador = list_get(ready_queue, least_estimate_index);
 			list_remove(ready_queue, least_estimate_index);
 		}
+		team_planner_exec_trainer();
 	}
-
-	exec_entrenador->wait_time = 0;
+	
 	pthread_mutex_unlock(&planner_mutex);
 }
 
@@ -408,14 +438,29 @@ void team_planner_apply_FIFO() {
 
 	// Si no hay entrenador, planifico el proximo
 	if (exec_entrenador == NULL) {
+
+		//TODO remodelar
 		int next_out_index = fifo_index;
 		if (next_out_index <= list_size(ready_queue)) {
-			exec_entrenador = list_get(ready_queue, next_out_index);
+			/*exec_entrenador = list_get(ready_queue, next_out_index);
 			list_remove(ready_queue, next_out_index);
-			fifo_index++;
+			fifo_index++;*/
+
+			t_list* listo_para_planificar = list_create();
+			
+			bool _is_available(t_entrenador_pokemon* trainner) {
+				return trainner->blocked_info->status == 0;
+			}
+			t_list* bloquados_en_cero = list_filter(block_queue, (void*) _is_available);
+			
+			list_add_all(listo_para_planificar, bloquados_en_cero);
+			list_add_all(listo_para_planificar, new_queue);
+
+			//TODO
+			exec_entrenador = algoritmo_cercania(listo_para_planificar);
 		}
-		exec_entrenador->wait_time = 0;
-		exec_entrenador->current_burst_time = 0;
+
+	team_planner_exec_trainer();		
 	}
 
 	pthread_mutex_unlock(&planner_mutex);
@@ -433,8 +478,8 @@ void team_planner_apply_RR() {
 			list_remove(ready_queue, next_out_index);
 			fifo_index++;
 		}
-		exec_entrenador->wait_time = 0;
-		exec_entrenador->current_burst_time = 0;
+		
+		team_planner_exec_trainer();
 	}
 
 	pthread_mutex_unlock(&planner_mutex);

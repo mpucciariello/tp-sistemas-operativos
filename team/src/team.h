@@ -36,4 +36,5 @@ void team_retry_connect(void* arg);
 bool pokemon_required(char* name);
 
 
+
 #endif /* TEAM_H_ */
