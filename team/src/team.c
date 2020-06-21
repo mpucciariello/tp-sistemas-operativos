@@ -168,17 +168,40 @@ void move_trainers(t_entrenador_pokemon* entrenador) {
 	int aux_y;
 	int steps;
 
+	steps = fabs(aux_x + aux_y);
+	sleep(steps*(team_config->retardo_ciclo_cpu)); 
+	//pokemon temporal el pokemon que planifico en el momento. lo debe modificar el algoritmo de cercanía al terminar su ejecucion
+
 	aux_x = entrenador->position->pos_x - pokemon_temporal->position->pos_x;
 	aux_y = entrenador->position->pos_y - pokemon_temporal->position->pos_y;
+	//buscar mecanismo para contar rafagas de cpu
+
+	team_logger_info((
+			"Un trainer se movio de:\n\n"
+			"x\t\t%d\n"
+			"y:\t\t%d\n"
+			"a:\n\n"
+			"x\t\t%d\n"
+			"y:\t\t%d\n",
+			entrenador->position->pos_x,
+			entrenador->position->pos_y,
+			pokemon_temporal->position->pos_x,
+			pokemon_temporal->position->pos_y
+		);
+
+	entrenador->position->pos_x = pokemon_temporal->position->pos_x;
+	entrenador->position = pokemon_temporal->position->pos_y;
+
+
 
 	//TODO
 	//muevo, cuento tiempo, logueo movimiento
 
 	t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 	catch_send->id_correlacional = 0;
-	catch_send->nombre_pokemon = string_duplicate("Weepinbell");
-	catch_send->pos_x = 17;
-	catch_send->pos_y = 8;
+	catch_send->nombre_pokemon = pokemon_temporal->name;
+	catch_send-> pos_x = pokemon_temporal->position->pos_x;
+	catch_send->pos_y = pokemon_temporal->position->pos_y;
 	catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 	catch_protocol = CATCH_POKEMON;
 	send_message_catch(catch_send, entrenador); 
