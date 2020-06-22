@@ -97,6 +97,7 @@ void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 	}
 }
 
+
 void send_message_catch(t_catch_pokemon* catch_send) {
 	t_protocol catch_protocol = CATCH_POKEMON;
 	t_entrenador_pokemon* entrenador_aux = exec_entrenador;
@@ -124,6 +125,7 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 	usleep(500000);
 }
 
+
 void send_get_message() {
 	t_protocol get_protocol;
 	t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
@@ -142,6 +144,7 @@ void send_get_message() {
 		usleep(500000);
 	}
 }
+
 
 int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
@@ -167,6 +170,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	return 0;
 }
 
+
 void move_trainers() {
 	sem_wait(&exec_entrenador->sem_trainer);
 
@@ -183,8 +187,8 @@ void move_trainers() {
 																	  pokemon_temporal->position->pos_x, 
 																	  pokemon_temporal->position->pos_y);
 
-	exec_entrenador->position->pos_x = pokemon_temporal->position->pos_x;
-	exec_entrenador->position->pos_y = pokemon_temporal->position->pos_y;
+																	exec_entrenador->position->pos_x = pokemon_temporal->position->pos_x;
+																	exec_entrenador->position->pos_y = pokemon_temporal->position->pos_y;
 
 	t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 	catch_send->id_correlacional = 0;
@@ -197,6 +201,7 @@ void move_trainers() {
 	
 	pokemon_temporal = NULL;
 }
+
 
 void subscribe_to(void *arg) {
 
@@ -235,7 +240,7 @@ void subscribe_to(void *arg) {
 		team_logger_warn("No se pudo conectar con BROKER");
 		socket_close_conection(new_broker_fd);
 	} else {
-		team_logger_info("Conexion con BROKER establecida correctamente!");
+		team_logger_info("Conexión con BROKER establecida correctamente!");
 		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
 
 		t_protocol subscribe_protocol = SUBSCRIBE;
@@ -250,6 +255,7 @@ void subscribe_to(void *arg) {
 	}
 }
 
+
 void team_retry_connect(void* arg) {
 	void* arg2 = arg;
 	while (true) {
@@ -258,6 +264,7 @@ void team_retry_connect(void* arg) {
 		utils_delay(team_config->tiempo_reconexion);
 	}
 }
+
 
 t_catch_pokemon* filter_msg_catch_by_id_caught(uint32_t id_corr_caught) {
 	for (int i = 0; i < list_size(message_catch_sended); i++) {
@@ -269,6 +276,7 @@ t_catch_pokemon* filter_msg_catch_by_id_caught(uint32_t id_corr_caught) {
 	}
 	return NULL;
 }
+
 
 t_entrenador_pokemon* filter_trainer_by_id_caught(uint32_t id_corr_caught) {
 	for (int i = 0; i < list_size(block_queue); i++) {
@@ -282,6 +290,7 @@ t_entrenador_pokemon* filter_trainer_by_id_caught(uint32_t id_corr_caught) {
 	}
 	return NULL;
 }
+
 
 void *receive_msg(int fd, int send_to) {
 	int protocol;
@@ -389,6 +398,7 @@ void *receive_msg(int fd, int send_to) {
 	return NULL;
 }
 
+
 bool pokemon_required(char* pokemon_name) {
 
 	bool _es_el_mismo(char* name) {
@@ -407,9 +417,33 @@ bool pokemon_required(char* pokemon_name) {
 	return true;
 }
 
+
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
+
+	if(list_size(entrenador->pokemons) == list_size(entrenador->targets)){
+		t_list* pokemons_target_aux = list_create();
+		pokemons_target_aux = entrenador->targets;
+		trainer->locked = true;
+
+		for(i = 0; i<list_size(entrenador->pokemons); i++){
+			t_pokemon* pokemon = list_get(entrenador->pokemons, i);
+
+			for(int j = 0; j<list_size(pokemons_target_aux); j++){
+				t_pokemon* pokemon_aux = list_get(pokemons_target_aux, j);
+
+				if(string_equals_ignore_case(pokemon->name, pokemon_aux->name)){
+					list_remove(pokemons_target_aux, j);
+				}
+			}
+		}
+
+		if (list_size(pokemons_target_aux) == 0){
+			return true;
+		}
+	}
 	return false;
 }
+
 
 void team_server_init() {
 
@@ -447,12 +481,14 @@ void team_server_init() {
 	}
 }
 
+
 void *handle_connection(void *arg) {
 	t_handle_connection* connect_handler = (t_handle_connection *) arg;
 	int client_fd = connect_handler->fd;
 	receive_msg(client_fd, connect_handler->bool_val);
 	return NULL;
 }
+
 
 void send_ack(void* arg) {
 	int val = *((int*) arg);
@@ -468,6 +504,7 @@ void send_ack(void* arg) {
 	team_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
 	socket_close_conection(client_fd);
 }
+
 
 void team_exit() {
 	socket_close_conection(team_socket);
