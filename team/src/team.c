@@ -27,6 +27,7 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
+	sem_init(&sem_entrenadores, 0, 0);
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -34,9 +35,10 @@ void team_init() {
 	pthread_t tid2;
 	pthread_t tid3;
 	pthread_t planificator;
+	pthread_t algoritmo_cercania_entrenadores;
 	team_planner_init();
 	send_get_message();
-	sem_wait(&sem_entrenadores);
+	sem_wait(&sem_entrenadores);  
 
 	for (int i = 0; i < list_size(new_queue); i++) {
 		t_entrenador_pokemon* entrenador;
@@ -49,8 +51,14 @@ void team_init() {
 	sem_t sem_message_on_queue;
 	sem_init(&sem_message_on_queue, 0, 0);
 
+	sem_t sem_trainer_exec_is_loaded;
+	sem_init(&sem_trainer_exec_is_loaded, 0, 0);
+
 	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
 	pthread_detach(&planificator);
+
+	pthread_create(&algoritmo_cercania_entrenadores, NULL, (void*) team_planner_algoritmo_cercania, NULL);
+	pthread_detach(&algoritmo_cercania_entrenadores);
 
 	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
 	t_cola cola_appeared = APPEARED_QUEUE;
@@ -102,16 +110,20 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 	if (i == 0) {
 		team_logger_info("Catch sent!");
-		team_planner_block_current_trainner(catch_send->pokemon_name, 1); 
-		//TODO
-		//cuando recibo un caught vuelvo a poner en 0 al status
+		team_planner_block_current_trainner(catch_send->pokemon_name, 1);
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador->list_id_catch, catch_send->id_correlacional);
 
 	} else {
 		remove_pokemon_from_catch (catch_send);
+		team_planner_block_current_trainner(0, 0);
 		//TODO
+
 		//chequear si el estrenador está completo. si está terminado. bloquear al pokemon
+		if(esta_completo && tiene_los_que_necesita){
+			team_planner_finish_trainer(entrenador);
+		}
+		
 	}
 
 	usleep(500000);
@@ -164,20 +176,22 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 
 void move_trainers(t_entrenador_pokemon* entrenador) {
 	sem_wait(&entrenador->sem_trainer);
+	sem_wait(&sem_trainer_exec_is_loaded);
+
 	int aux_x;
 	int aux_y;
 	int steps;
 
 	steps = fabs(aux_x + aux_y);
 	sleep(steps*(team_config->retardo_ciclo_cpu)); 
-	//pokemon temporal el pokemon que planifico en el momento. lo debe modificar el algoritmo de cercanía al terminar su ejecucion
+	//pokemon temporal el pokemon que planifico en el momento. lo debe modificar el algoritmo de PLANIFICACIÓN al terminar su ejecucion
 
 	aux_x = entrenador->position->pos_x - pokemon_temporal->position->pos_x;
 	aux_y = entrenador->position->pos_y - pokemon_temporal->position->pos_y;
 	//buscar mecanismo para contar rafagas de cpu
 
 	team_logger_info((
-			"Un trainer se movio de:\n\n"
+			"Un trainer se movió de:\n\n"
 			"x\t\t%d\n"
 			"y:\t\t%d\n"
 			"a:\n\n"
@@ -192,11 +206,6 @@ void move_trainers(t_entrenador_pokemon* entrenador) {
 	entrenador->position->pos_x = pokemon_temporal->position->pos_x;
 	entrenador->position = pokemon_temporal->position->pos_y;
 
-
-
-	//TODO
-	//muevo, cuento tiempo, logueo movimiento
-
 	t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 	catch_send->id_correlacional = 0;
 	catch_send->nombre_pokemon = pokemon_temporal->name;
@@ -205,7 +214,8 @@ void move_trainers(t_entrenador_pokemon* entrenador) {
 	catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 	catch_protocol = CATCH_POKEMON;
 	send_message_catch(catch_send, entrenador); 
-
+	
+	pokemon_temporal = NULL;
 	sem_post(&sem_planification);
 }
 
@@ -270,6 +280,16 @@ void team_retry_connect(void* arg) {
 	}
 }
 
+t_catch_pokemon* filter_msg_catch_by_id_caught(uint32_t id_corr_caught){
+	for(int i = 0; i < list_size(message_catch_sended); i++){
+		t_catch_pokemon* catch_message;
+
+		if(catch_message->id_correlacional = id_corr_caught){
+			return catch_message;
+		}
+	}
+}
+
 void *receive_msg(int fd, int send_to) {
 	int protocol;
 	int is_server = send_to;
@@ -293,6 +313,10 @@ void *receive_msg(int fd, int send_to) {
 				break;
 
 				team_planner_change_block_status(0, caught_rcv->id_correlacional)//no tiene mensajes pendientes 
+				
+				t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);
+				remove_pokemon_from_catch(catch_message);
+				
 				//TODO
 			}
 
@@ -362,7 +386,7 @@ void *receive_msg(int fd, int send_to) {
 
 			default:
 				break;
-		}
+		}//TODO
 	}
 	return NULL;
 }

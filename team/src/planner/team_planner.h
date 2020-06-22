@@ -58,11 +58,12 @@ typedef struct {
 typedef struct {
 	char* name;
 	t_position* position;
-} t_temporal_pokemon
+} t_temporal_pokemon;
 
 sem_t sem_entrenadores;
 sem_t sem_message_on_queue;
 sem_t sem_planification;
+sem_t sem_trainer_exec_is_loaded;
 pthread_mutex_t planner_mutex;
 t_temporal_pokemon pokemon_temporal;
 
@@ -72,6 +73,7 @@ t_list* ready_queue;
 t_list* block_queue;
 t_list* exit_queue;
 t_list* pokemon_to_catch;
+t_list* pokemons_ready;
 
 t_list* keys_list;
 t_list* target_pokemons;
@@ -81,7 +83,8 @@ t_dictionary* team_planner_global_targets;
 void team_planner_init();
 void team_planner_destroy();
 void team_planner_run_planification();
-void move_trainers(t_entrenador_pokemon* entrenador);
+void team_planner_algoritmo_cercania();
+//void move_trainers(t_entrenador_pokemon* entrenador);
 void team_planner_block_current_trainner(char*, int);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
