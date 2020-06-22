@@ -231,37 +231,41 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 }
 
 
-void team_planner_block_and_set_status_trainer(char* pokemon_name, int status, t_entrenador_pokemon* entrenador) {
-	// Creo la informacion de bloqueo
-	//Sucede en el catch. El status puede ser 0, 1
-	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo));
-	info_bloqueo->pokemon_needed = malloc(sizeof(pokemon_name));
-	strcpy(info_bloqueo->pokemon_needed, pokemon_name);
-	info_bloqueo->blocked_time = 0;
-	info_bloqueo->status = status;
-	entrenador->blocked_info = info_bloqueo;
-	entrenador->state = BLOCK;		
-	list_add(block_queue, entrenador);
-	entrenador = NULL;
-
-	if (status == 0) {
-		sem_post(&sem_entrenadores_disponibles);
-	}	
-}
-
-
-void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
-	//Sucede en el caught. El status puede ser 0, 2
+void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr, char* pokemon_name) {
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo)); //TODO: es necesario este malloc?
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
-	//TODO: ver caso deadlock (2)
-
+	info_bloqueo->pokemon_needed = pokemon_name;
+	
 	t_entrenador_pokemon* entrenador = find_trainer_by_id_corr(id_corr);
-	entrenador->blocked_info = info_bloqueo;
 
-	if (status == 0) {
+	if (status == 0) {		
+		entrenador->blocked_info = info_bloqueo;
 		sem_post(&sem_entrenadores_disponibles);
+	}
+
+	if (status == 2) {
+		//TODO: cambiar el pokemon needed por el unneeded
+		info_bloqueo->pokemon_needed = pokemon_name;
+		entrenador->blocked_info = info_bloqueo;
+	}
+}
+
+void team_planner_change_block_status_by_id_trainer(int status, t_entrenador_pokemon* entrenador, char* pokemon_name) {
+	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo)); //TODO: es necesario este malloc?
+	info_bloqueo->blocked_time = 0;
+	info_bloqueo->status = status;
+	info_bloqueo->pokemon_needed = pokemon_name;
+	
+	if (status == 0) {		
+		entrenador->blocked_info = info_bloqueo;
+		sem_post(&sem_entrenadores_disponibles);
+	}
+
+	if (status == 2) {
+		//TODO: cambiar el pokemon needed por el unneeded
+		info_bloqueo->pokemon_needed = pokemon_name;
+		entrenador->blocked_info = info_bloqueo;
 	}
 }
 

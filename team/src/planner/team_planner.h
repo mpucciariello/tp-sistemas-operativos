@@ -86,13 +86,12 @@ void team_planner_destroy();
 void team_planner_run_planification();
 void team_planner_algoritmo_cercania();
 void move_trainers();
-void team_planner_block_current_trainner(char*, int, t_entrenador_pokemon*);
+void team_planner_change_block_status_by_id_trainer(int, t_entrenador_pokemon*, char*);
 void team_planner_set_algorithm();
 void team_planner_check_unlocks();
 t_list* team_planner_create_ready_queue();
-void team_planner_change_block_status_by_id_corr(int, uint32_t);
+void team_planner_change_block_status_by_id_corr(int, uint32_t, char*);
 void team_planner_finish_trainner(t_entrenador_pokemon*);
 t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t);
-void team_planner_change_block_status_by_id_corr(int, uint32_t);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

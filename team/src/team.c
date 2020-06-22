@@ -105,23 +105,31 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 	t_entrenador_pokemon* entrenador_aux = exec_entrenador;
 	exec_entrenador = NULL;
 	sem_post(&sem_planification);
+	list_add(block_queue, entrenador_aux);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
+	//TODO enviar a cola de bloqueados
 	if (i == 0) {
 		team_logger_info("Catch sent!");
-		team_planner_block_and_set_status_trainer(catch_send->nombre_pokemon, 1, entrenador_aux);
+		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, catch_send->pokemon_name);;
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador_aux ->list_id_catch, catch_send->id_correlacional);
 
-	} else {
+	} else { //si no se envió el id_corr no existe! entonces hago una variante de la función block que reciba el trainer
 		remove_pokemon_from_catch (catch_send);
 		team_planner_block_and_set_status_trainer(0, 0, entrenador_aux);
+		list_add(entrenador->pokemons, catch_send->nombre_pokemon);
 
+		if(trainer_is_in_deadlock_caught(entrenador_aux, catch_send->id_correlacional)){
+			team_planner_change_block_status_by_id_trainer(2, entrenador_aux, catch_send->pokemon_name);
+		} else {
+			team_planner_change_block_status_by_id_trainer(0, entrenador_aux, NULL);
+		}
+		
 		if (trainer_completed_with_success(entrenador_aux)) {
 			team_planner_finish_trainner(entrenador_aux);
-		}
-		//TODO: si está en deadlock cambiar a status 2
+		}		
 	}
 
 	usleep(500000);
@@ -318,19 +326,20 @@ void *receive_msg(int fd, int send_to) {
 				remove_pokemon_from_catch(catch_message);
 				
 				t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
+				list_add(entrenador->pokemons, catch_message->nombre_pokemon);
 
 				if(caught_rcv->result){
 					if(trainer_completed_with_success(entrenador)){
 						team_planner_finish_trainner(entrenador);
 					}
 
-					if(trainer_is_in_deadlock(entrenador)){
-						team_planner_change_block_status_by_id_corr(2, caught_rcv->id_correlacional);
+					if(trainer_is_in_deadlock_caught(entrenador, caught_rcv->id_correlacional)){
+						team_planner_change_block_status_by_id_corr(2, caught_rcv->id_correlacional, catch_message->pokemon_name);
 					} else {
-						team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
+						team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional, NULL);
 					}
 				} else {
-					team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
+					team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional, NULL);
 				}
 
 				usleep(50000);
@@ -408,7 +417,16 @@ void *receive_msg(int fd, int send_to) {
 }
 
 
-bool trainer_is_in_deadlock(t_entrenador_pokemon* entrenador){
+bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador, uint32_t id_corr_caught){
+	t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(id_corr_caught);
+	char* nombre_pokemon = catch_message->nombre_pokemon;
+
+	for(int i = 0; i < list_size(entrenador->targets); i++){
+		t_pokemon* pokemon = list_get(entrenador->targets, i);
+		if(string_equals_ignore_case(pokemon->name, nombre_pokemon)){
+			return false;
+		}
+	}
 	return true;
 }
 
