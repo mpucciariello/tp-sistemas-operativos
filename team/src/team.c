@@ -112,17 +112,17 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 	//TODO enviar a cola de bloqueados
 	if (i == 0) {
 		team_logger_info("Catch sent!");
-		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, catch_send->pokemon_name);;
+		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, catch_send->nombre_pokemon);
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador_aux ->list_id_catch, catch_send->id_correlacional);
 
 	} else { //si no se envió el id_corr no existe! entonces hago una variante de la función block que reciba el trainer
 		remove_pokemon_from_catch (catch_send);
-		team_planner_block_and_set_status_trainer(0, 0, entrenador_aux);
-		list_add(entrenador->pokemons, catch_send->nombre_pokemon);
+		team_planner_change_block_status_by_id_trainer(0, 0, entrenador_aux);
+		list_add(entrenador_aux->pokemons, catch_send->nombre_pokemon);
 
 		if(trainer_is_in_deadlock_caught(entrenador_aux, catch_send->id_correlacional)){
-			team_planner_change_block_status_by_id_trainer(2, entrenador_aux, catch_send->pokemon_name);
+			team_planner_change_block_status_by_id_trainer(2, entrenador_aux, catch_send->nombre_pokemon);
 		} else {
 			team_planner_change_block_status_by_id_trainer(0, entrenador_aux, NULL);
 		}
@@ -293,7 +293,7 @@ t_entrenador_pokemon* filter_trainer_by_id_caught(uint32_t id_corr_caught) {
 		t_entrenador_pokemon* entrenador = list_get(block_queue, i);
 		for (int j = 0; i < list_size(entrenador->list_id_catch); j++) {
 			uint32_t id_aux = list_get(entrenador->list_id_catch, j);
-			if ((uint32_t) entrenador->list_id_catch == id_corr_caught) {
+			if (id_aux == id_corr_caught) {
 				return entrenador;
 			}
 		}
@@ -334,7 +334,7 @@ void *receive_msg(int fd, int send_to) {
 					}
 
 					if(trainer_is_in_deadlock_caught(entrenador, caught_rcv->id_correlacional)){
-						team_planner_change_block_status_by_id_corr(2, caught_rcv->id_correlacional, catch_message->pokemon_name);
+						team_planner_change_block_status_by_id_corr(2, caught_rcv->id_correlacional, catch_message->nombre_pokemon);
 					} else {
 						team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional, NULL);
 					}

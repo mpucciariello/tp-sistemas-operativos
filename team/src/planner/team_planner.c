@@ -86,7 +86,6 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->current_burst_time = 0;
 	entrenador->estimated_time = 0;
 	sem_init(&entrenador->sem_trainer, 0, 0);
-	entrenador->targets = list_create();
 	entrenador->blocked_info = NULL;
 
 	return entrenador;
