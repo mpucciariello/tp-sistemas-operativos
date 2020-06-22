@@ -11,7 +11,6 @@
 #include "../config/team_config.h"
 #include "../../../shared-common/common/utils.h"
 
-
 typedef enum {
 	NEW, READY, BLOCK, EXEC, EXIT
 } e_state;
@@ -61,22 +60,22 @@ typedef struct {
 	t_position* position;
 } t_temporal_pokemon;
 
-sem_t sem_entrenadores;
-sem_t sem_message_on_queue;
-sem_t sem_planification;
-sem_t sem_algoritmo_cercania;
-sem_t sem_trainer_exec_is_loaded;
+sem_t sem_entrenadores_disponibles; //avisa cuando hay entrenadores en la cola de nuevos
+sem_t sem_message_on_queue; //avisa al algoritmo de cercania cuando hay mensajes encolados
+sem_t sem_planification; //controla que el pokemon permita al planificador seguir
+sem_t sem_pokemons_in_ready_queue; //avisa cuando hay pokemons en ready para planificar
+sem_t sem_algoritmo_cercania; //para añadir a la cola de ready
+
 pthread_mutex_t planner_mutex;
 t_temporal_pokemon* pokemon_temporal;
-
 t_entrenador_pokemon* exec_entrenador;
+
 t_list* new_queue;
 t_list* ready_queue;
 t_list* block_queue;
 t_list* exit_queue;
 t_list* pokemon_to_catch;
 t_list* pokemons_ready;
-
 t_list* keys_list;
 t_list* target_pokemons;
 
@@ -86,11 +85,12 @@ void team_planner_init();
 void team_planner_destroy();
 void team_planner_run_planification();
 void team_planner_algoritmo_cercania();
-//void move_trainers(t_entrenador_pokemon* entrenador);
-void team_planner_block_current_trainner(char*, int);
+void move_trainers();
+void team_planner_block_current_trainner(char*, int, t_entrenador_pokemon*);
 void team_planner_set_algorithm();
 void team_planner_check_unlocks();
 t_list* team_planner_create_ready_queue();
-void team_planner_change_block_status(int status, int32_t id_corr);
+void team_planner_change_block_status_by_id_corr(int, int32_t);
+void team_planner_finish_trainner(t_entrenador_pokemon*);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
