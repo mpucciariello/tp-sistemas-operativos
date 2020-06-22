@@ -51,12 +51,6 @@ void team_init() {
 	sem_t sem_message_on_queue;
 	sem_init(&sem_message_on_queue, 0, 0);
 
-	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
-	pthread_detach(planificator);
-
-	pthread_create(&algoritmo_cercania_entrenadores, NULL, (void*) team_planner_algoritmo_cercania, NULL);
-	pthread_detach(algoritmo_cercania_entrenadores);
-
 	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
 	t_cola cola_appeared = APPEARED_QUEUE;
 	pthread_create(&tid, NULL, (void*) team_retry_connect, (void*) &cola_appeared);
@@ -73,6 +67,14 @@ void team_init() {
 	t_cola cola_caught = CAUGHT_QUEUE;
 	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
 	pthread_detach(tid3);
+
+	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
+	team_logger_info("Creando el hilo planificador");
+	pthread_detach(planificator);
+
+	pthread_create(&algoritmo_cercania_entrenadores, NULL, (void*) team_planner_algoritmo_cercania, NULL);
+	team_logger_info("Creando el hilo para el algoritmo de cercanía");
+	pthread_detach(algoritmo_cercania_entrenadores);
 
 	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
 	team_server_init();
@@ -116,10 +118,10 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 		remove_pokemon_from_catch (catch_send);
 		team_planner_block_and_set_status_trainer(0, 0, entrenador_aux);
 
-		//TODO if
 		if (trainer_completed_with_success(entrenador_aux)) {
 			team_planner_finish_trainner(entrenador_aux);
-		}			
+		}
+		//TODO: si está en deadlock cambiar a status 2
 	}
 
 	usleep(500000);
@@ -312,17 +314,24 @@ void *receive_msg(int fd, int send_to) {
 						caught_rcv->id_correlacional);
 				team_logger_info("Resultado (0/1): %d", caught_rcv->result);
 
-				team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);//no tiene mensajes pendientes
-				
 				t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);
 				remove_pokemon_from_catch(catch_message);
 				
 				t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
-				//TODO: trainer_completed
-				if(trainer_completed_with_success(entrenador)){
-					team_planner_finish_trainner(entrenador);
-				}	
-				//TODO: enviar a deadlock
+
+				if(caught_rcv->result){
+					if(trainer_completed_with_success(entrenador)){
+						team_planner_finish_trainner(entrenador);
+					}
+
+					if(trainer_is_in_deadlock(entrenador)){
+						team_planner_change_block_status_by_id_corr(2, caught_rcv->id_correlacional);
+					} else {
+						team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
+					}
+				} else {
+					team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
+				}
 
 				usleep(50000);
 				break;
@@ -398,6 +407,10 @@ void *receive_msg(int fd, int send_to) {
 	return NULL;
 }
 
+
+bool trainer_is_in_deadlock(t_entrenador_pokemon* entrenador){
+	return true;
+}
 
 bool pokemon_required(char* pokemon_name) {
 

@@ -57,8 +57,18 @@ void team_planner_algoritmo_cercania() {
 	//TODO: modificar team_planner_check_unlocks() para que se condiga con la nueva estructura
 	list_add(pokemons_ready, pokemon);
 	list_add(ready_queue, entrenador);
+	delete_from_bloqued_queue(entrenador);
 	
 	sem_post(&sem_algoritmo_cercania);
+}
+
+void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador){
+	for(int i = 0; i < list_size(block_queue); i++){
+		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
+		if(entrenador_aux->id == entrenador->id){
+			list_remove(block_queue, i);
+		}
+	}
 }
 
 
