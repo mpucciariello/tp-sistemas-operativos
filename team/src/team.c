@@ -108,17 +108,17 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 	
 	if (i == 0) {
 		team_logger_info("Catch sent!");
-		team_planner_block_current_trainner(catch_send->nombre_pokemon, 1, entrenador_aux);
+		team_planner_block_and_set_status_trainer(catch_send->nombre_pokemon, 1, entrenador_aux);
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador_aux ->list_id_catch, catch_send->id_correlacional);
 
 	} else {
 		remove_pokemon_from_catch (catch_send);
-		team_planner_block_current_trainner(0, 0, entrenador_aux);
+		team_planner_block_and_set_status_trainer(0, 0, entrenador_aux);
 
 		//TODO if
-		if (trainer_completed_with_success(entrenador)) {
-			team_planner_finish_trainner(entrenador);
+		if (trainer_completed_with_success(entrenador_aux)) {
+			team_planner_finish_trainner(entrenador_aux);
 		}			
 	}
 
@@ -157,7 +157,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		team_logger_info("Conexion con BROKER establecida correctamente!");
 		utils_serialize_and_send(broker_fd_send, protocolo, paquete);
 
-		uint32_t id_corr;
+		uint32_t id_corr = 0;
 		int recibido = recv(broker_fd_send, id_corr, sizeof(uint32_t), MSG_WAITALL);
 		if (recibido > 0 && queue != NULL) {
 			list_add(queue, id_corr);
@@ -423,9 +423,8 @@ bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 	if(list_size(entrenador->pokemons) == list_size(entrenador->targets)){
 		t_list* pokemons_target_aux = list_create();
 		pokemons_target_aux = entrenador->targets;
-		trainer->locked = true;
 
-		for(i = 0; i<list_size(entrenador->pokemons); i++){
+		for(int i = 0; i<list_size(entrenador->pokemons); i++){
 			t_pokemon* pokemon = list_get(entrenador->pokemons, i);
 
 			for(int j = 0; j<list_size(pokemons_target_aux); j++){

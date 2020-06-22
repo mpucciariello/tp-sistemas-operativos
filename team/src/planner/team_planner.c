@@ -1,4 +1,4 @@
----#include "team_planner.h"
+#include "team_planner.h"
 
 bool preemptive;
 int fifo_index = 0;
@@ -77,7 +77,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->estimated_time = 0;
 	sem_init(&entrenador->sem_trainer, 0, 0);
 	entrenador->targets = list_create();
-	entrenador->blocked_info->NULL;
+	entrenador->blocked_info = NULL;
 
 	return entrenador;
 }
@@ -240,7 +240,7 @@ void team_planner_block_and_set_status_trainer(char* pokemon_name, int status, t
 }
 
 
-void team_planner_change_block_status_by_id_corr(int status, int32_t id_corr) {
+void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 	//Sucede en el caught. El status puede ser 0, 2
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo)); //TODO: es necesario este malloc?
 	info_bloqueo->blocked_time = 0;
@@ -449,7 +449,7 @@ void team_planner_check_unlocks() { //cuando llamarlo?
 
 void team_planner_run_checks() {
 	// Si el entrenador actual termino bloqueado lo encolo
-	team_planner_check_exec_trainer_is_block();
+	//team_planner_check_exec_trainer_is_block();
 	// Admitir nuevos entrenadores
 	//team_planner_admit_new_trainers();
 	// Se desbloquea algun entrenador?
