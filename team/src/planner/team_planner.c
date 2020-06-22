@@ -66,9 +66,11 @@ void team_planner_algoritmo_cercania() {
 		entrenador->current_burst_time = 0;
 	}
 
+	pthread_mutex_lock(&planner_mutex);
 	list_add(pokemons_ready, pokemon);
 	list_add(ready_queue, entrenador);
 	delete_from_bloqued_queue(entrenador);
+	pthread_mutex_unlock(&planner_mutex);
 		
 	sem_post(&sem_algoritmo_cercania);
 }
@@ -77,7 +79,9 @@ void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador){
 	for(int i = 0; i < list_size(block_queue); i++){
 		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
 		if(entrenador_aux->id == entrenador->id){
+			pthread_mutex_lock(&planner_mutex);
 			list_remove(block_queue, i);
+			pthread_mutex_unlock(&planner_mutex);
 		}
 	}
 }
@@ -99,6 +103,8 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	sem_init(&entrenador->sem_trainer, 0, 0);
 	entrenador->targets = list_create();
 	entrenador->blocked_info = NULL;
+	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers, entrenador);	
+	pthread_detach(entrenador->hilo_entrenador);
 
 	return entrenador;
 }
@@ -199,11 +205,11 @@ char* planner_print_global_targets() {
 	char* global_targets_string = string_new();
 	string_append(&global_targets_string, "POKEMON		|CANTIDAD		\n");
 	for (int i = 0; i < list_size(keys_list); i++) {
-		char* nombre_pokemon = list_get(keys_list, i);
 		int j = 24 - strlen(nombre_pokemon);
+		char* nombre_pokemon = list_get(keys_list, i);
 		int cantidad_pokemon = (int) dictionary_get(team_planner_global_targets, nombre_pokemon);
 		char* target_string = string_new();
-		for(int k = 0; k < j; k++){
+		for(int k = 0, k < j, k++){
 			string_append(&nombre_pokemon, " ");
 		}	
 		string_append(&target_string, "		|");
@@ -239,7 +245,9 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->blocked_info->pokemon_unneeded = NULL;
 	entrenador->blocked_info->blocked_time = 0;
 	entrenador->blocked_info->status = 0;
+	pthread_mutex_lock(&planner_mutex);
 	list_add(exit_queue, entrenador);
+	pthread_mutex_unlock(&planner_mutex);
 	team_planner_free_pokemons(entrenador);
 }
 
@@ -391,7 +399,7 @@ bool team_planner_is_SJF_algorithm() {
 	return team_config->algoritmo_planificacion == SJF_CD || team_config->algoritmo_planificacion == SJF_SD;
 }
 
-//que hace esto
+
 t_pokemon_state team_planner_get_pokemon_state(int id_entrenador, char* pokemon_name) {
 	for (int i = 0; i < list_size(target_pokemons); i++) {
 		t_pokemon* pokemon = list_get(target_pokemons, i);
@@ -502,7 +510,6 @@ void team_planner_apply_RR() {
 	pthread_mutex_lock(&planner_mutex);
 	t_temporal_pokemon* pokemon;
 
-	//team_planner_run_checks();
 
 	if (exec_entrenador == NULL && pokemon_temporal == NULL) {
 		int next_out_index = fifo_index;

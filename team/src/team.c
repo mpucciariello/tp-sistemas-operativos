@@ -40,14 +40,7 @@ void team_init() {
 	send_get_message();
 	sem_wait(&sem_entrenadores_disponibles);  
 
-	for (int i = 0; i < list_size(new_queue); i++) {
-		t_entrenador_pokemon* entrenador;
-		entrenador = list_get(new_queue, i);
-		pthread_t thread_entrenadores;
-		pthread_create(&thread_entrenadores, NULL, (void*) move_trainers, entrenador);	
-		pthread_detach(thread_entrenadores);
-	}
-
+	
 	sem_t sem_message_on_queue;
 	sem_init(&sem_message_on_queue, 0, 0);
 
@@ -189,9 +182,11 @@ void move_trainers() {
 
 	int steps = fabs(aux_x + aux_y);
 	sleep(steps*team_config->retardo_ciclo_cpu);
-	
-	//TODO: cómo podría ser el mecanismo para contar rafagas de cpu
 
+	/*for(int i = 0; i < (steps*team_config->retardo_ciclo_cpu; i++)){
+		exec_entrenador->current_burst_time++;
+	}*/
+	
 	team_logger_info("Un enternador se movió de (%d, %d) a (%d, %d)", exec_entrenador->position->pos_x, 
 																	  exec_entrenador->position->pos_y, 
 																	  pokemon_temporal->position->pos_x, 

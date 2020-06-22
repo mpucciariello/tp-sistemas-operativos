@@ -32,6 +32,7 @@ typedef struct {
 	int estimated_time;
 	t_entrenador_info_bloqueo* blocked_info;
 	sem_t sem_trainer;
+	pthread_t hilo_entrenador;
 	t_list* list_id_catch;
 } t_entrenador_pokemon;
 
