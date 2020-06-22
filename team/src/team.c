@@ -114,7 +114,7 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 		team_logger_info("Catch sent!");
 		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, catch_send->nombre_pokemon);
 		list_add(message_catch_sended, catch_send);
-		list_add(entrenador_aux ->list_id_catch, catch_send->id_correlacional);
+		list_add(entrenador_aux ->list_id_catch, (uint32_t)catch_send->id_correlacional);
 
 	} else { //si no se envió el id_corr no existe! entonces hago una variante de la función block que reciba el trainer
 		remove_pokemon_from_catch (catch_send);
@@ -170,7 +170,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		uint32_t id_corr = 0;
 		int recibido = recv(broker_fd_send, id_corr, sizeof(uint32_t), MSG_WAITALL);
 		if (recibido > 0 && queue != NULL) {
-			list_add(queue, id_corr);
+			list_add(queue, (int32_t)id_corr);
 		}
 		if (protocolo == CATCH_POKEMON) {
 			t_catch_pokemon *catch_send = (t_catch_pokemon*) paquete;
@@ -292,7 +292,7 @@ t_entrenador_pokemon* filter_trainer_by_id_caught(uint32_t id_corr_caught) {
 	for (int i = 0; i < list_size(block_queue); i++) {
 		t_entrenador_pokemon* entrenador = list_get(block_queue, i);
 		for (int j = 0; i < list_size(entrenador->list_id_catch); j++) {
-			uint32_t id_aux = list_get(entrenador->list_id_catch, j);
+			uint32_t id_aux = (uint32_t) list_get(entrenador->list_id_catch, j);
 			if (id_aux == id_corr_caught) {
 				return entrenador;
 			}

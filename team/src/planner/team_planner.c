@@ -199,11 +199,11 @@ char* planner_print_global_targets() {
 	char* global_targets_string = string_new();
 	string_append(&global_targets_string, "POKEMON		|CANTIDAD		\n");
 	for (int i = 0; i < list_size(keys_list); i++) {
-		int j = 24 - strlen(nombre_pokemon);
 		char* nombre_pokemon = list_get(keys_list, i);
+		int j = 24 - strlen(nombre_pokemon);
 		int cantidad_pokemon = (int) dictionary_get(team_planner_global_targets, nombre_pokemon);
 		char* target_string = string_new();
-		for(int k = 0, k < j, k++){
+		for(int k = 0; k < j; k++){
 			string_append(&nombre_pokemon, " ");
 		}	
 		string_append(&target_string, "		|");
@@ -400,39 +400,6 @@ t_pokemon_state team_planner_get_pokemon_state(int id_entrenador, char* pokemon_
 		}
 	}
 	return UNKNOWN;
-}
-
-
-void team_planner_check_unlocks() { //cuando llamarlo?
-	for (int i = 0; i < list_size(block_queue); i++) {
-		bool set_free = false;
-		
-
-		if (set_free) {
-			team_logger_info("Se libera al entrenador: id %d", trainner->id); 
-			trainner->estimated_time = team_planner_calculate_exponential_mean(trainner->current_burst_time, trainner->estimated_time);
-			team_logger_info("Estimacion recalculada: %f", trainner->estimated_time);
-
-			if (team_planner_is_SJF_algorithm()) {
-				// Si el algoritmo es SJF ya no me sirve el tiempo de rafaga
-				trainner->current_burst_time = 0;
-			}
-			
-		}
-	}
-}
-
-
-void team_planner_run_checks() {
-	
-	// Admitir nuevos entrenadores
-	// Se desbloquea algun entrenador?
-	team_planner_check_unlocks();
-	// Hay entrenadores listos para ejecutar?
-	if (list_is_empty(ready_queue)) {
-		team_logger_info("No hay entrenadores listos para ejecutar.");
-		return;
-	}
 }
 
 

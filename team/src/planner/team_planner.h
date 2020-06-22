@@ -92,5 +92,9 @@ t_list* team_planner_create_ready_queue();
 void team_planner_change_block_status_by_id_corr(int, uint32_t, char*);
 void team_planner_finish_trainner(t_entrenador_pokemon*);
 t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t);
+void delete_from_bloqued_queue(t_entrenador_pokemon*);
+float team_planner_calculate_exponential_mean(int, float);
+bool team_planner_is_SJF_algorithm();
+void new_cpu_cicle();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
