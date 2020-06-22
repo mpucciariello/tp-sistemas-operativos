@@ -118,13 +118,13 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 
 	} else { //si no se envió el id_corr no existe! entonces hago una variante de la función block que reciba el trainer
 		remove_pokemon_from_catch (catch_send);
-		team_planner_change_block_status_by_id_trainer(0, 0, entrenador_aux);
+		team_planner_change_block_status_by_trainer(0, 0, entrenador_aux);
 		list_add(entrenador_aux->pokemons, catch_send->nombre_pokemon);
 
 		if(trainer_is_in_deadlock_caught(entrenador_aux, catch_send->id_correlacional)){
-			team_planner_change_block_status_by_id_trainer(2, entrenador_aux, catch_send->nombre_pokemon);
+			team_planner_change_block_status_by_trainer(2, entrenador_aux, catch_send->nombre_pokemon);
 		} else {
-			team_planner_change_block_status_by_id_trainer(0, entrenador_aux, NULL);
+			team_planner_change_block_status_by_trainer(0, entrenador_aux, NULL);
 		}
 		
 		if (trainer_completed_with_success(entrenador_aux)) {
@@ -411,7 +411,8 @@ void *receive_msg(int fd, int send_to) {
 
 			default:
 				break;
-		}//TODO: agregar algoritmo para contar ciclos de cpu.
+		}
+		new_cpu_cicle();
 	}
 	return NULL;
 }
