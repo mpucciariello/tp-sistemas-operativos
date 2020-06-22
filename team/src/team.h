@@ -34,7 +34,9 @@ void subscribe_to(void *arg);
 void send_message_test();
 void team_retry_connect(void* arg);
 bool pokemon_required(char* name);
-
+void send_get_message();
+void move_trainers(t_entrenador_pokemon* entrenador);
+int send_message(void* paquete, t_protocol protocolo, t_list* queue);
 
 
 #endif /* TEAM_H_ */

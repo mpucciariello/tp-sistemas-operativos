@@ -5,8 +5,6 @@ int fifo_index = 0;
 char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
-void team_planner_set_algorithm();
-
 void team_planner_run_planification() {
 	sem_wait(&sem_algoritmo_cercania);
 	sem_wait(&sem_planification);
@@ -22,39 +20,38 @@ void team_planner_algoritmo_cercania(){
 	sem_wait(&sem_entrenadores); 
 	sem_wait(&sem_message_on_queue);
 	
-	t_entrenador_pokemon* entrenador_aux;
 	t_temporal_pokemon* pokemon;
-	t_pokemon_received* pokemon_con_posiciones_aux;
-	int aux_x, aux_y, closest_sum;
+	t_entrenador_pokemon* entrenador;
 	int c = -1;
+	int min_steps = 0;
 
 	t_list* entrenadores_disponibles = list_create();
 	entrenadores_disponibles = team_planner_create_ready_queue();
 	
 	for(int i = 0; i < list_size(entrenadores_disponibles); i++){
-		entrenador_aux = list_get(entrenadores_disponibles, i);
+		t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
 
 		for(int j = 0; j < list_size(pokemon_to_catch); j++){
-			pokemon_con_posiciones_aux = list_get(pokemon_to_catch, j);
+			t_pokemon_received* pokemon_con_posiciones_aux = list_get(pokemon_to_catch, j);
 
 			for(int k = 0; k < list_size(pokemon_con_posiciones_aux->pos); k++){
 
-				posicion_aux = list_get(pokemon_con_posiciones->pos, j);
+				t_position* posicion_aux = list_get(pokemon_con_posiciones_aux->pos, k);
 
-				aux_x = posicion_aux->pos_x - entrenador_aux->position->pos_x;
-				aux_y = posicion_aux->pos_y - entrenador_aux->position->pos_y;
+				int aux_x = posicion_aux->pos_x - entrenador_aux->position->pos_x;
+				int aux_y = posicion_aux->pos_y - entrenador_aux->position->pos_y;
 
-				closest_sum = fabs(aux_x + aux_y);
+				int closest_sum = fabs(aux_x + aux_y);
 
-				if(c = -1){ //solo la primera vez
+				if (c == -1) { //solo la primera vez
 					min_steps = closest_sum;
 					c = 0;
 				}
 
-				if(closest_sum < min_steps){
-					pokemon->name = pokemon_con_posiciones_aux -> name;
-					pokemon->pos->x = posicion_aux -> pos_x;
-					pokemon->pos->y = posicion_aux -> pos_y;
+				if (closest_sum < min_steps) {
+					pokemon->name = pokemon_con_posiciones_aux->name;
+					pokemon->position->pos_x = posicion_aux->pos_x;
+					pokemon->position->pos_y = posicion_aux->pos_y;
 					entrenador = entrenador_aux;
 				}
 			}
@@ -62,8 +59,9 @@ void team_planner_algoritmo_cercania(){
 	}
 	
 	//TODO
-	team_planner_check_unlocks();
-	list_add(pokemons_ready, pokemon); 
+	//team_planner_check_unlocks();
+	list_add(pokemons_ready, pokemon);
+	list_add(ready_queue, entrenador);
 	
 	//para que funcione tanto el pok como el trainer deben tener el mismo index EN TODO MOMENTO.
 	sem_post(&sem_algoritmo_cercania);
@@ -94,6 +92,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador){
 	//funcion que verifique que tiene absolutamente todo lo que necesita y viceversa
+	return false;
 }
 
 t_pokemon* team_planner_pokemon_create(int id, int entrenador_id, char* nombre, t_pokemon_state estado) {
@@ -251,7 +250,13 @@ void team_planner_block_current_trainner(char* pokemon_name, int status) {
 
 t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t id) { //para el caught
 	int _id_match(t_entrenador_pokemon *entrenador) {
-		return list_contains(entrenador->list_id_catch, id);
+		for(int i = 0; i < list_size(entrenador->list_id_catch); i++) {
+			uint32_t id_corr = (uint32_t) list_get(entrenador->list_id_catch, i);
+			if(id_corr == id) {
+				return 1;
+			}
+		}
+		return 0;
 	}
 
 	return list_find(block_queue, (void*) _id_match);
@@ -461,10 +466,11 @@ t_list* filter_block_list() {
 		return trainner->blocked_info->status == 0;
 	}
 	t_list* blocked_but_to_exec = list_filter(block_queue, (void*) _is_available);
+	return blocked_but_to_exec;
 }
 
 
-t_list* team_planner_create_ready_queue(){
+t_list* team_planner_create_ready_queue() {
 
 	t_list* listo_para_planificar = list_create();
 		
@@ -484,7 +490,7 @@ t_list* team_planner_create_ready_queue(){
 void team_planner_apply_SJF(bool is_preemptive) {
 	preemptive = is_preemptive;
 	pthread_mutex_lock(&planner_mutex);
-	t_pokemon* pokemon;
+	t_temporal_pokemon* pokemon;
 
 	team_planner_run_checks();
 
@@ -492,7 +498,7 @@ void team_planner_apply_SJF(bool is_preemptive) {
 
 	if (!preemptive) {
 		// Hay desalojo
-		if ((exec_entrenador == NULL) && (pokemon_temporal == NULL)){
+		if (exec_entrenador == NULL && pokemon_temporal == NULL) {
 			exec_entrenador = list_get(ready_queue, least_estimate_index);
 			list_remove(ready_queue, least_estimate_index);
 		} else {
@@ -531,13 +537,13 @@ void team_planner_apply_SJF(bool is_preemptive) {
 //FIFO
 void team_planner_apply_FIFO() {
 	pthread_mutex_lock(&planner_mutex);
-	t_pokemon* pokemon;
+	t_temporal_pokemon* pokemon;
 
 	team_planner_run_checks();
 
-	if ((exec_entrenador == NULL) && (pokemon_temporal == NULL)){
+	if (exec_entrenador == NULL && pokemon_temporal == NULL) {
 		int next_out_index = fifo_index;
-		if(next_out_index <= list_size(ready_queue)){ //para mi si es FIFO siempre extrae el index 0
+		if (next_out_index <= list_size(ready_queue)) { //para mi si es FIFO siempre extrae el index 0
 			exec_entrenador = list_get(ready_queue, 0);
 			pokemon = list_get(pokemons_ready, 0);
 			list_remove(ready_queue, 0);
@@ -546,8 +552,7 @@ void team_planner_apply_FIFO() {
 		}		
 	}
 	pokemon_temporal = pokemon;
-	team_planner_exec_trainer();		
-	}
+	team_planner_exec_trainer();
 
 	pthread_mutex_unlock(&planner_mutex);
 }
@@ -556,11 +561,11 @@ void team_planner_apply_FIFO() {
 //RR
 void team_planner_apply_RR() {
 	pthread_mutex_lock(&planner_mutex);
-	t_pokemon* pokemon;
+	t_temporal_pokemon* pokemon;
 
 	team_planner_run_checks();
 
-	if ((exec_entrenador == NULL) && (pokemon_temporal == NULL)) {
+	if (exec_entrenador == NULL && pokemon_temporal == NULL) {
 		int next_out_index = fifo_index;
 		if (next_out_index < list_size(ready_queue)) {
 			exec_entrenador = list_get(ready_queue, next_out_index);
@@ -743,7 +748,6 @@ void team_planner_init() {
 	planner_load_entrenadores();
 	sem_init(&sem_planification, 0, 1); //empieza en uno pero cambia cada vez que un entrenador termina
 	sem_init(&sem_algoritmo_cercania, 0, 0);
-	pthread_mutex_init(&sem_ready_queue);
 }
 
 

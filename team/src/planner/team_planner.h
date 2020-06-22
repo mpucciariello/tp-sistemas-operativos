@@ -2,6 +2,7 @@
 #define PLANNER_TEAM_PLANNER_H_
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <semaphore.h>
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
@@ -63,9 +64,10 @@ typedef struct {
 sem_t sem_entrenadores;
 sem_t sem_message_on_queue;
 sem_t sem_planification;
+sem_t sem_algoritmo_cercania;
 sem_t sem_trainer_exec_is_loaded;
 pthread_mutex_t planner_mutex;
-t_temporal_pokemon pokemon_temporal;
+t_temporal_pokemon* pokemon_temporal;
 
 t_entrenador_pokemon* exec_entrenador;
 t_list* new_queue;
@@ -86,5 +88,9 @@ void team_planner_run_planification();
 void team_planner_algoritmo_cercania();
 //void move_trainers(t_entrenador_pokemon* entrenador);
 void team_planner_block_current_trainner(char*, int);
+void team_planner_set_algorithm();
+void team_planner_check_unlocks();
+t_list* team_planner_create_ready_queue();
+void team_planner_change_block_status(int status, int32_t id_corr);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
