@@ -569,6 +569,7 @@ void send_ack(void* arg) {
 
 
 void team_exit() {
+	team_planner_print_fullfill_target();
 	socket_close_conection(team_socket);
 	pthread_mutex_destroy(&planner_mutex);
 	team_planner_destroy();

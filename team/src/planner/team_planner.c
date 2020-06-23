@@ -354,7 +354,7 @@ void planner_load_entrenadores() {
 	team_planner_global_targets = dictionary_create();
 	while (team_planner_has_config_trainners(i)) {
 		t_position* posicion = team_planner_extract_position(team_config->posiciones_entrenadores[i]);
-		t_list* pokemons = team_planner_extract_pokemons(team_config->pokemon_entrenadores[i], i, BLOCKED); //TODO: cambiar estado de pokemones atrapados y al llegar
+		t_list* pokemons = team_planner_extract_pokemons(team_config->pokemon_entrenadores[i], i, BLOCKED); 
 		t_list* objetivos = team_planner_extract_pokemons(team_config->objetivos_entrenadores[i], i, FREE);
 
 		t_entrenador_pokemon* entrenador = team_planner_entrenador_create(i, posicion, pokemons, objetivos);
@@ -445,7 +445,7 @@ t_pokemon_state team_planner_get_pokemon_state(int id_entrenador, char* pokemon_
 }
 
 
-t_list* filter_block_list() {
+t_list* filter_block_list_by_0() {
 	bool _is_available(t_entrenador_pokemon* trainner) {
 		return trainner->blocked_info->status == 0;
 	}
@@ -458,7 +458,7 @@ t_list* team_planner_create_ready_queue() {
 	bool _is_available(t_entrenador_pokemon* trainner) {
 		return trainner->blocked_info->status == 0;
 	}
-	t_list* bloquados_en_cero = list_filter(block_queue, (void*) _is_available);
+	t_list* bloquados_en_cero = filter_block_list_by_0(block_queue, (void*) _is_available);
 	
 	t_list* listo_para_planificar = list_create();
 	list_add_all(listo_para_planificar, bloquados_en_cero);
@@ -503,6 +503,7 @@ void team_planner_apply_SJF(bool is_preemptive) {
 	pthread_mutex_unlock(&planner_mutex);
 }
 
+
 //FIFO
 void team_planner_apply_FIFO() {
 	pthread_mutex_lock(&planner_mutex);
@@ -535,7 +536,6 @@ void team_planner_apply_RR() {
 		}
 		team_planner_exec_trainer();
 	}
-
 	pthread_mutex_unlock(&planner_mutex);
 }
 
@@ -559,16 +559,17 @@ void team_planner_set_algorithm() {
 	}
 }
 
-//t_pokemon* team_planner_get_pokemon_by_trainner(t_entrenador_pokemon* entrenador) {
-//	char* pokemon_unneeded = entrenador->blocked_info->pokemon_unneeded;
-//	for (int i = 0; i < list_size(target_pokemons); i++) {
-//		t_pokemon* p = list_get(target_pokemons, i);
-//		if (entrenador->id == p->trainner_id && string_equals_ignore_case(pokemon_unneeded, p->name)) {
-//			return p;
-//		}
-//	}
-//	return NULL;
-//}
+t_pokemon* team_planner_get_pokemon_by_trainner(t_entrenador_pokemon* entrenador) {
+	char* pokemon_unneeded = entrenador->blocked_info->pokemon_unneeded;
+	for (int i = 0; i < list_size(target_pokemons); i++) {
+		t_pokemon* p = list_get(target_pokemons, i);
+		if (entrenador->id == p->trainner_id && string_equals_ignore_case(pokemon_unneeded, p->name)) {
+			return p;
+		}
+	}
+	return NULL;
+}
+
 
 /*void team_planner_solve_deadlock(t_entrenador_pokemon* bloqueado, t_entrenador_pokemon* bloqueante) {
 	team_logger_info("Se procederá a resolver deadlock!");
@@ -668,6 +669,75 @@ void team_planner_check_deadlocks() {
 	list_destroy(ids_bloqueados);
 }*/
 
+
+//se llamará cuando quiera verificar que lo unico que puedo hacer a partir de ahora es solucionar deadlock
+bool all_queues_are_empty_except_block(){
+	if(list_size(new_queue) == 0 && list_size(ready_queue) == 0){
+		return true;
+	}
+	return false;
+}
+
+
+//la uso para comprobar que todos los elementos de bloqueados tienen state 2, podría usar un list_size
+t_list* filter_block_list_by_2() {
+	bool _is_in_deadlock(t_entrenador_pokemon* trainner) {
+		return trainner->blocked_info->status == 2;
+	}
+	t_list* blocked_in_deadlock = list_filter(block_queue, (void*) _is_in_deadlock);
+	return blocked_in_deadlock;
+}
+
+
+//empiezo con una resolución de deadlock diferente
+void solve_deadlock(){
+	if(list_size(block_queue) == list_size(filter_block_list_by_2())){
+		team_logger_info("Se iniciará la detección y resolución de deadlocks!");
+		int i = 0
+
+		t_list* block_queue_in_deadlock = block_queue;
+
+		while(i < list_size(block_queue_in_deadlock)){
+			
+			t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue_in_deadlock, i);
+			char* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
+
+			for(int j = 0; j < list_size(block_queue_in_deadlock); j++){
+				
+			}		
+		
+		}
+	}
+}
+
+char* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador){
+	int i = 0;
+	bool le_sirve = true;
+
+	while(i < list_size(entrenador->pokemons)){
+		char* pokemon_a_entregar = list_size(entrenador->pokemons, i); //agarro al primero de la lista de los que tengo
+		
+		for(int j = 0; j < list_size(entrenador->targets); j++){	 //recorro la lista de objetivos		
+			char* pokemon_objetivo = list_get(entrenador->targets, i);
+			if(string_equals_ignore_case(pokemon_objetivo, pokemon_a_entregar)){
+				le_sirve = true; //si son iguales agarro al segundo de la lista de los que tengo para volver a comparar
+				break;
+			} else {
+			le_sirve = false;
+			} //si no le sirve y todavía no termino de recorrer los obtenidos sigue. si ya termino entonces controla
+		}
+
+		if(le_sirve){
+			i++; //si finalmente le sirve busca al prox
+		} else {
+			i = list_size(entrenador->pokemons); //corta el while
+			return pokemon_a_entregar;
+		}
+	}
+	return NULL;
+}
+
+
 t_list* team_planner_get_trainners() {
 	t_list* trainners = list_create();
 	list_add(trainners, exec_entrenador);
@@ -677,6 +747,7 @@ t_list* team_planner_get_trainners() {
 	list_add_all(trainners, exit_queue);
   return trainners;
 }
+
 
 void team_planner_print_fullfill_target() {
 	pthread_mutex_lock(&planner_mutex);
@@ -699,6 +770,7 @@ void team_planner_print_fullfill_target() {
 	team_logger_info("Deadlocks producidos: %d  y resueltos: %d", deadlocks_detected, deadlocks_resolved);
 	pthread_mutex_unlock(&planner_mutex);
 }
+
 
 void team_planner_init() {
 	team_logger_info("Planificador de TEAM iniciando estructuras!");

@@ -39,7 +39,7 @@ typedef struct {
 	sem_t sem_trainer;
 	pthread_t hilo_entrenador;
 	t_list* list_id_catch;
-	t_temporal_pokemon* pokemon_a_atrapar;
+	t_temporal_pokemon* pokemon_a_atrapar; //TODO ver aplicación para deadlock
 } t_entrenador_pokemon;
 
 typedef enum {
