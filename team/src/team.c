@@ -107,14 +107,14 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 		team_logger_info("Catch sent!");
 		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, NULL);
 		list_add(message_catch_sended, catch_send);
-		list_add(entrenador_aux ->list_id_catch, (uint32_t)catch_send->id_correlacional);
+		list_add(entrenador_aux->list_id_catch, (uint32_t)catch_send->id_correlacional);
 
 	} else { //si no se envió el id_corr no existe! entonces hago una variante de la función block que reciba el trainer
-		remove_pokemon_from_catch (catch_send);
-		team_planner_change_block_status_by_trainer(0, 0, entrenador_aux);
+		remove_pokemon_from_catch(catch_send);
+		team_planner_change_block_status_by_trainer(0, entrenador_aux, catch_send->nombre_pokemon);
 		list_add(entrenador_aux->pokemons, catch_send->nombre_pokemon);
 
-		if(trainer_is_in_deadlock_caught(entrenador_aux, catch_send->id_correlacional)){
+		if (trainer_is_in_deadlock_caught(entrenador_aux, catch_send->id_correlacional)) {
 			team_planner_change_block_status_by_trainer(2, entrenador_aux, catch_send->nombre_pokemon);
 		} else {
 			team_planner_change_block_status_by_trainer(0, entrenador_aux, NULL);
@@ -163,7 +163,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		uint32_t id_corr = 0;
 		int recibido = recv(broker_fd_send, id_corr, sizeof(uint32_t), MSG_WAITALL);
 		if (recibido > 0 && queue != NULL) {
-			list_add(queue, (int32_t)id_corr);
+			list_add(queue, (uint32_t)id_corr);
 		}
 		if (protocolo == CATCH_POKEMON) {
 			t_catch_pokemon *catch_send = (t_catch_pokemon*) paquete;
@@ -174,8 +174,8 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 }
 
 
-void check_RR_burst(){
-	if(exec_entrenador->current_burst_time = team_config->quantum){
+void check_RR_burst() {
+	if (exec_entrenador->current_burst_time == team_config->quantum) {
 		sem_post(&sem_planification);
 		t_entrenador_pokemon* entrenador = exec_entrenador;
 		exec_entrenador = NULL;
@@ -184,7 +184,7 @@ void check_RR_burst(){
 		//Ver como frenar la ejecución de el entrenador cuadno se queda sin quantum
 		//agregar pokemon
 		pthread_mutex_lock(&planner_mutex);
-		list_add(pokemons_ready, pokemon);
+		//list_add(pokemons_ready, pokemon);
 		list_add(ready_queue, entrenador);
 		pthread_mutex_unlock(&planner_mutex);
 	}
@@ -198,7 +198,7 @@ void move_trainers() {
 
 	int steps = fabs(aux_x + aux_y);
 
-	for(int i = 0; i < steps; i++)){
+	for (int i = 0; i < steps; i++) {
 		sleep(team_config->retardo_ciclo_cpu);
 		exec_entrenador->current_burst_time++;
 		check_RR_burst(); //TODO ver como frenar

@@ -45,7 +45,8 @@ void team_planner_algoritmo_cercania() {
 				}
 
 				if (closest_sum < min_steps) {
-					pokemon->name = pokemon_con_posiciones_aux->name;
+					pokemon = malloc(sizeof(t_temporal_pokemon));
+					pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
 					pokemon->position->pos_x = posicion_aux->pos_x;
 					pokemon->position->pos_y = posicion_aux->pos_y;
 					entrenador = entrenador_aux;
@@ -102,8 +103,8 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->estimated_time = 0;
 	sem_init(&entrenador->sem_trainer, 0, 0);
 	entrenador->blocked_info = NULL;
-	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers, entrenador);	
-	pthread_detach(entrenador->hilo_entrenador);
+//	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers, entrenador);
+//	pthread_detach(entrenador->hilo_entrenador);
 
 	return entrenador;
 }
@@ -205,13 +206,14 @@ char* planner_print_global_targets() {
 	string_append(&global_targets_string, "POKEMON		|CANTIDAD		\n");
 	for (int i = 0; i < list_size(keys_list); i++) {
 		char* nombre_pokemon = list_get(keys_list, i);
-		int j = 24 - strlen(nombre_pokemon);
+		int j = 10 - strlen(nombre_pokemon);
 		int cantidad_pokemon = (int) dictionary_get(team_planner_global_targets, nombre_pokemon);
 		char* target_string = string_new();
-		for(int k = 0; k < j; k++){
-			string_append(&nombre_pokemon, " ");
-		}	
-		string_append(&target_string, "		|");
+		for (int k = 0; k < j; k++) {
+			strcat(nombre_pokemon, " ");
+		}
+		string_append(&target_string, nombre_pokemon);
+		string_append(&target_string, "		| ");
 		string_append(&target_string, string_itoa(cantidad_pokemon));
 		string_append(&target_string, "		\n");
 		string_append(&global_targets_string, target_string);
@@ -298,10 +300,10 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	add_to_block_queue_if_not_there(entrenador);
 }
 
-void add_to_block_queue_if_not_there(t_entrenador_pokemon* entrenador){
-	for(int i = 0; i < list_size(block_queue); i++){
+void add_to_block_queue_if_not_there(t_entrenador_pokemon* entrenador) {
+	for (int i = 0; i < list_size(block_queue); i++) {
 		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
-		if(entrenador_aux->id = entrenador->id){
+		if (entrenador_aux->id == entrenador->id){
 			continue;
 		} else {
 			list_add(block_queue, entrenador);
