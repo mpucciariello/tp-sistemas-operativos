@@ -101,6 +101,9 @@ void new_cpu_cicle();
 void add_to_block_queue_if_not_there(t_entrenador_pokemon*);
 void add_to_ready_queue(t_entrenador_pokemon*);
 void delete_from_new_queue(t_entrenador_pokemon*);
+t_entrenador_pokemon* entrenador_que_necesita(char*);
+bool block_queue_is_not_empty();
+char* ver_a_quien_no_necesita(t_entrenador_pokemon*);
 
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

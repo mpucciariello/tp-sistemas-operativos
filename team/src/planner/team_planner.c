@@ -693,22 +693,66 @@ t_list* filter_block_list_by_2() {
 void solve_deadlock(){
 	if(list_size(block_queue) == list_size(filter_block_list_by_2())){
 		team_logger_info("Se iniciará la detección y resolución de deadlocks!");
-		int i = 0
+		int i = 0;
 
-		t_list* block_queue_in_deadlock = block_queue;
+		while(block_queue_is_not_empty()){
 
-		while(i < list_size(block_queue_in_deadlock)){
-			
-			t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue_in_deadlock, i);
-			char* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
+			t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, i);
+			char* pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueado);
 
-			for(int j = 0; j < list_size(block_queue_in_deadlock); j++){
-				
-			}		
-		
+			//TENGO QUE BUSCAR QUIEN NECESITA AL POKEMON QUE A MI ME SOBRA
+			t_entrenador_pokemon* entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
+
+			entrenador_bloqueado->pokemon_a_atrapar->name = pokemon_de_entrenador_bloqueante;
+			entrenador_bloqueado->pokemon_a_atrapar->position->pos_x = entrenador_bloqueante->position->pos_x;
+			entrenador_bloqueado->pokemon_a_atrapar->position->pos_y = entrenador_bloqueante->position->pos_y;
+
+			team_logger_info("Se detectó un deadlock. El entrenador   %d", entrenador_bloqueante->id, " está bloqueando al entrenador %d", entrenador_bloqueado->id);	
+
+			add_to_ready_queue(entrenador_bloqueado);
+			//ver que no tiene que enviar ningun mensaje catch aca, solo moverse.		
 		}
 	}
 }
+
+
+bool block_queue_is_not_empty(){
+	if (list_size(block_queue) != 0){
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
+t_entrenador_pokemon* entrenador_que_necesita(char* pokemon_de_entrenador_bloqueado){
+	//tengo que fijarme quien lo necesita y no lo tiene
+	int i = 0;
+	bool lo_tiene = true;
+
+	while(i < list_size(block_queue)){
+		t_entrenador_pokemon* entrenador = list_size(block_queue, i); 
+		
+		for(int j = 0; j < list_size(entrenador->targets); j++){	 		
+			char* pokemon_objetivo = list_get(entrenador->targets, j);
+			if(string_equals_ignore_case(pokemon_objetivo, pokemon_de_entrenador_bloqueado)){
+				lo_tiene = true; 
+				break;
+			} else {
+			lo_tiene = false;
+			} 
+		}
+
+		if(lo_tiene){
+			i++; 
+		} else {
+			i = list_size(block_queue); //corta el while
+			return entrenador;
+		}
+	}
+	return NULL;
+}
+
 
 char* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador){
 	int i = 0;
@@ -718,7 +762,7 @@ char* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador){
 		char* pokemon_a_entregar = list_size(entrenador->pokemons, i); //agarro al primero de la lista de los que tengo
 		
 		for(int j = 0; j < list_size(entrenador->targets); j++){	 //recorro la lista de objetivos		
-			char* pokemon_objetivo = list_get(entrenador->targets, i);
+			char* pokemon_objetivo = list_get(entrenador->targets, j);
 			if(string_equals_ignore_case(pokemon_objetivo, pokemon_a_entregar)){
 				le_sirve = true; //si son iguales agarro al segundo de la lista de los que tengo para volver a comparar
 				break;
