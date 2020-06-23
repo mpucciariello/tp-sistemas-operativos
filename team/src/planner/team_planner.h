@@ -69,10 +69,12 @@ sem_t sem_message_on_queue; //avisa al algoritmo de cercania cuando hay mensajes
 sem_t sem_planification; //controla que el pokemon permita al planificador seguir
 sem_t sem_pokemons_in_ready_queue; //avisa cuando hay pokemons en ready para planificar
 sem_t sem_algoritmo_cercania; //para añadir a la cola de ready
-sem_t sem_pokemons_to_get;
-sem_t sem_deadlock;
+sem_t sem_pokemons_to_get; //para enviar al mensaje get
+sem_t sem_deadlock; //para controlar deadlock
 
 pthread_mutex_t planner_mutex;
+pthread_mutex_t move_trainers;
+
 t_entrenador_pokemon* exec_entrenador;
 
 t_list* new_queue;
@@ -108,6 +110,8 @@ bool block_queue_is_not_empty();
 char* ver_a_quien_no_necesita(t_entrenador_pokemon*);
 void remove_from_pokemons_list(t_entrenador_pokemon*, char*);
 bool trainer_completed_with_success(t_entrenador_pokemon*);
+bool all_queues_are_empty_except_block();
+bool entrenadores_listos();
 
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

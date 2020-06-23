@@ -27,6 +27,7 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
+	pthread_mutex_init(&move_trainers, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	pthread_attr_t attrs;
@@ -125,6 +126,11 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 		
 		if (trainer_completed_with_success(entrenador_aux)) {
 			team_planner_finish_trainner(entrenador_aux);
+		}
+
+		//DEADLOCK
+		if (all_queues_are_empty_except_block()){
+			solve_deadlock();
 		}		
 	}
 
@@ -187,8 +193,7 @@ void check_RR_burst(){
 		exec_entrenador = NULL;
 		add_to_ready_queue(entrenador);
 		
-		//TODO
-		//Ver como frenar la ejecución de el entrenador cuando se queda sin quantum
+		//TODO Ver como frenar la ejecución de el entrenador cuando se queda sin quantum
 		
 	}
 }
@@ -196,6 +201,7 @@ void check_RR_burst(){
 
 void move_trainers() {
 	sem_wait(&exec_entrenador->sem_trainer);
+	pthread_mutex_lock(&move_trainers);
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
@@ -235,7 +241,8 @@ void move_trainers() {
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 		t_protocol catch_protocol = CATCH_POKEMON;
 		send_message_catch(catch_send);
-	} 
+	}
+	pthread_mutex_unlock(&move_trainers); 
 }
 
 
@@ -367,6 +374,12 @@ void *receive_msg(int fd, int send_to) {
 					} else {
 						team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
 					}
+
+					//DEADLOCK
+					if (all_queues_are_empty_except_block()){
+						solve_deadlock();
+					}
+
 				} else {
 					team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
 				}

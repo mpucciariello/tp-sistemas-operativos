@@ -15,9 +15,28 @@ void team_planner_run_planification() {
 	context_switch_qty++;
 }
 
+
+bool entrenadores_listos(){
+	t_list* entrenadores_disponibles = list_create();
+	entrenadores_disponibles = team_planner_create_ready_queue();
+	if(list_size(entrenadores_disponibles) > 0){
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
 void team_planner_algoritmo_cercania() {
-	//TODO sincronizar con create ready queue
+	//TODO ver si esto es una genialidad o un desastre
+
+	while (true) {
+		if (entrenadores_listos()) {
+			sem_post(&sem_entrenadores_disponibles);
+		}
+	}
 	sem_wait(&sem_message_on_queue);
+	sem_wait(&sem_entrenadores_disponibles);
 	
 	t_temporal_pokemon* pokemon;
 	t_entrenador_pokemon* entrenador;
@@ -412,6 +431,7 @@ void new_cpu_cicle() {
 	pthread_mutex_unlock(&planner_mutex);
 }
 
+
 float team_planner_calculate_exponential_mean(int burst_time, float tn) {
 	float alpha = 0.5f;
 	//tn+1 = α*tn + (1 - α)*tn
@@ -558,21 +578,10 @@ void team_planner_set_algorithm() {
 	}
 }
 
-t_pokemon* team_planner_get_pokemon_by_trainner(t_entrenador_pokemon* entrenador) {
-	char* pokemon_unneeded = entrenador->blocked_info->pokemon_unneeded;
-	for (int i = 0; i < list_size(target_pokemons); i++) {
-		t_pokemon* p = list_get(target_pokemons, i);
-		if (entrenador->id == p->trainner_id && string_equals_ignore_case(pokemon_unneeded, p->name)) {
-			return p;
-		}
-	}
-	return NULL;
-}
-
 
 //se llamará cuando quiera verificar que lo unico que puedo hacer a partir de ahora es solucionar deadlock
 bool all_queues_are_empty_except_block(){
-	if(list_size(new_queue) == 0 && list_size(ready_queue) == 0){
+	if(!entrenadores_listos()){ 
 		return true;
 	}
 	return false;
