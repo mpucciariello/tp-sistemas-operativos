@@ -16,7 +16,6 @@ typedef enum {
 } e_state;
 
 typedef struct {
-	char* pokemon_unneeded;
 	int blocked_time;
 	int status; // 0 -> Puede correrse, no espera nada. 1 -> espera un mensaje. 2 -> Deadlock
 } t_entrenador_info_bloqueo;
@@ -29,6 +28,7 @@ typedef struct {
 	t_list* targets;
 	int wait_time;
 	int current_burst_time;
+	int total_burst_time;
 	int estimated_time;
 	t_entrenador_info_bloqueo* blocked_info;
 	sem_t sem_trainer;
@@ -47,7 +47,7 @@ typedef struct {
 	int trainner_id;
 	char* name;
 	t_pokemon_state state;
-	t_entrenador_pokemon* blocking_trainner;
+	t_entrenador_pokemon* blocking_trainner; //que es esto
 	t_position* position;
 } t_pokemon;
 
@@ -87,10 +87,10 @@ void team_planner_destroy();
 void team_planner_run_planification();
 void team_planner_algoritmo_cercania();
 void move_trainers();
-void team_planner_change_block_status_by_trainer(int, t_entrenador_pokemon*, char*);
+void team_planner_change_block_status_by_trainer(int, t_entrenador_pokemon*);
 void team_planner_set_algorithm();
 t_list* team_planner_create_ready_queue();
-void team_planner_change_block_status_by_id_corr(int, uint32_t, char*);
+void team_planner_change_block_status_by_id_corr(int, uint32_t);
 void team_planner_finish_trainner(t_entrenador_pokemon*);
 t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t);
 void delete_from_bloqued_queue(t_entrenador_pokemon*);

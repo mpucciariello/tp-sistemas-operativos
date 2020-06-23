@@ -100,6 +100,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->targets = targets;
 	entrenador->wait_time = 0;
 	entrenador->current_burst_time = 0;
+	entrenador->total_burst_time = 0;
 	entrenador->estimated_time = 0;
 	sem_init(&entrenador->sem_trainer, 0, 0);
 	entrenador->blocked_info = NULL;
@@ -243,7 +244,6 @@ void team_planner_free_pokemons(t_entrenador_pokemon* entrenador) {
 
 void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->state = EXIT;
-	entrenador->blocked_info->pokemon_unneeded = NULL;
 	entrenador->blocked_info->blocked_time = 0;
 	entrenador->blocked_info->status = 0;
 	pthread_mutex_lock(&planner_mutex);
@@ -253,11 +253,10 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 }
 
 
-void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr, char* pokemon_name) {
+void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo)); 
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
-	info_bloqueo->pokemon_unneeded = pokemon_name;
 	
 	t_entrenador_pokemon* entrenador = find_trainer_by_id_corr(id_corr);
 	entrenador->state = BLOCK;
@@ -267,12 +266,7 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr, c
 		sem_post(&sem_entrenadores_disponibles);
 	}
 
-	if(status == 1) {
-		entrenador->blocked_info = info_bloqueo;
-	}
-
-	if (status == 2) {
-		info_bloqueo->pokemon_unneeded = pokemon_name;
+	if(status == 1 || status == 2) {
 		entrenador->blocked_info = info_bloqueo;
 	}
 
@@ -283,22 +277,16 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo)); 
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
-	info_bloqueo->pokemon_unneeded = pokemon_name;
 	entrenador->state = BLOCK;
 	
+	entrenador->blocked_info = info_bloqueo;
+
 	if (status == 0) {		
-		entrenador->blocked_info = info_bloqueo;
 		sem_post(&sem_entrenadores_disponibles);
 	}
-
-
-	if (status == 2) {
-		info_bloqueo->pokemon_unneeded = pokemon_name;
-		entrenador->blocked_info = info_bloqueo;
-	}
-
 	add_to_block_queue_if_not_there(entrenador);
 }
+
 
 void add_to_block_queue_if_not_there(t_entrenador_pokemon* entrenador) {
 	for (int i = 0; i < list_size(block_queue); i++) {
@@ -568,19 +556,19 @@ void team_planner_set_algorithm() {
 	}
 }
 
-t_pokemon* team_planner_get_pokemon_by_trainner(t_entrenador_pokemon* entrenador) {
-	char* pokemon_unneeded = entrenador->blocked_info->pokemon_unneeded;
-	for (int i = 0; i < list_size(target_pokemons); i++) {
-		t_pokemon* p = list_get(target_pokemons, i);
-		if (entrenador->id == p->trainner_id && string_equals_ignore_case(pokemon_unneeded, p->name)) {
-			return p;
-		}
-	}
-	return NULL;
-}
+//t_pokemon* team_planner_get_pokemon_by_trainner(t_entrenador_pokemon* entrenador) {
+//	char* pokemon_unneeded = entrenador->blocked_info->pokemon_unneeded;
+//	for (int i = 0; i < list_size(target_pokemons); i++) {
+//		t_pokemon* p = list_get(target_pokemons, i);
+//		if (entrenador->id == p->trainner_id && string_equals_ignore_case(pokemon_unneeded, p->name)) {
+//			return p;
+//		}
+//	}
+//	return NULL;
+//}
 
 void team_planner_solve_deadlock(t_entrenador_pokemon* bloqueado, t_entrenador_pokemon* bloqueante) {
-	team_logger_info("Se ha procedera a resolver deadlock!");
+	team_logger_info("Se procederá a resolver deadlock!");
 	deadlocks_resolved++;
 
 	team_logger_info("El deadlock ha sido resuelto!");
@@ -700,7 +688,7 @@ void team_planner_print_fullfill_target() {
 	team_logger_info("Cantidad de ciclos de CPU realizados por entrenador:");
 
 	void _list_burst_trainner(t_entrenador_pokemon *trainner) {
-		team_logger_info("Entrenador %d -> Ciclos de CPU realizados: %d", trainner->id, trainner->current_burst_time);
+		team_logger_info("Entrenador %d -> Ciclos de CPU realizados: %d", trainner->id, trainner->total_burst_time);
 	}
 	list_iterate(trainners, (void*) _list_burst_trainner);
 

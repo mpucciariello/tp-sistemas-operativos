@@ -74,8 +74,8 @@ void team_init() {
 	usleep(500000);
 	for (;;)
 		;
-
 }
+
 
 void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
@@ -102,19 +102,18 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
-	
 	if (i == 0) {
 		team_logger_info("Catch sent!");
 		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, NULL);
 		list_add(message_catch_sended, catch_send);
-		list_add(entrenador_aux->list_id_catch, (uint32_t)catch_send->id_correlacional);
+		list_add(entrenador_aux ->list_id_catch, (uint32_t)catch_send->id_correlacional);
 
-	} else { //si no se envió el id_corr no existe! entonces hago una variante de la función block que reciba el trainer
-		remove_pokemon_from_catch(catch_send);
-		team_planner_change_block_status_by_trainer(0, entrenador_aux, catch_send->nombre_pokemon);
+	} else {
+		remove_pokemon_from_catch (catch_send);
+		team_planner_change_block_status_by_trainer(0, 0, entrenador_aux);
 		list_add(entrenador_aux->pokemons, catch_send->nombre_pokemon);
 
-		if (trainer_is_in_deadlock_caught(entrenador_aux, catch_send->id_correlacional)) {
+		if(trainer_is_in_deadlock_caught(entrenador_aux)){
 			team_planner_change_block_status_by_trainer(2, entrenador_aux, catch_send->nombre_pokemon);
 		} else {
 			team_planner_change_block_status_by_trainer(0, entrenador_aux, NULL);
@@ -133,7 +132,7 @@ void send_get_message() {
 	t_protocol get_protocol;
 	t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
 
-	for (int i = 0; i < list_size(keys_list); i++) {
+	for (int i = 0; i < list_size(keys_list); i++) {//TODO ver lista de keys
 		char* nombre = list_get(keys_list, i);
 		get_send->id_correlacional = 0;
 		get_send->nombre_pokemon = string_duplicate(nombre);
@@ -163,21 +162,23 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		uint32_t id_corr = 0;
 		int recibido = recv(broker_fd_send, id_corr, sizeof(uint32_t), MSG_WAITALL);
 		if (recibido > 0 && queue != NULL) {
-			list_add(queue, (uint32_t)id_corr);
+			list_add(queue, (int32_t)id_corr);
 		}
 		if (protocolo == CATCH_POKEMON) {
 			t_catch_pokemon *catch_send = (t_catch_pokemon*) paquete;
 			catch_send->id_correlacional = id_corr;
 		}
+		socket_close_conection(broker_fd);
 	}
 	return 0;
 }
 
 
-void check_RR_burst() {
-	if (exec_entrenador->current_burst_time == team_config->quantum) {
+void check_RR_burst(){
+	if(exec_entrenador->current_burst_time = team_config->quantum){
 		sem_post(&sem_planification);
 		t_entrenador_pokemon* entrenador = exec_entrenador;
+		t_temporal_pokemon* pokemon = pokemon_temporal;
 		exec_entrenador = NULL;
 		
 		//TODO
@@ -190,6 +191,7 @@ void check_RR_burst() {
 	}
 }
 
+
 void move_trainers() {
 	sem_wait(&exec_entrenador->sem_trainer);
 
@@ -198,10 +200,13 @@ void move_trainers() {
 
 	int steps = fabs(aux_x + aux_y);
 
-	for (int i = 0; i < steps; i++) {
+	for(int i = 0; i < steps; i++)){
 		sleep(team_config->retardo_ciclo_cpu);
 		exec_entrenador->current_burst_time++;
-		check_RR_burst(); //TODO ver como frenar
+		exec_entrenador->total_burst_time++; //para contabilizar ciclos totales.
+		if(team_config->algoritmo_planificacion = RR){
+			check_RR_burst(); //TODO ver como frenar
+		}
 	}
 	
 	team_logger_info("Un enternador se movió de (%d, %d) a (%d, %d)", exec_entrenador->position->pos_x,
@@ -338,20 +343,23 @@ void *receive_msg(int fd, int send_to) {
 				remove_pokemon_from_catch(catch_message);
 				
 				t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
-				list_add(entrenador->pokemons, catch_message->nombre_pokemon);
+				
 
 				if(caught_rcv->result){
+
+					list_add(entrenador->pokemons, catch_message->nombre_pokemon);
+
 					if(trainer_completed_with_success(entrenador)){
 						team_planner_finish_trainner(entrenador);
 					}
 
-					if(trainer_is_in_deadlock_caught(entrenador, caught_rcv->id_correlacional)){
-						team_planner_change_block_status_by_id_corr(2, caught_rcv->id_correlacional, catch_message->nombre_pokemon);
+					if(trainer_is_in_deadlock_caught(entrenador)){
+						team_planner_change_block_status_by_id_corr(2, caught_rcv->id_correlacional);
 					} else {
-						team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional, NULL);
+						team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
 					}
 				} else {
-					team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional, NULL);
+					team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
 				}
 
 				usleep(50000);
@@ -430,17 +438,30 @@ void *receive_msg(int fd, int send_to) {
 }
 
 
-bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador, uint32_t id_corr_caught){
-	t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(id_corr_caught);
-	char* nombre_pokemon = catch_message->nombre_pokemon;
+bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador){
+	t_list* targets_aux = entrenador->targets;
+	if(list_size(entrenador->pokemons) == list_size(entrenador->targets)){
 
-	for(int i = 0; i < list_size(entrenador->targets); i++){
-		t_pokemon* pokemon = list_get(entrenador->targets, i);
-		if(string_equals_ignore_case(pokemon->name, nombre_pokemon)){
-			return false;
+		for(int i = 0; i < list__size(entrenador->pokemons); i++){
+			char* pokemon_obtenido = list_get(entrenador->pokemons, i);
+
+			for(int j = 0; j < list_size(targets_aux); j++){
+				char* pokemon_objetivo = list_get(targets_aux, j);
+				if(string_equals_ignore_case(pokemon_objetivo, pokemon_obtenido)){
+					list_remove(target_pokemons, j);
+				}
+			}
 		}
+
+		if (list_size(targets_aux) != 0){
+			return true; //deadlock
+		} else {
+			return false;//está completo
+		}
+	} else {
+		return false; //no está completo, puede seguir
 	}
-	return true;
+
 }
 
 bool pokemon_required(char* pokemon_name) {
@@ -551,7 +572,6 @@ void send_ack(void* arg) {
 
 void team_exit() {
 	socket_close_conection(team_socket);
-//socket_close_conection(broker_fd);
 	pthread_mutex_destroy(&planner_mutex);
 	team_planner_destroy();
 	team_config_free();
