@@ -99,7 +99,10 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 	t_entrenador_pokemon* entrenador_aux = exec_entrenador;
 	exec_entrenador = NULL;
 	sem_post(&sem_planification);
+
+	pthread_mutex_lock(&planner_mutex);
 	list_add(block_queue, entrenador_aux);
+	pthread_mutex_unlock(&planner_mutex);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
@@ -115,7 +118,7 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 		list_add(entrenador_aux->pokemons, catch_send->nombre_pokemon);
 
 		if(trainer_is_in_deadlock_caught(entrenador_aux)){
-			team_planner_change_block_status_by_trainer(2, entrenador_aux);
+			entrenador->deadlock = true;
 		} else {
 			team_planner_change_block_status_by_trainer(0, entrenador_aux);
 		}
@@ -217,14 +220,22 @@ void move_trainers() {
 	exec_entrenador->position->pos_x = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	exec_entrenador->position->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 
-	t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
-	catch_send->id_correlacional = 0;
-	catch_send->nombre_pokemon = exec_entrenador->pokemon_a_atrapar->name;
-	catch_send-> pos_x = exec_entrenador->pokemon_a_atrapar->position->pos_x;
-	catch_send->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_y;
-	catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
-	t_protocol catch_protocol = CATCH_POKEMON;
-	send_message_catch(catch_send); 
+	if(exec_entrenador->deadlock){
+		sem_post(&sem_planification);
+		sem_wait(&sem_deadlock);
+	}
+
+
+	if(exec_entrenador->blocked_info == 0){
+		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
+		catch_send->id_correlacional = 0;
+		catch_send->nombre_pokemon = exec_entrenador->pokemon_a_atrapar->name;
+		catch_send-> pos_x = exec_entrenador->pokemon_a_atrapar->position->pos_x;
+		catch_send->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_y;
+		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
+		t_protocol catch_protocol = CATCH_POKEMON;
+		send_message_catch(catch_send);
+	} 
 }
 
 
@@ -352,7 +363,7 @@ void *receive_msg(int fd, int send_to) {
 					}
 
 					if(trainer_is_in_deadlock_caught(entrenador)){
-						team_planner_change_block_status_by_id_corr(2, caught_rcv->id_correlacional);
+						entrenador->deadlock = true;
 					} else {
 						team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
 					}
@@ -481,30 +492,7 @@ bool pokemon_required(char* pokemon_name) {
 }
 
 
-bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 
-	if(list_size(entrenador->pokemons) == list_size(entrenador->targets)){
-		t_list* pokemons_target_aux = list_create();
-		pokemons_target_aux = entrenador->targets;
-
-		for(int i = 0; i<list_size(entrenador->pokemons); i++){
-			t_pokemon* pokemon = list_get(entrenador->pokemons, i);
-
-			for(int j = 0; j<list_size(pokemons_target_aux); j++){
-				t_pokemon* pokemon_aux = list_get(pokemons_target_aux, j);
-
-				if(string_equals_ignore_case(pokemon->name, pokemon_aux->name)){
-					list_remove(pokemons_target_aux, j);
-				}
-			}
-		}
-
-		if (list_size(pokemons_target_aux) == 0){
-			return true;
-		}
-	}
-	return false;
-}
 
 
 void team_server_init() {

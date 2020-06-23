@@ -16,7 +16,7 @@ void team_planner_run_planification() {
 }
 
 void team_planner_algoritmo_cercania() {
-	sem_wait(&sem_entrenadores_disponibles);
+	//TODO sincronizar con create ready queue
 	sem_wait(&sem_message_on_queue);
 	
 	t_temporal_pokemon* pokemon;
@@ -269,7 +269,9 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->blocked_info->blocked_time = 0;
 	entrenador->blocked_info->status = 0;
 	entrenador->pokemon_a_atrapar = NULL;
+	entrenador->deadlock = false;
 	pthread_mutex_lock(&planner_mutex);
+	list_remove(block_queue, entrenador);
 	list_add(exit_queue, entrenador);
 	pthread_mutex_unlock(&planner_mutex);
 	team_planner_free_pokemons(entrenador);
@@ -286,13 +288,10 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 	entrenador->state = BLOCK;
 	entrenador->pokemon_a_atrapar = NULL;
 
-	if (status == 0) {		
-		entrenador->blocked_info = info_bloqueo;
-		sem_post(&sem_entrenadores_disponibles);
-	}
+	entrenador->blocked_info = info_bloqueo;
 
-	if(status == 1 || status == 2) {
-		entrenador->blocked_info = info_bloqueo;
+	if (status == 0) {
+		sem_post(&sem_entrenadores_disponibles);
 	}
 
 	add_to_block_queue_if_not_there(entrenador);
@@ -456,7 +455,7 @@ t_list* filter_block_list_by_0() {
 
 t_list* team_planner_create_ready_queue() {	
 	bool _is_available(t_entrenador_pokemon* trainner) {
-		return trainner->blocked_info->status == 0;
+		return trainner->blocked_info->status == 0 && trainner->deadlock == false;
 	}
 	t_list* bloquados_en_cero = filter_block_list_by_0(block_queue, (void*) _is_available);
 	
@@ -571,105 +570,6 @@ t_pokemon* team_planner_get_pokemon_by_trainner(t_entrenador_pokemon* entrenador
 }
 
 
-/*void team_planner_solve_deadlock(t_entrenador_pokemon* bloqueado, t_entrenador_pokemon* bloqueante) {
-	team_logger_info("Se procederá a resolver deadlock!");
-	deadlocks_resolved++;
-
-	team_logger_info("El deadlock ha sido resuelto!");
-}
-
-
-//va a poder filtrar por info = 2.
-t_list* team_planner_get_id_entrenadores_deadlock(t_entrenador_pokemon* entrenador) {
-	t_list* lista = list_create();
-
-	t_pokemon* pokemon_necesita_entrenador_bloqueante = NULL;
-	t_pokemon* pokemon_necesita_entrenador = team_planner_get_pokemon_by_trainner(entrenador);
-
-	if (pokemon_necesita_entrenador->state == FREE)
-		return NULL;
-	// Este es el entrenador que esta bloqueando a mi entrenador original
-	t_entrenador_pokemon* entrenador_bloqueante = pokemon_necesita_entrenador->blocking_trainner;
-	// Si no hay entrenador bloqueante => retorno
-	if (entrenador_bloqueante == NULL)
-		return NULL;
-	list_add(lista, &entrenador_bloqueante->id);
-
-	while (true) {
-		if (entrenador_bloqueante->state == BLOCK) {
-			// Este es el pokemon que necesita el entrenador bloqueante para continuar
-			pokemon_necesita_entrenador_bloqueante = team_planner_get_pokemon_by_trainner(entrenador_bloqueante);
-			// Si el pokemon que necesita el entrenador bloqueante esta bloqueado por el entrenador original => hay deadlock
-			if (pokemon_necesita_entrenador_bloqueante->blocking_trainner->id == entrenador->id) {
-				list_add(lista, &entrenador->id);
-				return lista;
-			}
-			if (entrenador_bloqueante->id == pokemon_necesita_entrenador_bloqueante->blocking_trainner->id)
-				return lista;
-			// No estaba bloqueado por el original => guardo la info
-			list_add(lista, &pokemon_necesita_entrenador_bloqueante->blocking_trainner->id);
-			// Evaluo al entrenador que bloquea a mi entrenador bloqueante
-			entrenador_bloqueante = pokemon_necesita_entrenador_bloqueante->blocking_trainner;
-		} else {
-			// El entrenador bloqueante no esta bloqueado
-			return NULL;
-		}
-	}
-}
-
-void team_planner_check_deadlocks() {
-	t_list* ids_bloqueados = list_create();
-
-	int _get_id(t_entrenador_pokemon* entrenador) {
-		return entrenador->id;
-	}
-	ids_bloqueados = list_map(block_queue, (void*) _get_id);
-
-	int i;
-	for (i = 0; i < list_size(block_queue); i++) {
-		t_entrenador_pokemon* trainner = list_get(block_queue, i);
-
-		bool _es_el_mismo(int id) {
-			return trainner->id == id;
-		}
-		if (!list_any_satisfy(ids_bloqueados, (void*)_es_el_mismo))
-			continue;
-
-		t_list* id_entrenadores_deadlock = team_planner_get_id_entrenadores_deadlock(trainner);
-
-		if (id_entrenadores_deadlock != NULL) {
-			if (!list_is_empty(id_entrenadores_deadlock)) {
-				deadlocks_detected++;
-				team_logger_info("Se ha detectado deadlock entre:");
-				team_logger_info("Entrenador %d", trainner->id);
-				int j;
-				for (j = 0; j < list_size(id_entrenadores_deadlock) ; j++) {
-					int* aux = list_get(id_entrenadores_deadlock, j);
-					int k;
-					for (k = 0; k < list_size(ids_bloqueados); k++) {
-						int id_aux = (int) list_get(ids_bloqueados, k);
-						if (id_aux == *aux)
-							list_remove(ids_bloqueados, k);
-					}
-					team_logger_info("Bloqueado por %d", *aux);
-
-					int _is_the_one(t_entrenador_pokemon* entrenador) {
-						return entrenador->id = *aux;
-					}
-					t_entrenador_pokemon* trainner_bloqueado = list_find(block_queue, (void*) _is_the_one);
-
-					team_planner_solve_deadlock(trainner_bloqueado, trainner);
-				}
-				list_clean(id_entrenadores_deadlock);
-			} else {
-				team_logger_warn("No se ha detectado deadlock");
-			}
-		}
-	}
-	list_destroy(ids_bloqueados);
-}*/
-
-
 //se llamará cuando quiera verificar que lo unico que puedo hacer a partir de ahora es solucionar deadlock
 bool all_queues_are_empty_except_block(){
 	if(list_size(new_queue) == 0 && list_size(ready_queue) == 0){
@@ -679,38 +579,61 @@ bool all_queues_are_empty_except_block(){
 }
 
 
-//la uso para comprobar que todos los elementos de bloqueados tienen state 2, podría usar un list_size
-t_list* filter_block_list_by_2() {
-	bool _is_in_deadlock(t_entrenador_pokemon* trainner) {
-		return trainner->blocked_info->status == 2;
+//empiezo con una resolución de deadlock diferente
+void solve_deadlock(){
+
+	sem_init(&sem_deadlock, 0, 0);
+
+	team_logger_info("Se iniciará la detección y resolución de deadlocks!");
+	int i = 0;
+
+	while(block_queue_is_not_empty()){
+
+		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, i);
+		char* pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueado);
+
+		//TENGO QUE BUSCAR QUIEN NECESITA AL POKEMON QUE A MI ME SOBRA
+		t_entrenador_pokemon* entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
+
+		entrenador_bloqueado->pokemon_a_atrapar->name = pokemon_de_entrenador_bloqueante;
+		entrenador_bloqueado->pokemon_a_atrapar->position->pos_x = entrenador_bloqueante->position->pos_x;
+		entrenador_bloqueado->pokemon_a_atrapar->position->pos_y = entrenador_bloqueante->position->pos_y;
+
+		deadlocks_detected++;	
+
+		team_logger_info("Se detectó un deadlock. El entrenador   %d", entrenador_bloqueante->id, " está bloqueando al entrenador %d", entrenador_bloqueado->id);	
+
+		add_to_ready_queue(entrenador_bloqueado);
+
+		sem_wait(&sem_deadlock);
+		char* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
+
+		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
+		list_add(entrenador_bloqueante, pokemon_de_entrenador_bloqueado);
+		remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
+		remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
+
+		if(trainer_completed_with_success(entrenador_bloqueado)){
+			team_planner_finish_trainner(entrenador_bloqueado);
+		}
+
+		if(trainer_completed_with_success(entrenador_bloqueante)){
+			team_planner_finish_trainner(entrenador_bloqueante);
+		}
+
+		deadlocks_resolved++;	
 	}
-	t_list* blocked_in_deadlock = list_filter(block_queue, (void*) _is_in_deadlock);
-	return blocked_in_deadlock;
+	team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 }
 
 
-//empiezo con una resolución de deadlock diferente
-void solve_deadlock(){
-	if(list_size(block_queue) == list_size(filter_block_list_by_2())){
-		team_logger_info("Se iniciará la detección y resolución de deadlocks!");
-		int i = 0;
+void remove_from_pokemons_list(t_entrenador_pokemon* entrenador, char* pokemon){
+	for(int i = 0; i < list_size(entrenador->pokemons); i++){
+		char* pokemon_aux = list_get(entrenador->pokemons);
 
-		while(block_queue_is_not_empty()){
-
-			t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, i);
-			char* pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueado);
-
-			//TENGO QUE BUSCAR QUIEN NECESITA AL POKEMON QUE A MI ME SOBRA
-			t_entrenador_pokemon* entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
-
-			entrenador_bloqueado->pokemon_a_atrapar->name = pokemon_de_entrenador_bloqueante;
-			entrenador_bloqueado->pokemon_a_atrapar->position->pos_x = entrenador_bloqueante->position->pos_x;
-			entrenador_bloqueado->pokemon_a_atrapar->position->pos_y = entrenador_bloqueante->position->pos_y;
-
-			team_logger_info("Se detectó un deadlock. El entrenador   %d", entrenador_bloqueante->id, " está bloqueando al entrenador %d", entrenador_bloqueado->id);	
-
-			add_to_ready_queue(entrenador_bloqueado);
-			//ver que no tiene que enviar ningun mensaje catch aca, solo moverse.		
+		if(string_equals_ignore_case(pokemon, pokemon_aux)){
+			list_remove(entrenador->pokemons, i);
+			break;
 		}
 	}
 }
@@ -823,6 +746,31 @@ void team_planner_init() {
 	sem_init(&sem_planification, 0, 1); 
 	sem_init(&sem_algoritmo_cercania, 0, 0);
 	sem_init(&sem_pokemons_in_ready_queue, 0, 0);
+}
+
+bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
+
+	if(list_size(entrenador->pokemons) == list_size(entrenador->targets)){
+		t_list* pokemons_target_aux = list_create();
+		pokemons_target_aux = entrenador->targets;
+
+		for(int i = 0; i<list_size(entrenador->pokemons); i++){
+			t_pokemon* pokemon = list_get(entrenador->pokemons, i);
+
+			for(int j = 0; j<list_size(pokemons_target_aux); j++){
+				t_pokemon* pokemon_aux = list_get(pokemons_target_aux, j);
+
+				if(string_equals_ignore_case(pokemon->name, pokemon_aux->name)){
+					list_remove(pokemons_target_aux, j);
+				}
+			}
+		}
+
+		if (list_size(pokemons_target_aux) == 0){
+			return true;
+		}
+	}
+	return false;
 }
 
 
