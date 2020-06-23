@@ -70,13 +70,18 @@ void team_planner_algoritmo_cercania() {
 	entrenador->pokemon_a_atrapar->name = pokemon->name;
 	entrenador->pokemon_a_atrapar->position->pos_x = pokemon->position->pos_x;
 	entrenador->pokemon_a_atrapar->position->pos_y = pokemon->position->pos_y;
+	
+	add_to_ready_queue(entrenador);		
+	sem_post(&sem_algoritmo_cercania);
+}
 
+void add_to_ready_queue(t_entrenador_pokemon* entrenador){
+	entrenador->state = READY;
 	pthread_mutex_lock(&planner_mutex);
 	list_add(ready_queue, entrenador);
-	delete_from_bloqued_queue(entrenador);
 	pthread_mutex_unlock(&planner_mutex);
-		
-	sem_post(&sem_algoritmo_cercania);
+	delete_from_bloqued_queue(entrenador);
+	delete_from_new_queue(entrenador);	
 }
 
 void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador){	
@@ -85,6 +90,18 @@ void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador){
 		if(entrenador_aux->id == entrenador->id){
 			pthread_mutex_lock(&planner_mutex);
 			list_remove(block_queue, i);
+			pthread_mutex_unlock(&planner_mutex);
+		}
+	}
+}
+
+
+void delete_from_new_queue(t_entrenador_pokemon* entrenador){	
+	for(int i = 0; i < list_size(new_queue); i++){
+		t_entrenador_pokemon* entrenador_aux = list_get(new_queue, i);
+		if(entrenador_aux->id == entrenador->id){
+			pthread_mutex_lock(&planner_mutex);
+			list_remove(new_queue, i);
 			pthread_mutex_unlock(&planner_mutex);
 		}
 	}
@@ -203,6 +220,7 @@ void planner_init_global_targets(t_list* objetivos) {
 			dictionary_put(team_planner_global_targets, pokemon_name, (void *) cantidad_pokemon);
 		}
 	}
+	sem_post(&sem_pokemons_to_get);
 }
 
 

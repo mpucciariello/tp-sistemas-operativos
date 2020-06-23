@@ -28,6 +28,7 @@ void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
+	sem_init(&sem_pokemons_to_get, 0, 1);
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -129,6 +130,8 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 
 
 void send_get_message() {
+	
+	sem_wait(&sem_pokemons_to_get);
 	t_protocol get_protocol;
 	t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
 
@@ -177,11 +180,9 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 void check_RR_burst(){
 	if(exec_entrenador->current_burst_time == team_config->quantum){
 		sem_post(&sem_planification);
-		exec_entrenador -> pokemon_a_atrapar = NULL;
-		pthread_mutex_lock(&planner_mutex);
-		//list_add(ready_queue, exec_entrenador); //TODO funcion que pase a ready
-		pthread_mutex_unlock(&planner_mutex);
+		t_entrenador_pokemon* entrenador = exec_entrenador;
 		exec_entrenador = NULL;
+		add_to_ready_queue(entrenador);
 		
 		//TODO
 		//Ver como frenar la ejecución de el entrenador cuando se queda sin quantum
@@ -201,7 +202,7 @@ void move_trainers() {
 	for(int i = 0; i < steps; i++){
 		sleep(team_config->retardo_ciclo_cpu);
 		exec_entrenador->current_burst_time++;
-		exec_entrenador->total_burst_time++; //para contabilizar ciclos totales.
+		exec_entrenador->total_burst_time++; 
 
 		if(team_config->algoritmo_planificacion == RR){
 			check_RR_burst(); //TODO ver como frenar

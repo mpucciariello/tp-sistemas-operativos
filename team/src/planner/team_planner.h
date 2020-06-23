@@ -98,5 +98,8 @@ float team_planner_calculate_exponential_mean(int, float);
 bool team_planner_is_SJF_algorithm();
 void new_cpu_cicle();
 void add_to_block_queue_if_not_there(t_entrenador_pokemon*);
+void add_to_ready_queue(t_entrenador_pokemon*);
+void delete_from_new_queue(t_entrenador_pokemon*);
+
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
