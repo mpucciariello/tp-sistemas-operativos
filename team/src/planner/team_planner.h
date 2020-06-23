@@ -34,6 +34,7 @@ typedef struct {
 	sem_t sem_trainer;
 	pthread_t hilo_entrenador;
 	t_list* list_id_catch;
+	t_temporal_pokemon* pokemon_a_atrapar;
 } t_entrenador_pokemon;
 
 typedef enum {
@@ -68,7 +69,6 @@ sem_t sem_pokemons_in_ready_queue; //avisa cuando hay pokemons en ready para pla
 sem_t sem_algoritmo_cercania; //para añadir a la cola de ready
 
 pthread_mutex_t planner_mutex;
-t_temporal_pokemon* pokemon_temporal;
 t_entrenador_pokemon* exec_entrenador;
 
 t_list* new_queue;
@@ -76,7 +76,6 @@ t_list* ready_queue;
 t_list* block_queue;
 t_list* exit_queue;
 t_list* pokemon_to_catch;
-t_list* pokemons_ready;
 t_list* keys_list;
 t_list* target_pokemons;
 

@@ -177,17 +177,15 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 void check_RR_burst(){
 	if(exec_entrenador->current_burst_time = team_config->quantum){
 		sem_post(&sem_planification);
-		t_entrenador_pokemon* entrenador = exec_entrenador;
-		t_temporal_pokemon* pokemon = pokemon_temporal;
+		exec_entrenador -> pokemon_a_atrapar = NULL;
+		pthread_mutex_lock(&planner_mutex);
+		//list_add(ready_queue, exec_entrenador); //TODO funcion que pase a ready
+		pthread_mutex_unlock(&planner_mutex);
 		exec_entrenador = NULL;
 		
 		//TODO
-		//Ver como frenar la ejecución de el entrenador cuadno se queda sin quantum
-		//agregar pokemon
-		pthread_mutex_lock(&planner_mutex);
-		//list_add(pokemons_ready, pokemon);
-		list_add(ready_queue, entrenador);
-		pthread_mutex_unlock(&planner_mutex);
+		//Ver como frenar la ejecución de el entrenador cuando se queda sin quantum
+		
 	}
 }
 
@@ -195,8 +193,8 @@ void check_RR_burst(){
 void move_trainers() {
 	sem_wait(&exec_entrenador->sem_trainer);
 
-	int aux_x = exec_entrenador->position->pos_x - pokemon_temporal->position->pos_x;
-	int	aux_y = exec_entrenador->position->pos_y - pokemon_temporal->position->pos_y;
+	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
+	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
 
 	int steps = fabs(aux_x + aux_y);
 
@@ -211,22 +209,21 @@ void move_trainers() {
 	
 	team_logger_info("Un enternador se movió de (%d, %d) a (%d, %d)", exec_entrenador->position->pos_x,
 																	  exec_entrenador->position->pos_y,
-																	  pokemon_temporal->position->pos_x, 
-																	  pokemon_temporal->position->pos_y);
+																	  exec_entrenador->pokemon_a_atrapar->position->pos_x;
+																	  exec_entrenador->pokemon_a_atrapar->position->pos_y;
 
-	exec_entrenador->position->pos_x = pokemon_temporal->position->pos_x;
-	exec_entrenador->position->pos_y = pokemon_temporal->position->pos_y;
+	exec_entrenador->position->pos_x = exec_entrenador->pokemon_a_atrapar->position->pos_x;
+	exec_entrenador->position->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 
 	t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 	catch_send->id_correlacional = 0;
-	catch_send->nombre_pokemon = pokemon_temporal->name;
-	catch_send-> pos_x = pokemon_temporal->position->pos_x;
-	catch_send->pos_y = pokemon_temporal->position->pos_y;
+	catch_send->nombre_pokemon = pokemon_a_atrapar->name;
+	catch_send-> pos_x = exec_entrenador->pokemon_a_atrapar->position->pos_x;
+	catch_send->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_y;
 	catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 	t_protocol catch_protocol = CATCH_POKEMON;
 	send_message_catch(catch_send); 
 	
-	pokemon_temporal = NULL;
 }
 
 
