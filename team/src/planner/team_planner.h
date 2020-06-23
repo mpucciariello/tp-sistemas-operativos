@@ -68,6 +68,7 @@ sem_t sem_message_on_queue; //avisa al algoritmo de cercania cuando hay mensajes
 sem_t sem_planification; //controla que el pokemon permita al planificador seguir
 sem_t sem_pokemons_in_ready_queue; //avisa cuando hay pokemons en ready para planificar
 sem_t sem_algoritmo_cercania; //para añadir a la cola de ready
+sem_t sem_pokemons_to_get;
 
 pthread_mutex_t planner_mutex;
 t_entrenador_pokemon* exec_entrenador;
