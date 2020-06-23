@@ -101,7 +101,6 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->current_burst_time = 0;
 	entrenador->estimated_time = 0;
 	sem_init(&entrenador->sem_trainer, 0, 0);
-	entrenador->targets = list_create();
 	entrenador->blocked_info = NULL;
 	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers, entrenador);	
 	pthread_detach(entrenador->hilo_entrenador);
@@ -205,11 +204,11 @@ char* planner_print_global_targets() {
 	char* global_targets_string = string_new();
 	string_append(&global_targets_string, "POKEMON		|CANTIDAD		\n");
 	for (int i = 0; i < list_size(keys_list); i++) {
-		int j = 24 - strlen(nombre_pokemon);
 		char* nombre_pokemon = list_get(keys_list, i);
+		int j = 24 - strlen(nombre_pokemon);
 		int cantidad_pokemon = (int) dictionary_get(team_planner_global_targets, nombre_pokemon);
 		char* target_string = string_new();
-		for(int k = 0, k < j, k++){
+		for(int k = 0; k < j; k++){
 			string_append(&nombre_pokemon, " ");
 		}	
 		string_append(&target_string, "		|");
