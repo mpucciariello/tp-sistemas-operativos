@@ -104,19 +104,19 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 	
 	if (i == 0) {
 		team_logger_info("Catch sent!");
-		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, NULL);
+		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador_aux ->list_id_catch, (uint32_t)catch_send->id_correlacional);
 
 	} else {
 		remove_pokemon_from_catch (catch_send);
-		team_planner_change_block_status_by_trainer(0, 0, entrenador_aux);
+		team_planner_change_block_status_by_trainer(0, entrenador_aux);
 		list_add(entrenador_aux->pokemons, catch_send->nombre_pokemon);
 
 		if(trainer_is_in_deadlock_caught(entrenador_aux)){
-			team_planner_change_block_status_by_trainer(2, entrenador_aux, catch_send->nombre_pokemon);
+			team_planner_change_block_status_by_trainer(2, entrenador_aux);
 		} else {
-			team_planner_change_block_status_by_trainer(0, entrenador_aux, NULL);
+			team_planner_change_block_status_by_trainer(0, entrenador_aux);
 		}
 		
 		if (trainer_completed_with_success(entrenador_aux)) {
@@ -162,20 +162,20 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		uint32_t id_corr = 0;
 		int recibido = recv(broker_fd_send, id_corr, sizeof(uint32_t), MSG_WAITALL);
 		if (recibido > 0 && queue != NULL) {
-			list_add(queue, (int32_t)id_corr);
+			list_add(queue, (uint32_t)id_corr);
 		}
 		if (protocolo == CATCH_POKEMON) {
 			t_catch_pokemon *catch_send = (t_catch_pokemon*) paquete;
 			catch_send->id_correlacional = id_corr;
 		}
-		socket_close_conection(broker_fd);
+		socket_close_conection(broker_fd_send);//cambie broker_fd por broker_fd_send.
 	}
 	return 0;
 }
 
 
 void check_RR_burst(){
-	if(exec_entrenador->current_burst_time = team_config->quantum){
+	if(exec_entrenador->current_burst_time == team_config->quantum){
 		sem_post(&sem_planification);
 		exec_entrenador -> pokemon_a_atrapar = NULL;
 		pthread_mutex_lock(&planner_mutex);
@@ -198,32 +198,32 @@ void move_trainers() {
 
 	int steps = fabs(aux_x + aux_y);
 
-	for(int i = 0; i < steps; i++)){
+	for(int i = 0; i < steps; i++){
 		sleep(team_config->retardo_ciclo_cpu);
 		exec_entrenador->current_burst_time++;
 		exec_entrenador->total_burst_time++; //para contabilizar ciclos totales.
-		if(team_config->algoritmo_planificacion = RR){
+
+		if(team_config->algoritmo_planificacion == RR){
 			check_RR_burst(); //TODO ver como frenar
 		}
 	}
 	
 	team_logger_info("Un enternador se movió de (%d, %d) a (%d, %d)", exec_entrenador->position->pos_x,
 																	  exec_entrenador->position->pos_y,
-																	  exec_entrenador->pokemon_a_atrapar->position->pos_x;
-																	  exec_entrenador->pokemon_a_atrapar->position->pos_y;
+																	  exec_entrenador->pokemon_a_atrapar->position->pos_x,
+																	  exec_entrenador->pokemon_a_atrapar->position->pos_y);
 
 	exec_entrenador->position->pos_x = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	exec_entrenador->position->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 
 	t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 	catch_send->id_correlacional = 0;
-	catch_send->nombre_pokemon = pokemon_a_atrapar->name;
+	catch_send->nombre_pokemon = exec_entrenador->pokemon_a_atrapar->name;
 	catch_send-> pos_x = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	catch_send->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_y;
 	catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 	t_protocol catch_protocol = CATCH_POKEMON;
 	send_message_catch(catch_send); 
-	
 }
 
 
@@ -439,7 +439,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador){
 	t_list* targets_aux = entrenador->targets;
 	if(list_size(entrenador->pokemons) == list_size(entrenador->targets)){
 
-		for(int i = 0; i < list__size(entrenador->pokemons); i++){
+		for(int i = 0; i < list_size(entrenador->pokemons); i++){
 			char* pokemon_obtenido = list_get(entrenador->pokemons, i);
 
 			for(int j = 0; j < list_size(targets_aux); j++){

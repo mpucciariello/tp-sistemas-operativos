@@ -21,6 +21,11 @@ typedef struct {
 } t_entrenador_info_bloqueo;
 
 typedef struct {
+	char* name;
+	t_position* position;
+} t_temporal_pokemon;
+
+typedef struct {
 	int id;
 	e_state state;
 	t_position* position;
@@ -57,10 +62,6 @@ typedef struct {
 	t_list* pos;
 } t_pokemon_received;
 
-typedef struct {
-	char* name;
-	t_position* position;
-} t_temporal_pokemon;
 
 sem_t sem_entrenadores_disponibles; //avisa cuando hay entrenadores en la cola de nuevos
 sem_t sem_message_on_queue; //avisa al algoritmo de cercania cuando hay mensajes encolados
