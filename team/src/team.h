@@ -42,4 +42,5 @@ void delete_from_bloqued_queue(t_entrenador_pokemon*);
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon*, uint32_t);
 
 
+
 #endif /* TEAM_H_ */

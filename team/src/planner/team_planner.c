@@ -258,16 +258,23 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr, c
 	info_bloqueo->pokemon_unneeded = pokemon_name;
 	
 	t_entrenador_pokemon* entrenador = find_trainer_by_id_corr(id_corr);
+	entrenador->state = BLOCK;
 
 	if (status == 0) {		
 		entrenador->blocked_info = info_bloqueo;
 		sem_post(&sem_entrenadores_disponibles);
 	}
 
+	if(status == 1) {
+		entrenador->blocked_info = info_bloqueo;
+	}
+
 	if (status == 2) {
 		info_bloqueo->pokemon_unneeded = pokemon_name;
 		entrenador->blocked_info = info_bloqueo;
 	}
+
+	add_to_block_queue_if_not_there(entrenador);
 }
 
 void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemon* entrenador, char* pokemon_name) {
@@ -275,19 +282,32 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
 	info_bloqueo->pokemon_unneeded = pokemon_name;
+	entrenador->state = BLOCK;
 	
 	if (status == 0) {		
 		entrenador->blocked_info = info_bloqueo;
 		sem_post(&sem_entrenadores_disponibles);
 	}
 
-//TODO: ver status = 1 en catch bien enviado
+
 	if (status == 2) {
 		info_bloqueo->pokemon_unneeded = pokemon_name;
 		entrenador->blocked_info = info_bloqueo;
 	}
+
+	add_to_block_queue_if_not_there(entrenador);
 }
 
+void add_to_block_queue_if_not_there(t_entrenador_pokemon* entrenador){
+	for(int i = 0; i < list_size(block_queue); i++){
+		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
+		if(entrenador_aux->id = entrenador->id){
+			continue;
+		} else {
+			list_add(block_queue, entrenador);
+		}
+	}
+}
 
 t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t id) { 
 	int _id_match(t_entrenador_pokemon *entrenador) {

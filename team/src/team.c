@@ -102,10 +102,10 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
-	//TODO enviar a cola de bloqueados
+	
 	if (i == 0) {
 		team_logger_info("Catch sent!");
-		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, catch_send->nombre_pokemon);
+		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional, NULL);
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador_aux ->list_id_catch, (uint32_t)catch_send->id_correlacional);
 
@@ -174,27 +174,43 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 }
 
 
-void move_trainers(t_entrenador_pokemon* entrenador) {
-	sem_wait(&entrenador->sem_trainer);
-	exec_entrenador = entrenador;
+void check_RR_burst(){
+	if(exec_entrenador->current_burst_time = team_config->quantum){
+		sem_post(&sem_planification);
+		t_entrenador_pokemon* entrenador = exec_entrenador;
+		exec_entrenador = NULL;
+		
+		//TODO
+		//Ver como frenar la ejecución de el entrenador cuadno se queda sin quantum
+		//agregar pokemon
+		pthread_mutex_lock(&planner_mutex);
+		list_add(pokemons_ready, pokemon);
+		list_add(ready_queue, entrenador);
+		pthread_mutex_unlock(&planner_mutex);
+	}
+}
 
-	int aux_x = entrenador->position->pos_x - pokemon_temporal->position->pos_x;
-	int	aux_y = entrenador->position->pos_y - pokemon_temporal->position->pos_y;
+void move_trainers() {
+	sem_wait(&exec_entrenador->sem_trainer);
+
+	int aux_x = exec_entrenador->position->pos_x - pokemon_temporal->position->pos_x;
+	int	aux_y = exec_entrenador->position->pos_y - pokemon_temporal->position->pos_y;
 
 	int steps = fabs(aux_x + aux_y);
-	sleep(steps*team_config->retardo_ciclo_cpu);
 
-	/*for(int i = 0; i < (steps*team_config->retardo_ciclo_cpu; i++)){
+	for(int i = 0; i < steps; i++)){
+		sleep(team_config->retardo_ciclo_cpu);
 		exec_entrenador->current_burst_time++;
-	}*/
+		check_RR_burst(); //TODO ver como frenar
+	}
 	
-	team_logger_info("Un enternador se movió de (%d, %d) a (%d, %d)", entrenador->position->pos_x,
-																	  entrenador->position->pos_y,
+	team_logger_info("Un enternador se movió de (%d, %d) a (%d, %d)", exec_entrenador->position->pos_x,
+																	  exec_entrenador->position->pos_y,
 																	  pokemon_temporal->position->pos_x, 
 																	  pokemon_temporal->position->pos_y);
 
-	entrenador->position->pos_x = pokemon_temporal->position->pos_x;
-	entrenador->position->pos_y = pokemon_temporal->position->pos_y;
+	exec_entrenador->position->pos_x = pokemon_temporal->position->pos_x;
+	exec_entrenador->position->pos_y = pokemon_temporal->position->pos_y;
 
 	t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 	catch_send->id_correlacional = 0;
