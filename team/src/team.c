@@ -27,7 +27,7 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
-	//pthread_mutex_init(&move_trainers, NULL);
+	pthread_mutex_init(&move_trainers, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	pthread_attr_t attrs;
@@ -43,7 +43,6 @@ void team_init() {
 	sem_wait(&sem_entrenadores_disponibles);  
 
 	
-	sem_t sem_message_on_queue;
 	sem_init(&sem_message_on_queue, 0, 0);
 
 	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
@@ -201,7 +200,7 @@ void check_RR_burst(){
 
 void move_trainers() {
 	sem_wait(&exec_entrenador->sem_trainer);
-	//pthread_mutex_lock(&move_trainers);
+	pthread_mutex_lock(&move_trainers);
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
@@ -228,11 +227,11 @@ void move_trainers() {
 
 	if(exec_entrenador->deadlock){
 		sem_post(&sem_planification);
-		sem_wait(&sem_deadlock);
+		sem_post(&sem_deadlock);
 	}
 
 
-	if(exec_entrenador->blocked_info == 0){
+	if(exec_entrenador->blocked_info == 0 && entrenador->deadlock == false){//TODO
 		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 		catch_send->id_correlacional = 0;
 		catch_send->nombre_pokemon = exec_entrenador->pokemon_a_atrapar->name;
@@ -242,7 +241,7 @@ void move_trainers() {
 		t_protocol catch_protocol = CATCH_POKEMON;
 		send_message_catch(catch_send);
 	}
-	//pthread_mutex_unlock(&move_trainers);
+	pthread_mutex_unlock(&move_trainers);
 }
 
 

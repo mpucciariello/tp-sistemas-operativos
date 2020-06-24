@@ -16,13 +16,11 @@ void team_planner_run_planification() {
 }
 
 
-bool entrenadores_listos(){
+void entrenadores_listos(){
 	t_list* entrenadores_disponibles = list_create();
 	entrenadores_disponibles = team_planner_create_ready_queue();
 	if(list_size(entrenadores_disponibles) > 0){
-		return true;
-	} else {
-		return false;
+		sem_post(&sem_entrenadores_disponibles);
 	}
 }
 
@@ -31,8 +29,7 @@ void team_planner_algoritmo_cercania() {
 	//TODO ver si esto es una genialidad o un desastre
 
 	while (true) {
-		if (entrenadores_listos()) {
-			sem_post(&sem_entrenadores_disponibles);
+		entrenadores_listos();
 		}
 	}
 	sem_wait(&sem_message_on_queue);
@@ -629,7 +626,7 @@ void solve_deadlock(){
 		if(trainer_completed_with_success(entrenador_bloqueante)){
 			team_planner_finish_trainner(entrenador_bloqueante);
 		}
-
+		i++;
 		deadlocks_resolved++;	
 	}
 	team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
