@@ -38,7 +38,7 @@ typedef struct {
 	t_entrenador_info_bloqueo* blocked_info;
 	sem_t sem_trainer;
 	pthread_t hilo_entrenador;
-	//thread_mutex_t sem_move_trainers;
+	pthread_mutex_t sem_move_trainers;
 	t_list* list_id_catch;
 	t_pokemon* pokemon_a_atrapar; //TODO ver aplicación para deadlock
 	bool deadlock;

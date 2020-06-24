@@ -198,7 +198,7 @@ void check_RR_burst() {
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	sem_wait(&entrenador->sem_trainer);
-	//pthread_mutex_lock(&entrenador->sem_move_trainers);
+	pthread_mutex_lock(&entrenador->sem_move_trainers);
 
 	exec_entrenador = entrenador;
 
@@ -240,7 +240,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 		send_message_catch(catch_send);
 	}
-	//pthread_mutex_unlock(&exec_entrenador->sem_move_trainers);
+	pthread_mutex_unlock(&exec_entrenador->sem_move_trainers);
 }
 
 void subscribe_to(void *arg) {
