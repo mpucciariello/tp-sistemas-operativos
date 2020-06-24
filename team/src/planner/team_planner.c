@@ -143,8 +143,8 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->blocked_info = NULL;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
-	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);
-	pthread_detach(entrenador->hilo_entrenador);
+	//pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);
+	//pthread_detach(entrenador->hilo_entrenador);
 
 	return entrenador;
 }
@@ -157,10 +157,9 @@ t_pokemon* team_planner_pokemon_create(char* nombre) {
 }
 
 
-t_pokemon* team_planner_pokemon_appeared_create(char* nombre, int x, int y, t_pokemon_state estado) {
+t_pokemon* team_planner_pokemon_appeared_create(char* nombre, int x, int y) {
 	t_pokemon* pokemon = malloc(sizeof(t_pokemon));
 	pokemon->name = nombre;
-	pokemon->state = estado;
 	t_position* pos = malloc(sizeof(t_position));
 	pos->pos_x = x;
 	pos->pos_y = y;

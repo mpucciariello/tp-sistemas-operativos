@@ -25,7 +25,7 @@ t_list* get_id_corr;
 t_list* keys_list;
 t_list* message_catch_sended;
 
-pthread_mutex_t sem_move_trainers;
+//pthread_mutex_t sem_move_trainers;
 
 int team_load();
 void team_init();
