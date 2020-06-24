@@ -39,7 +39,7 @@ void send_message_test();
 void team_retry_connect(void* arg);
 bool pokemon_required(char* name);
 void send_get_message();
-void move_trainers();
+void move_trainers_and_catch_pokemon();
 int send_message(void* paquete, t_protocol protocolo, t_list* queue);
 bool trainer_completed_with_success(t_entrenador_pokemon*);
 void delete_from_bloqued_queue(t_entrenador_pokemon*);

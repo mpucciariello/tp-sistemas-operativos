@@ -51,11 +51,6 @@ typedef enum {
 
 typedef struct {
 	char* name;
-	t_position* position;
-} t_pokemon;
-
-typedef struct {
-	char* name;
 	t_list* pos;
 } t_pokemon_received;
 
@@ -86,7 +81,7 @@ void team_planner_init();
 void team_planner_destroy();
 void team_planner_run_planification();
 void team_planner_algoritmo_cercania();
-void move_trainers();
+void move_trainers_and_catch_pokemon();
 void team_planner_change_block_status_by_trainer(int, t_entrenador_pokemon*);
 void team_planner_set_algorithm();
 t_list* team_planner_create_ready_queue();
