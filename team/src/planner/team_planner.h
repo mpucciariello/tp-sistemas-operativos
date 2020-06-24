@@ -23,7 +23,7 @@ typedef struct {
 typedef struct {
 	char* name;
 	t_position* position;
-} t_temporal_pokemon;
+} t_pokemon;
 
 typedef struct {
 	int id;
@@ -39,7 +39,7 @@ typedef struct {
 	sem_t sem_trainer;
 	pthread_t hilo_entrenador;
 	t_list* list_id_catch;
-	t_temporal_pokemon* pokemon_a_atrapar; //TODO ver aplicación para deadlock
+	t_pokemon* pokemon_a_atrapar; //TODO ver aplicación para deadlock
 	bool deadlock;
 } t_entrenador_pokemon;
 
@@ -50,11 +50,7 @@ typedef enum {
 } t_pokemon_state;
 
 typedef struct {
-	int id;
-	int trainner_id;
 	char* name;
-	t_pokemon_state state;
-	t_entrenador_pokemon* blocking_trainner; //que es esto
 	t_position* position;
 } t_pokemon;
 
@@ -68,7 +64,7 @@ sem_t sem_entrenadores_disponibles; //avisa cuando hay entrenadores en la cola d
 sem_t sem_message_on_queue; //avisa al algoritmo de cercania cuando hay mensajes encolados
 sem_t sem_planification; //controla que el pokemon permita al planificador seguir
 sem_t sem_pokemons_in_ready_queue; //avisa cuando hay pokemons en ready para planificar
-sem_t sem_algoritmo_cercania; //para añadir a la cola de ready
+sem_t sem_algoritmo_cercania_ejecuto; //para añadir a la cola de ready
 sem_t sem_pokemons_to_get; //para enviar al mensaje get
 sem_t sem_deadlock; //para controlar deadlock
 
