@@ -27,7 +27,6 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
-	//pthread_mutex_init(&sem_move_trainers, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	sem_init(&sem_message_on_queue, 0, 0);
@@ -199,7 +198,7 @@ void check_RR_burst() {
 
 void move_trainers_and_catch_pokemon() {
 	sem_wait(&exec_entrenador->sem_trainer);
-	//pthread_mutex_lock(&sem_move_trainers);
+	pthread_mutex_lock(&exec_entrenador->sem_move_trainers);
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
@@ -239,7 +238,7 @@ void move_trainers_and_catch_pokemon() {
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 		send_message_catch(catch_send);
 	}
-	//pthread_mutex_unlock(&sem_move_trainers);
+	pthread_mutex_unlock(&exec_entrenador->sem_move_trainers);
 }
 
 void subscribe_to(void *arg) {

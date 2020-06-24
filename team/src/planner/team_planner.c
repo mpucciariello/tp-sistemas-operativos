@@ -144,8 +144,9 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->blocked_info = NULL;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
-	//pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);
-	//pthread_detach(entrenador->hilo_entrenador);
+	pthread_mutex_init(&entrenador->sem_move_trainers, NULL);
+	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);
+	pthread_detach(entrenador->hilo_entrenador);
 
 	return entrenador;
 }
