@@ -196,7 +196,7 @@ void check_RR_burst() {
 
 void move_trainers_and_catch_pokemon() {
 	sem_wait(&exec_entrenador->sem_trainer);
-	pthread_mutex_lock(&sem_move_trainers);
+	//pthread_mutex_lock(&sem_move_trainers);
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
