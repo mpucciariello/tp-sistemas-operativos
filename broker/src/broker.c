@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	pointer = 0;
+	id =  1;
 	broker_server_init();
 	broker_exit();
 
@@ -352,6 +353,7 @@ static void *handle_connection(void *arg) {
 		}
 			// From GB
 		case NEW_POKEMON: {
+			
 			broker_logger_info("NEW RECEIVED FROM GB");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
@@ -368,10 +370,17 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					new_receive);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
+						new_receive->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,NEW_QUEUE,new_receive->id_correlacional);
+			}
+			
 			broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
-			save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
-					new_receive->id_correlacional);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			new_snd->id_correlacional = new_receive->id_correlacional;
 			create_message_ack(new_snd->id_correlacional, new_queue, NEW_QUEUE);
@@ -394,7 +403,7 @@ static void *handle_connection(void *arg) {
 
 			// From GB or GC
 		case APPEARED_POKEMON: {
-			pthread_mutex_lock(&msave);
+			
 			broker_logger_info("APPEARED RECEIVED");
 			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
@@ -409,12 +418,18 @@ static void *handle_connection(void *arg) {
 
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
-
-			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d",
-					from);
-			save_node_list_memory(from, message_void->size_message,
-					APPEARED_QUEUE, appeared_rcv->id_correlacional);
+			pthread_mutex_lock(&msave);
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message,
+						APPEARED_QUEUE, appeared_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,APPEARED_QUEUE,appeared_rcv->id_correlacional);
+			}
+			
+			broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d", from);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
 					memory);
 			create_message_ack(appeared_rcv->id_correlacional, appeared_queue,
@@ -425,6 +440,8 @@ static void *handle_connection(void *arg) {
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
 			broker_logger_info("APPEARED SENT TO TEAM");
+
+			create_message_ack(appeared_rcv->id_correlacional, appeared_queue, APPEARED_QUEUE);
 
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
@@ -453,10 +470,16 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					get_rcv);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
-			save_node_list_memory(from, message_void->size_message, GET_QUEUE,
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message, GET_QUEUE,
 					get_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,GET_QUEUE,get_rcv->id_correlacional);
+			}
+			broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 			get_snd->id_correlacional = get_rcv->id_correlacional;
 
@@ -497,10 +520,16 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					catch_rcv);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
-			save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
+			int from = 0;
+			if (is_buddy()) {	
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
 					catch_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,CATCH_QUEUE,catch_rcv->id_correlacional);
+			}
+			broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from,
 					memory);
 			catch_send->id_correlacional = catch_rcv->id_correlacional;
@@ -546,11 +575,18 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					loc_rcv);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d",
-					from);
-			save_node_list_memory(from, message_void->size_message,
-					LOCALIZED_QUEUE, loc_rcv->id_correlacional);
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message,
+						LOCALIZED_QUEUE, loc_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,LOCALIZED_QUEUE, loc_rcv->id_correlacional);
+			}
+			
+			broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d", from);
+			
 			t_localized_pokemon* loc_snd = get_from_memory(protocol, from,
 					memory);
 
@@ -602,11 +638,18 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					caught_rcv);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message,
+					CAUGHT_QUEUE, caught_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,CAUGHT_QUEUE, caught_rcv->id_correlacional);
+			}
 			broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d",
 					from);
-			save_node_list_memory(from, message_void->size_message,
-					CAUGHT_QUEUE, caught_rcv->id_correlacional);
+
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from,
 					memory);
 			create_message_ack(caught_rcv->id_correlacional, caught_queue,
@@ -1258,7 +1301,6 @@ void purge_msg() {
 		return string_equals_ignore_case(get_queue_name(n->cola),
 				get_queue_name(node->cola)) && n->id == node->id;
 	}
-
 	list_remove(list_memory, 0);
 	pthread_mutex_unlock(&mmem);
 	pthread_mutex_lock(&msubs);
@@ -1267,6 +1309,32 @@ void purge_msg() {
 	buddy_free(buddy, node->pointer);
 	broker_logger_info("Message removed successfully");
 	broker_logger_info("Memory consolidated");
+}
+
+int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correlacional) {
+	pthread_mutex_lock(&mpointer);
+	int from = pointer;
+
+	if (pointer + message_void->size_message > broker_config->tamano_memoria){
+		if(broker_config->algoritmo_particion_libre == FF){
+			from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
+		}
+		else{
+			from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
+		}
+
+		save_node_list_memory(from, message_void->size_message, cola,
+											id_correlacional);
+		pthread_mutex_unlock(&mpointer);
+		return from;
+	}
+
+	if (message_void->size_message < broker_config->tamano_minimo_particion) {
+		pointer += broker_config->tamano_minimo_particion;
+	}
+	memcpy(memory + from, message_void->message, message_void->size_message);
+	pthread_mutex_unlock(&mpointer);
+	return from;
 }
 
 int save_on_memory(t_message_to_void *message_void) {
@@ -1285,7 +1353,6 @@ int save_on_memory(t_message_to_void *message_void) {
 			pointer += message_void->size_message;
 		}
 	}
-
 	memcpy(memory + from, message_void->message, message_void->size_message);
 	pthread_mutex_unlock(&mpointer);
 	return from;
@@ -1599,4 +1666,95 @@ int generar_id() {
 	id++;
 	pthread_mutex_unlock(&mid);
 	return id;
+}
+
+
+int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *message){
+	int size_free;
+	int pointer_busy;
+	t_list *new_list = list_create();
+	int flag =0;
+
+	int position;
+	int size = 0;
+	int flag_first = 0;
+
+	for(int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory* memory_node = list_get(list_memory,i);
+		if(memory_node->id == 0  &&  message->size_message > memory_node->size && flag == 0 ){
+			if(flag_first == 0){
+				position = i;
+				size = memory_node->size ;
+			}
+			if (memory_node->size < size){
+				position = i;
+			}
+		}
+	}
+	for(int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory* memory_node = list_get(list_memory,i);
+		if (i == position){
+			memory_node->cola = cola;
+			memory_node->id = id_correlacional;
+			size_free = message->size_message -  memory_node->size;
+			memory_node->size = message->size_message ;
+			pointer_busy = memory_node->pointer;
+			list_add(new_list,memory_node);
+			int pointer = memory_node->pointer + message->size_message;
+			memory_node->cola = cola;
+			memory_node->id = 0;
+			memory_node->pointer = pointer;
+			memory_node->size = size_free;
+			list_add(new_list,memory_node);
+		}
+		else{
+			list_add(new_list,memory_node);
+		}
+	}
+	list_destroy(list_memory );
+	list_memory = new_list ;
+	return pointer_busy;
+}
+
+
+int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void *message){
+	int size_free;
+	int pointer_busy;
+	t_list *new_list = list_create();
+	int flag =0 ;
+	for(int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory* memory_node = list_get(list_memory,i);
+		if(memory_node->id == 0  &&  message->size_message > memory_node->size && flag == 0 ){
+			flag = 1;
+			memory_node->cola = cola;
+			memory_node->id = id_correlacional;
+			size_free = message->size_message -  memory_node->size;
+			memory_node->size = message->size_message ;
+			pointer_busy = memory_node->pointer;
+			list_add(new_list,memory_node);
+			int pointer = memory_node->pointer + message->size_message;
+			memory_node->cola = cola;
+			memory_node->id = 0;
+			memory_node->pointer = pointer;
+			memory_node->size = size_free;
+			list_add(new_list,memory_node);
+
+		}
+		else{
+			list_add(new_list,memory_node);
+		}
+	}
+	list_destroy(list_memory );
+	list_memory = new_list ;
+	return pointer_busy;
+}
+
+void liberar_memoria(int id_correlacional,t_cola cola){
+
+	for(int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory* memory_node = list_get(list_memory,i);
+		if(memory_node->id == id_correlacional  && memory_node->cola == cola){
+			memory_node->id = 0;
+		}
+	}
 }

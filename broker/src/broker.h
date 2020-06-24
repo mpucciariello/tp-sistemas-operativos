@@ -30,6 +30,7 @@ char *memory;
 uint32_t pointer;
 
 uint32_t id;
+
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
 
 t_list *list_memory;
@@ -79,6 +80,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
 void *get_from_memory(t_protocol protocol, int posicion, void *message);
 int save_on_memory(t_message_to_void *message_void);
 char* get_protocol_name(t_cola q);
+int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id);
 void save_node_list_memory(int pointer, int size,t_cola cola,int id);
 void send_all_messages(t_subscribe *subscriber);
 void purge_msg();
@@ -87,4 +89,6 @@ void handle_disconnection(int fdesc);
 void dump();
 _Bool is_buddy();
 void create_message_ack(int id,t_list *cola,t_cola unCola);
+int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void *message_void);
+int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *message_void);
 #endif  /* BROKER_H_ */
