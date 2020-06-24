@@ -147,6 +147,9 @@ void send_get_message() {
 		get_protocol = GET_POKEMON;
 		
 		int i = send_message(get_send, get_protocol, get_id_corr);
+		if(i==0){
+			team_logger_info("Se envió un mensaje GET a un Pokemon %s", get_send->nombre_pokemon);
+		}
 		if (i > 0) {
 			team_logger_info("Se recibió un id correlacional en respuesta a un GET: %d", get_id_corr);
 		}
