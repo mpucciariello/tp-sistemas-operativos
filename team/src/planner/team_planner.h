@@ -103,6 +103,7 @@ bool trainer_completed_with_success(t_entrenador_pokemon*);
 bool all_queues_are_empty_except_block();
 void entrenadores_listos();
 void team_planner_print_fullfill_target();
+void solve_deadlock();
 
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
