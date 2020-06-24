@@ -111,6 +111,7 @@ void remove_from_pokemons_list(t_entrenador_pokemon*, char*);
 bool trainer_completed_with_success(t_entrenador_pokemon*);
 bool all_queues_are_empty_except_block();
 void entrenadores_listos();
+void team_planner_print_fullfill_target();
 
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

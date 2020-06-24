@@ -31,7 +31,7 @@ void team_planner_algoritmo_cercania() {
 	while (true) {
 		entrenadores_listos();
 		}
-	}
+
 	sem_wait(&sem_message_on_queue);
 	sem_wait(&sem_entrenadores_disponibles);
 	
@@ -576,12 +576,23 @@ void team_planner_set_algorithm() {
 }
 
 
+void entrenadores_n(){
+	t_list* entrenadores_disponibles = list_create();
+	entrenadores_disponibles = team_planner_create_ready_queue();
+	if(list_size(entrenadores_disponibles) > 0){
+		sem_post(&sem_entrenadores_disponibles);
+	}
+}
+
+
 //se llamará cuando quiera verificar que lo unico que puedo hacer a partir de ahora es solucionar deadlock
 bool all_queues_are_empty_except_block(){
-	if(!entrenadores_listos()){ 
-		return true;
-	}
-	return false;
+		t_list* entrenadores_disponibles = team_planner_create_ready_queue();
+		if(list_size(entrenadores_disponibles) > 0){
+			return false;
+		} else {
+			return true;
+		}
 }
 
 

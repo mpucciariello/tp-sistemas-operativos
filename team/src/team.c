@@ -27,7 +27,7 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
-	pthread_mutex_init(&move_trainers, NULL);
+	pthread_mutex_init(&sem_move_trainers, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	pthread_attr_t attrs;
@@ -170,10 +170,10 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		team_logger_info("Conexion con BROKER establecida correctamente!");
 		utils_serialize_and_send(broker_fd_send, protocolo, paquete);
 
-		uint32_t id_corr = 0;
+		uint32_t id_corr;
 		int recibido = recv(broker_fd_send, &id_corr, sizeof(uint32_t), MSG_WAITALL); //agrego & al id_corr
 		if (recibido > 0 && queue != NULL) {
-			list_add(queue, (uint32_t)id_corr);
+			list_add(queue, id_corr);
 		}
 		if (protocolo == CATCH_POKEMON) {
 			t_catch_pokemon *catch_send = (t_catch_pokemon*) paquete;
@@ -200,7 +200,7 @@ void check_RR_burst(){
 
 void move_trainers() {
 	sem_wait(&exec_entrenador->sem_trainer);
-	pthread_mutex_lock(&move_trainers);
+	pthread_mutex_lock(&sem_move_trainers);
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
@@ -231,7 +231,7 @@ void move_trainers() {
 	}
 
 
-	if(exec_entrenador->blocked_info == 0 && entrenador->deadlock == false){//TODO
+	if(exec_entrenador->blocked_info == 0 && exec_entrenador->deadlock == false){//TODO
 		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 		catch_send->id_correlacional = 0;
 		catch_send->nombre_pokemon = exec_entrenador->pokemon_a_atrapar->name;
@@ -241,7 +241,7 @@ void move_trainers() {
 		t_protocol catch_protocol = CATCH_POKEMON;
 		send_message_catch(catch_send);
 	}
-	pthread_mutex_unlock(&move_trainers);
+	pthread_mutex_unlock(&sem_move_trainers);
 }
 
 
