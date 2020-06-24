@@ -27,7 +27,7 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
-	pthread_mutex_init(&sem_move_trainers, NULL);
+	//pthread_mutex_init(&sem_move_trainers, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	sem_init(&sem_message_on_queue, 0, 0);
@@ -236,7 +236,7 @@ void move_trainers_and_catch_pokemon() {
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 		send_message_catch(catch_send);
 	}
-	pthread_mutex_unlock(&sem_move_trainers);
+	//pthread_mutex_unlock(&sem_move_trainers);
 }
 
 void subscribe_to(void *arg) {
