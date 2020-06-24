@@ -73,7 +73,7 @@ sem_t sem_pokemons_to_get; //para enviar al mensaje get
 sem_t sem_deadlock; //para controlar deadlock
 
 pthread_mutex_t planner_mutex;
-pthread_mutex_t move_trainers;
+//pthread_mutex_t move_trainers;
 
 t_entrenador_pokemon* exec_entrenador;
 
@@ -91,7 +91,7 @@ void team_planner_init();
 void team_planner_destroy();
 void team_planner_run_planification();
 void team_planner_algoritmo_cercania();
-void move_trainers();
+//void move_trainers();
 void team_planner_change_block_status_by_trainer(int, t_entrenador_pokemon*);
 void team_planner_set_algorithm();
 t_list* team_planner_create_ready_queue();
@@ -112,6 +112,8 @@ void remove_from_pokemons_list(t_entrenador_pokemon*, char*);
 bool trainer_completed_with_success(t_entrenador_pokemon*);
 bool all_queues_are_empty_except_block();
 bool entrenadores_listos();
+void team_planner_print_fullfill_target();
+void solve_deadlock();
 
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

@@ -290,7 +290,7 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
 	pthread_mutex_lock(&planner_mutex);
-	list_remove(block_queue, entrenador);
+	//list_remove(block_queue, entrenador); buscar funcion de remove x indice
 	list_add(exit_queue, entrenador);
 	pthread_mutex_unlock(&planner_mutex);
 	team_planner_free_pokemons(entrenador);
@@ -599,7 +599,7 @@ void solve_deadlock(){
 	while(block_queue_is_not_empty()){
 
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, i);
-		char* pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueado);
+		char* pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante);
 
 		//TENGO QUE BUSCAR QUIEN NECESITA AL POKEMON QUE A MI ME SOBRA
 		t_entrenador_pokemon* entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
@@ -618,7 +618,7 @@ void solve_deadlock(){
 		char* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
-		list_add(entrenador_bloqueante, pokemon_de_entrenador_bloqueado);
+		list_add(entrenador_bloqueante->pokemons, pokemon_de_entrenador_bloqueado);
 		remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
 		remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
 
@@ -638,7 +638,7 @@ void solve_deadlock(){
 
 void remove_from_pokemons_list(t_entrenador_pokemon* entrenador, char* pokemon){
 	for(int i = 0; i < list_size(entrenador->pokemons); i++){
-		char* pokemon_aux = list_get(entrenador->pokemons);
+		char* pokemon_aux = list_get(entrenador->pokemons, i);
 
 		if(string_equals_ignore_case(pokemon, pokemon_aux)){
 			list_remove(entrenador->pokemons, i);
@@ -663,7 +663,7 @@ t_entrenador_pokemon* entrenador_que_necesita(char* pokemon_de_entrenador_bloque
 	bool lo_tiene = true;
 
 	while(i < list_size(block_queue)){
-		t_entrenador_pokemon* entrenador = list_size(block_queue, i); 
+		t_entrenador_pokemon* entrenador = list_get(block_queue, i);
 		
 		for(int j = 0; j < list_size(entrenador->targets); j++){	 		
 			char* pokemon_objetivo = list_get(entrenador->targets, j);
@@ -691,7 +691,7 @@ char* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador){
 	bool le_sirve = true;
 
 	while(i < list_size(entrenador->pokemons)){
-		char* pokemon_a_entregar = list_size(entrenador->pokemons, i); //agarro al primero de la lista de los que tengo
+		char* pokemon_a_entregar = list_get(entrenador->pokemons, i); //agarro al primero de la lista de los que tengo
 		
 		for(int j = 0; j < list_size(entrenador->targets); j++){	 //recorro la lista de objetivos		
 			char* pokemon_objetivo = list_get(entrenador->targets, j);

@@ -27,7 +27,7 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
-	pthread_mutex_init(&move_trainers, NULL);
+	//pthread_mutex_init(&move_trainers, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	pthread_attr_t attrs;
@@ -119,7 +119,7 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 		list_add(entrenador_aux->pokemons, catch_send->nombre_pokemon);
 
 		if(trainer_is_in_deadlock_caught(entrenador_aux)){
-			entrenador->deadlock = true;
+			entrenador_aux->deadlock = true;
 		} else {
 			team_planner_change_block_status_by_trainer(0, entrenador_aux);
 		}
@@ -172,7 +172,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		utils_serialize_and_send(broker_fd_send, protocolo, paquete);
 
 		uint32_t id_corr = 0;
-		int recibido = recv(broker_fd_send, id_corr, sizeof(uint32_t), MSG_WAITALL);
+		int recibido = recv(broker_fd_send, &id_corr, sizeof(uint32_t), MSG_WAITALL); //agrego & al id_corr
 		if (recibido > 0 && queue != NULL) {
 			list_add(queue, (uint32_t)id_corr);
 		}
@@ -201,7 +201,7 @@ void check_RR_burst(){
 
 void move_trainers() {
 	sem_wait(&exec_entrenador->sem_trainer);
-	pthread_mutex_lock(&move_trainers);
+	//pthread_mutex_lock(&move_trainers);
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
@@ -242,7 +242,7 @@ void move_trainers() {
 		t_protocol catch_protocol = CATCH_POKEMON;
 		send_message_catch(catch_send);
 	}
-	pthread_mutex_unlock(&move_trainers); 
+	//pthread_mutex_unlock(&move_trainers);
 }
 
 
