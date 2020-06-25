@@ -40,7 +40,7 @@ typedef struct {
 	pthread_t hilo_entrenador;
 	pthread_mutex_t sem_move_trainers;
 	t_list* list_id_catch;
-	t_pokemon* pokemon_a_atrapar; //TODO ver aplicación para deadlock
+	t_pokemon* pokemon_a_atrapar; 
 	bool deadlock;
 } t_entrenador_pokemon;
 
@@ -65,6 +65,7 @@ sem_t sem_pokemons_to_get; //para enviar al mensaje get
 sem_t sem_deadlock; //para controlar deadlock
 
 pthread_mutex_t planner_mutex;
+pthread_mutex_t cola_pokemons_a_atrapar;
 
 t_entrenador_pokemon* exec_entrenador;
 

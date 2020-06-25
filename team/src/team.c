@@ -27,6 +27,7 @@ int team_load() {
 void team_init() {
 
 	pthread_mutex_init(&planner_mutex, NULL);
+	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	sem_init(&sem_message_on_queue, 0, 0);
@@ -83,7 +84,9 @@ void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 			for (int j = 0; j < list_size(posiciones_pokemon); j++) {
 				t_position* position = list_get(posiciones_pokemon, j);
 				if (position->pos_x == catch_message->pos_x && position->pos_y == catch_message->pos_y) {
+					pthread_mutex_lock(&cola_pokemons_a_atrapar);
 					list_remove(pokemon_to_catch, i);
+					pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 				}
 			}
 		}
@@ -199,8 +202,6 @@ void check_RR_burst() {
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	sem_wait(&entrenador->sem_trainer);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
-
-	exec_entrenador = entrenador;
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
@@ -401,7 +402,9 @@ void *receive_msg(int fd, int send_to) {
 					pokemon->name = loc_rcv->nombre_pokemon;
 					pokemon->pos = list_create();
 					pokemon->pos = loc_rcv->posiciones;
+					pthread_mutex_lock(&cola_pokemons_a_atrapar);
 					list_add(pokemon_to_catch, pokemon);
+					pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 					sem_post(&sem_message_on_queue);
 				}
 				break;
@@ -433,7 +436,9 @@ void *receive_msg(int fd, int send_to) {
 					pokemon->name = appeared_rcv->nombre_pokemon;
 					pokemon->pos = list_create();
 					list_add(pokemon->pos, posicion);
+					pthread_mutex_lock(&cola_pokemons_a_atrapar);
 					list_add(pokemon_to_catch, pokemon);
+					pthread_mutex_lock(&cola_pokemons_a_atrapar);
 					sem_post(&sem_message_on_queue);
 				}
 
