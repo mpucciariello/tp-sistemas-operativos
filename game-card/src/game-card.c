@@ -32,43 +32,33 @@ void game_card_init() {
 	pthread_t tid;
 	pthread_t tid2;
 	pthread_t tid3;
-	pthread_t tid4;
 	t_cola new_queue;
 	t_cola catch_queue;
 	t_cola get_queue;
 
-	/*
-	game_card_logger_info(
-			"Creando un hilo para subscribirse a la cola NEW del broker %d");
+	game_card_logger_info( "Creando un hilo para subscribirse a la cola NEW del broker %d");
 	new_queue = NEW_QUEUE;
-	pthread_create(&tid, NULL, (void*) game_card_retry_connect,
-			(void*) &new_queue);
+	pthread_create(&tid, NULL, (void*) game_card_retry_connect, (void*) &new_queue);
 	pthread_detach(tid);
 	usleep(500000);
 
-	game_card_logger_info(
-			"Creando un hilo para subscribirse a la cola CATCH del broker %d");
+	game_card_logger_info("Creando un hilo para subscribirse a la cola CATCH del broker %d");
 	catch_queue = CATCH_QUEUE;
-	pthread_create(&tid2, NULL, (void*) game_card_retry_connect,
-			(void*) &catch_queue);
+	pthread_create(&tid2, NULL, (void*) game_card_retry_connect, (void*) &catch_queue);
 	pthread_detach(tid2);
 	usleep(500000);
 
-	game_card_logger_info(
-			"Creando un hilo para subscribirse a la cola GET del broker %d");
+	game_card_logger_info("Creando un hilo para subscribirse a la cola GET del broker %d");
 	get_queue = GET_QUEUE;
-	pthread_create(&tid3, NULL, (void*) game_card_retry_connect,
-			(void *) &get_queue);
+	pthread_create(&tid3, NULL, (void*) game_card_retry_connect, (void *) &get_queue);
 	pthread_detach(tid3);
 	usleep(500000);
 
-
-	game_card_logger_info(
-			"Creando un hilo para poner al GAMECARD en modo Servidor");
+	game_card_logger_info("Creando un hilo para poner al GAMECARD en modo Servidor");
 	game_card_init_as_server();
 	usleep(500000);
-	for (;;);
-	*/
+	for (;;)
+		;
 }
 
 void game_card_retry_connect(void* arg) {
