@@ -107,7 +107,7 @@ void send_message_catch(t_catch_pokemon* catch_send) {
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
 	if (i == 0) {
-		team_logger_info("Catch sent!");
+		team_logger_info("Catch sent!");//TODO: agregar posicion y pokemon a atrapar
 		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador_aux ->list_id_catch, (void*)catch_send->id_correlacional);
@@ -150,7 +150,7 @@ void send_get_message() {
 		
 		int i = send_message(get_send, get_protocol, get_id_corr);
 		if(i==0){
-			team_logger_info("Se envió un mensaje GET a un Pokemon %s", get_send->nombre_pokemon);
+			team_logger_info("Se envió un mensaje GET. Pokemon %s", get_send->nombre_pokemon);
 		}
 		if (i > 0) {
 			team_logger_info("Se recibió un id correlacional en respuesta a un GET: %d", get_id_corr);
@@ -200,6 +200,7 @@ void check_RR_burst() {
 
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
+	team_logger_info("Se creó un hilo para el entrenador %d", entrenador->id);
 	sem_wait(&entrenador->sem_trainer);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 
@@ -476,6 +477,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 
 }
 
+
 bool pokemon_required(char* pokemon_name) {
 
 	bool _es_el_mismo(char* name) {
@@ -490,6 +492,7 @@ bool pokemon_required(char* pokemon_name) {
 
 	return !list_any_satisfy(pokemon_to_catch_name, (void*) _es_el_mismo);
 }
+
 
 void team_server_init() {
 
@@ -527,12 +530,14 @@ void team_server_init() {
 	}
 }
 
+
 void *handle_connection(void *arg) {
 	t_handle_connection* connect_handler = (t_handle_connection *) arg;
 	int client_fd = connect_handler->fd;
 	receive_msg(client_fd, connect_handler->bool_val);
 	return NULL;
 }
+
 
 void send_ack(void* arg) {
 	int val = *((int*) arg);
@@ -548,6 +553,7 @@ void send_ack(void* arg) {
 	team_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
 	socket_close_conection(client_fd);
 }
+
 
 void team_exit() {
 	team_planner_print_fullfill_target();
