@@ -257,7 +257,7 @@ static void *handle_connection(void *arg) {
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 
 			////falta mandar el id generado al team//////
-
+			send(client_fd, &get_rcv->id_correlacional, sizeof(uint32_t), 0);
 			//esto es para los ack de gamecard
 			create_message_ack(get_rcv->id_correlacional, get_queue, GET_QUEUE);
 			//free(message_void->message);

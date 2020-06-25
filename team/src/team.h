@@ -43,7 +43,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue);
 bool trainer_completed_with_success(t_entrenador_pokemon*);
 void delete_from_bloqued_queue(t_entrenador_pokemon*);
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon*);
-void send_message_catch(t_catch_pokemon*, t_entrenador_pokemon*);
+void send_message_catch(t_catch_pokemon*);
 
 
 #endif /* TEAM_H_ */
