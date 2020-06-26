@@ -6,9 +6,9 @@ char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
-	sem_wait(&sem_pokemons_in_ready_queue);
 	sem_wait(&sem_planificador);
-		
+	sem_wait(&sem_pokemons_in_ready_queue);
+			
 	team_planner_set_algorithm();
 
 	team_logger_info("Hay un nuevo entrenador en estado EXEC. id: %d", exec_entrenador->id);
