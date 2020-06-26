@@ -93,36 +93,30 @@ void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 	}
 }
 
-void send_message_catch(t_catch_pokemon* catch_send) {
-	t_protocol catch_protocol = CATCH_POKEMON;
-	t_entrenador_pokemon* entrenador_aux = exec_entrenador;
-	exec_entrenador = NULL;
-	sem_post(&sem_planification);
+void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entrenador) {
+	t_protocol catch_protocol = CATCH_POKEMON;	
 
-	entrenador_aux->state = BLOCK;
-	pthread_mutex_lock(&planner_mutex);
+	entrenador->state = BLOCK;
 	list_add(block_queue, entrenador_aux);
-	pthread_mutex_lock(&planner_mutex);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
 	if (i == 0) {
-		team_logger_info("Catch sent!");//TODO: agregar posicion y pokemon a atrapar
+		team_logger_info("Mensaje CATCH enviado! Pokemon: %s, posición (%d, %d)", catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);//TODO: agregar posicion y pokemon a atrapar
 		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador_aux ->list_id_catch, (void*)catch_send->id_correlacional);
-
 	} else {
 		remove_pokemon_from_catch(catch_send);
-		team_planner_change_block_status_by_trainer(0, entrenador_aux);
-		list_add(entrenador_aux->pokemons, catch_send->nombre_pokemon);
+		team_planner_change_block_status_by_trainer(0, entrenador);
+		list_add(entrenador->pokemons, catch_send->nombre_pokemon);
 
-		if (trainer_is_in_deadlock_caught(entrenador_aux)) {
-			entrenador_aux->deadlock = true;
+		if (trainer_is_in_deadlock_caught(entrenador)) {
+			entrenador->deadlock = true;
 		} //si tiene la cantidad requerida pero no los que corresponden -> deadlock. Se resuelve al final
 		
-		if (trainer_completed_with_success(entrenador_aux)) {
-			team_planner_finish_trainner(entrenador_aux);
+		if (trainer_completed_with_success(entrenador)) {
+			team_planner_finish_trainner(entrenador);
 		} //si tiene la cantidad requerida y corresponden con el objetivo -> EXIT
 
 		//DEADLOCK
@@ -186,23 +180,21 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 }
 
 
-void check_RR_burst() {
+void check_RR_burst(t_entrenador_pokemon* entrenador) {
 	if(exec_entrenador->current_burst_time == team_config->quantum) {
-		sem_post(&sem_planification);
-		t_entrenador_pokemon* entrenador = exec_entrenador;
+		pthread_mutex_lock(entrenador->sem_move_trainers);
+		pthread_mutex_unlock(&planner_mutex);
 		exec_entrenador = NULL;
 		add_to_ready_queue(entrenador);
 		
-		//TODO ver como frenar la ejecución del entrenador cuando se queda sin quantum. Lo mismo va a pasar con el desalojo de SJF
-		
+		//TODO: Va a pasar con el desalojo de SJF.		
 	}
 }
 
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	team_logger_info("Se creó un hilo para el entrenador %d", entrenador->id);
-	sem_wait(&entrenador->sem_trainer);
-	pthread_mutex_lock(&entrenador->sem_move_trainers);
+	pthread_mutex_unlock(&entrenador->sem_move_trainers);
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
@@ -215,7 +207,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		exec_entrenador->total_burst_time++; 
 
 		if (team_config->algoritmo_planificacion == RR) {
-			check_RR_burst(); //TODO ver como frenar
+			check_RR_burst(); 
 		} // igual SJF_CD
 	}
 	
@@ -228,7 +220,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	exec_entrenador->position->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 
 	if (exec_entrenador->deadlock) {
-		sem_post(&sem_planification);
+		pthread_mutex_unlock(&mutex_planner);
 		sem_post(&sem_deadlock);
 	}
 
@@ -240,9 +232,9 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		catch_send->pos_x = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 		catch_send->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_y;
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
-		send_message_catch(catch_send);
+		send_message_catch(catch_send, exec_entrenador);
 	}
-	pthread_mutex_unlock(&exec_entrenador->sem_move_trainers);
+	pthread_mutex_lock(&exec_entrenador->sem_move_trainers);
 }
 
 void subscribe_to(void *arg) {

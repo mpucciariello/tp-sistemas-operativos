@@ -6,14 +6,15 @@ char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
-	sem_wait(&sem_planification);
 	sem_wait(&sem_pokemons_in_ready_queue);
-	
+	pthread_mutex_unlock(&planner_mutex);
+		
 	team_planner_set_algorithm();
 
 	team_logger_info("Hay un nuevo entrenador en estado EXEC. id: %d", exec_entrenador->id);
-	sem_post(&exec_entrenador->sem_trainer);
+	pthread_mutex_unlock(&exec_entrenador->sem_trainer);
 	context_switch_qty++;
+	pthread_mutex_lock(&planner_mutex);
 }
 
 
@@ -28,11 +29,6 @@ void entrenadores_listos() {
 
 
 void team_planner_algoritmo_cercania() {
-
-	while (true) {
-		entrenadores_listos();
-	}
-
 	sem_wait(&sem_message_on_queue);
 	sem_wait(&sem_entrenadores_disponibles);
 	
@@ -88,18 +84,16 @@ void team_planner_algoritmo_cercania() {
 	entrenador->pokemon_a_atrapar->position->pos_x = pokemon->position->pos_x;
 	entrenador->pokemon_a_atrapar->position->pos_y = pokemon->position->pos_y;
 	
-	add_to_ready_queue(entrenador);	//Setea el estado. Elimina de su cola previa (NEW o BLOCK)	
-	sem_post(&sem_algoritmo_cercania_ejecuto);
+	add_to_ready_queue(entrenador);		
 }
 
 
 void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
 	entrenador->state = READY;
-	pthread_mutex_lock(&planner_mutex); //puede que los semaforos haya que ponerlos fuera de la función para que funcione(es decir donde se la llama)
 	list_add(ready_queue, entrenador);
-	pthread_mutex_unlock(&planner_mutex);
 	delete_from_bloqued_queue(entrenador, 0);
-	delete_from_new_queue(entrenador);	
+	delete_from_new_queue(entrenador);
+	sem_post(&sem_pokemons_in_ready_queue);	
 }
 
 
@@ -107,7 +101,6 @@ void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) { //0
 	for (int i = 0; i < list_size(block_queue); i++) {
 		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
 		if (entrenador_aux->id == entrenador->id) {
-			pthread_mutex_lock(&planner_mutex);
 			list_remove(block_queue, i);
 			if(cola = 0){
 				team_logger_info("Se eliminó a un entrenador de la cola BLOCK porque pasará a READY. id: %d", entrenador->id);
@@ -115,8 +108,6 @@ void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) { //0
 			if(cola = 1){
 				team_logger_info("Se eliminó a un entrenador de la cola BLOCK porque pasará a EXIT. id: %d", entrenador->id);
 			}
-
-			pthread_mutex_unlock(&planner_mutex);
 		}
 	}
 }
@@ -126,10 +117,8 @@ void delete_from_new_queue(t_entrenador_pokemon* entrenador) {
 	for (int i = 0; i < list_size(new_queue); i++) {
 		t_entrenador_pokemon* entrenador_aux = list_get(new_queue, i);
 		if (entrenador_aux->id == entrenador->id) {
-			pthread_mutex_lock(&planner_mutex);
 			list_remove(new_queue, i);
 			team_logger_info("Se eliminó a un entrenador de la cola NEW porque pasará a READY. id: %d", entrenador->id);
-			pthread_mutex_unlock(&planner_mutex);
 		}
 	}
 }
@@ -292,9 +281,7 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
 	delete_from_bloqued_queue(entrenador, 1);
-	pthread_mutex_lock(&planner_mutex);
 	list_add(exit_queue, entrenador);
-	pthread_mutex_unlock(&planner_mutex);
 }
 
 
@@ -405,7 +392,6 @@ int team_planner_get_least_estimate_index() {
 
 void new_cpu_cicle() { //relacionado con el retardo_cpu. Podría ser una función que cada x segundos aumente el tiempo en el while(true)
 	int i = 0;
-	pthread_mutex_lock(&planner_mutex);
 
 	for (i = 0; i < list_size(ready_queue); i++) {
 		t_entrenador_pokemon* trainner = list_get(ready_queue, i);
@@ -416,8 +402,6 @@ void new_cpu_cicle() { //relacionado con el retardo_cpu. Podría ser una funció
 		t_entrenador_pokemon* trainner = list_get(block_queue, i);
 		trainner->blocked_info->blocked_time++;
 	}
-
-	pthread_mutex_unlock(&planner_mutex);
 }
 
 
@@ -468,7 +452,6 @@ t_list* team_planner_create_ready_queue() {
 //SJF
 void team_planner_apply_SJF(bool is_preemptive) {
 	preemptive = is_preemptive;
-	pthread_mutex_lock(&planner_mutex);
 
 	int least_estimate_index = team_planner_get_least_estimate_index();
 
@@ -498,15 +481,11 @@ void team_planner_apply_SJF(bool is_preemptive) {
 		}
 		team_planner_exec_trainer();
 	}
-	
-	pthread_mutex_unlock(&planner_mutex);
 }
 
 
 //FIFO
 void team_planner_apply_FIFO() {
-	pthread_mutex_lock(&planner_mutex);
-
 	if (exec_entrenador == NULL && exec_entrenador->pokemon_a_atrapar == NULL) {
 		int next_out_index = fifo_index;
 		if (next_out_index <= list_size(ready_queue)) { 
@@ -517,15 +496,11 @@ void team_planner_apply_FIFO() {
 		}		
 	}
 	team_planner_exec_trainer();
-
-	pthread_mutex_unlock(&planner_mutex);
 }
 
 
 //RR
 void team_planner_apply_RR() {
-	pthread_mutex_lock(&planner_mutex);
-
 	if (exec_entrenador == NULL) {
 		int next_out_index = fifo_index;
 		if (next_out_index < list_size(ready_queue)) {
@@ -538,7 +513,6 @@ void team_planner_apply_RR() {
 		}
 		team_planner_exec_trainer();
 	}
-	pthread_mutex_unlock(&planner_mutex);
 }
 
 
@@ -700,7 +674,6 @@ t_list* team_planner_get_trainners() {
 
 
 void team_planner_print_fullfill_target() {
-	pthread_mutex_lock(&planner_mutex);
 	t_list* trainners = team_planner_get_trainners();
 
 	int add_burst_time(int accum, t_entrenador_pokemon* trainner) {
@@ -718,7 +691,6 @@ void team_planner_print_fullfill_target() {
 
 	list_destroy(trainners);
 	team_logger_info("Deadlocks producidos: %d  y resueltos: %d", deadlocks_detected, deadlocks_resolved);
-	pthread_mutex_unlock(&planner_mutex);
 }
 
 
@@ -789,9 +761,7 @@ void planner_destroy_quees() {
 void team_planner_destroy() {
 	sem_destroy(&sem_entrenadores_disponibles);
 	sem_destroy(&sem_message_on_queue);
-	sem_destroy(&sem_planification);
 	sem_destroy(&sem_pokemons_in_ready_queue);
-	sem_destroy(&sem_algoritmo_cercania_ejecuto);
 	planner_destroy_quees();
 	planner_destroy_global_targets(team_planner_global_targets);
 }
