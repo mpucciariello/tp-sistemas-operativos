@@ -97,15 +97,15 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 	t_protocol catch_protocol = CATCH_POKEMON;	
 
 	entrenador->state = BLOCK;
-	list_add(block_queue, entrenador_aux);
+	list_add(block_queue, entrenador);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
 	if (i == 0) {
-		team_logger_info("Mensaje CATCH enviado! Pokemon: %s, posición (%d, %d)", catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);//TODO: agregar posicion y pokemon a atrapar
+		team_logger_info("Mensaje CATCH enviado! Pokemon: %s, posición (%d, %d)", catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
 		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
 		list_add(message_catch_sended, catch_send);
-		list_add(entrenador_aux ->list_id_catch, (void*)catch_send->id_correlacional);
+		list_add(entrenador->list_id_catch, (void*)catch_send->id_correlacional);
 	} else {
 		remove_pokemon_from_catch(catch_send);
 		team_planner_change_block_status_by_trainer(0, entrenador);
@@ -182,7 +182,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 
 void check_RR_burst(t_entrenador_pokemon* entrenador) {
 	if(exec_entrenador->current_burst_time == team_config->quantum) {
-		pthread_mutex_lock(entrenador->sem_move_trainers);
+		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		pthread_mutex_unlock(&planner_mutex);
 		exec_entrenador = NULL;
 		add_to_ready_queue(entrenador);
@@ -207,7 +207,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		exec_entrenador->total_burst_time++; 
 
 		if (team_config->algoritmo_planificacion == RR) {
-			check_RR_burst(); 
+			check_RR_burst(exec_entrenador);
 		} // igual SJF_CD
 	}
 	
@@ -220,7 +220,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	exec_entrenador->position->pos_y = exec_entrenador->pokemon_a_atrapar->position->pos_x;
 
 	if (exec_entrenador->deadlock) {
-		pthread_mutex_unlock(&mutex_planner);
+		pthread_mutex_unlock(&planner_mutex);
 		sem_post(&sem_deadlock);
 	}
 

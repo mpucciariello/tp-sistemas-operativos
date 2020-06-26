@@ -12,7 +12,7 @@ void team_planner_run_planification() {
 	team_planner_set_algorithm();
 
 	team_logger_info("Hay un nuevo entrenador en estado EXEC. id: %d", exec_entrenador->id);
-	pthread_mutex_unlock(&exec_entrenador->sem_trainer);
+	pthread_mutex_unlock(&exec_entrenador->sem_move_trainers);
 	context_switch_qty++;
 	pthread_mutex_lock(&planner_mutex);
 }
@@ -102,10 +102,10 @@ void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) { //0
 		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
 		if (entrenador_aux->id == entrenador->id) {
 			list_remove(block_queue, i);
-			if(cola = 0){
+			if (cola == 0) {
 				team_logger_info("Se eliminó a un entrenador de la cola BLOCK porque pasará a READY. id: %d", entrenador->id);
 			}
-			if(cola = 1){
+			if (cola == 1) {
 				team_logger_info("Se eliminó a un entrenador de la cola BLOCK porque pasará a EXIT. id: %d", entrenador->id);
 			}
 		}
@@ -138,7 +138,6 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->current_burst_time = 0;
 	entrenador->total_burst_time = 0;
 	entrenador->estimated_time = 0;
-	sem_init(&entrenador->sem_trainer, 0, 0);
 	entrenador->blocked_info = NULL;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
@@ -417,7 +416,6 @@ void team_planner_exec_trainer() {
 	exec_entrenador->wait_time = 0;
 	exec_entrenador->current_burst_time = 0;
 	exec_entrenador->state = EXEC;
-	sem_post(&exec_entrenador->sem_trainer);
 }
 
 
@@ -698,8 +696,6 @@ void team_planner_init() {
 	team_logger_info("Planificador de TEAM iniciando estructuras!");
 	planner_init_quees();
 	planner_load_entrenadores();
-	sem_init(&sem_planification, 0, 1); 
-	sem_init(&sem_algoritmo_cercania_ejecuto, 0, 0);
 	sem_init(&sem_pokemons_in_ready_queue, 0, 0);
 }
 
