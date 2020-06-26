@@ -7,14 +7,14 @@ int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
 	sem_wait(&sem_pokemons_in_ready_queue);
-	pthread_mutex_unlock(&planner_mutex);
+	sem_wait(&sem_planificador);
 		
 	team_planner_set_algorithm();
 
 	team_logger_info("Hay un nuevo entrenador en estado EXEC. id: %d", exec_entrenador->id);
 	pthread_mutex_unlock(&exec_entrenador->sem_move_trainers);
 	context_switch_qty++;
-	pthread_mutex_lock(&planner_mutex);
+	
 }
 
 

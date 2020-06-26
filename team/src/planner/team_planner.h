@@ -60,6 +60,7 @@ sem_t sem_message_on_queue; //avisa al algoritmo de cercania cuando hay mensajes
 sem_t sem_pokemons_in_ready_queue; //avisa cuando hay pokemons en ready para planificar
 sem_t sem_pokemons_to_get; //para enviar al mensaje get
 sem_t sem_deadlock; //para controlar deadlock
+sem_t sem_planificador; 
 
 pthread_mutex_t planner_mutex;
 pthread_mutex_t cola_pokemons_a_atrapar;
