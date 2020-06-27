@@ -427,7 +427,6 @@ void *receive_msg(int fd, int send_to) {
 				team_logger_info("Appeared received!");
 				t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd, protocol);
 				team_logger_info("ID correlacional: %d", appeared_rcv->id_correlacional);
-				team_logger_info("Cantidad: %d", appeared_rcv->cantidad);
 				team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);
 				team_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
 				team_logger_info("Posición X: %d", appeared_rcv->pos_x);
@@ -450,6 +449,7 @@ void *receive_msg(int fd, int send_to) {
 					pokemon->pos = list_create();
 					list_add(pokemon->pos, posicion);
 					pthread_mutex_lock(&cola_pokemons_a_atrapar);
+					team_logger_info("Pokemon a atrapar: %s en la posicion (%d, %d)", pokemon->name, posicion->pos_x, posicion->pos_y);
 					list_add(pokemon_to_catch, pokemon);
 					pthread_mutex_lock(&cola_pokemons_a_atrapar);
 					sem_post(&sem_message_on_queue);
