@@ -26,12 +26,11 @@ int team_load() {
 
 void team_init() {
 
-	pthread_mutex_init(&planner_mutex, NULL);
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	sem_init(&sem_message_on_queue, 0, 0);
-	sem_init(&sem_planificador, 0, 0);
+	sem_init(&sem_planificador, 0, 1);
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -61,13 +60,13 @@ void team_init() {
 	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
 	pthread_detach(tid3);
 
-	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
-	team_logger_info("Creando un hilo que maneje la PLANIFICACIÓN");
-	pthread_detach(planificator);
-
 	pthread_create(&algoritmo_cercania_entrenadores, NULL, (void*) team_planner_algoritmo_cercania, NULL);
 	team_logger_info("Creando un hilo que maneje el ALGORITMO DE CERCANÍA");
 	pthread_detach(algoritmo_cercania_entrenadores);
+
+	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
+	team_logger_info("Creando un hilo que maneje la PLANIFICACIÓN");
+	pthread_detach(planificator);
 
 	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
 	team_server_init();
@@ -566,7 +565,6 @@ void send_ack(void* arg) {
 void team_exit() {
 	team_planner_print_fullfill_target();
 	socket_close_conection(team_socket);
-	pthread_mutex_destroy(&planner_mutex);
 	team_planner_destroy();
 	team_config_free();
 	team_logger_destroy();

@@ -62,7 +62,6 @@ sem_t sem_pokemons_to_get; //para enviar al mensaje get
 sem_t sem_deadlock; //para controlar deadlock
 sem_t sem_planificador; 
 
-pthread_mutex_t planner_mutex;
 pthread_mutex_t cola_pokemons_a_atrapar;
 
 t_entrenador_pokemon* exec_entrenador;
