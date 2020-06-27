@@ -22,13 +22,14 @@ void team_planner_run_planification() {
 
 void team_planner_algoritmo_cercania() {
 	sem_wait(&sem_message_on_queue);
-    team_planner_info("mensaje para algoritmo cercania");
 	sem_wait(&sem_entrenadores_disponibles);
 
 	team_logger_info("Se ejecutará el algoritmo de cercanía!");
 	
 	t_pokemon* pokemon;
-	t_entrenador_pokemon* entrenador;
+	t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
+	entrenador->pokemon_a_atrapar = malloc(sizeof(t_pokemon));
+	entrenador->pokemon_a_atrapar->position = malloc(sizeof(t_position));
 	int c = -1;
 	int min_steps = 0;
 
@@ -51,9 +52,10 @@ void team_planner_algoritmo_cercania() {
 					c = 0;
 				}
 
-				if (closest_sum < min_steps) {
+				if (closest_sum <= min_steps) {
 					pokemon = malloc(sizeof(t_pokemon));
 					pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
+					pokemon->position = malloc(sizeof(t_position));
 					pokemon->position->pos_x = posicion_aux->pos_x;
 					pokemon->position->pos_y = posicion_aux->pos_y;
 					entrenador = entrenador_aux;
@@ -74,11 +76,13 @@ void team_planner_algoritmo_cercania() {
 		entrenador->current_burst_time = 0;
 	}
 
-	entrenador->pokemon_a_atrapar->name = pokemon->name;
+	entrenador->pokemon_a_atrapar->name = string_duplicate(pokemon->name);
 	entrenador->pokemon_a_atrapar->position->pos_x = pokemon->position->pos_x;
 	entrenador->pokemon_a_atrapar->position->pos_y = pokemon->position->pos_y;
 	
-	add_to_ready_queue(entrenador);		
+	add_to_ready_queue(entrenador);
+	team_logger_info("Se agrego al entrenador: %d a la cola de ready", entrenador->id);
+	list_destroy(entrenadores_disponibles);
 }
 
 

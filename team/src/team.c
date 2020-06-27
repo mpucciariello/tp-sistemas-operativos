@@ -460,11 +460,12 @@ void *receive_msg(int fd, int send_to) {
 }
 
 
-void add_to_pokemon_to_catch(t_pokemon_received* pokemon){
+void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
 	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 	sem_post(&sem_message_on_queue);
+	t_position* posicion = list_get(pokemon->pos, 0);
 	team_logger_info("Se añadió un nuevo pokemon a la cola de POKEMONES A ATRAPAR: %s en la posición (%d, %d)", pokemon->name, posicion->pos_x, posicion->pos_y);
 }
 

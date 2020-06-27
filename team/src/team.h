@@ -46,6 +46,6 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon*);
 void send_message_catch(t_catch_pokemon*, t_entrenador_pokemon*);
 void check_SJF_CD_time(t_entrenador_pokemon*);
 void check_RR_burst(t_entrenador_pokemon*);
-
+void add_to_pokemon_to_catch(t_pokemon_received* pokemon);
 
 #endif /* TEAM_H_ */
