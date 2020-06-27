@@ -64,7 +64,7 @@ sem_t sem_planificador;
 
 pthread_mutex_t cola_pokemons_a_atrapar;
 
-t_entrenador_pokemon* exec_entrenador;
+//t_entrenador_pokemon* exec_entrenador;
 
 t_list* new_queue;
 t_list* ready_queue;

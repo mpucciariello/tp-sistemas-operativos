@@ -8,15 +8,12 @@ int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 void team_planner_run_planification() {
 	sem_wait(&sem_planificador);
 	sem_wait(&sem_pokemons_in_ready_queue);
-
-
 			
-	team_planner_set_algorithm();
+	t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
-	team_logger_info("Hay un nuevo entrenador en estado EXEC. id: %d", exec_entrenador->id);
-	pthread_mutex_unlock(&exec_entrenador->sem_move_trainers);
-	context_switch_qty++;
-	
+	team_logger_info("Hay un nuevo entrenador en estado EXEC. id: %d", entrenador->id);
+	pthread_mutex_unlock(&entrenador->sem_move_trainers);
+	context_switch_qty++;	
 }
 
 
@@ -412,10 +409,12 @@ float team_planner_calculate_exponential_mean(int burst_time, float tn) {
 }
 
 
-void team_planner_exec_trainer() {
-	exec_entrenador->wait_time = 0;
-	exec_entrenador->current_burst_time = 0;
-	exec_entrenador->state = EXEC;
+t_entrenador_pokemon* team_planner_exec_trainer(t_entrenador_pokemon* entrenador) {
+	entrenador->wait_time = 0;
+	entrenador->current_burst_time = 0;
+	entrenador->state = EXEC; //TODO, que retorne el trainer
+
+	return entrenador;
 }
 
 
@@ -448,62 +447,58 @@ t_list* team_planner_create_ready_queue() {
 
 
 //SJF
-void team_planner_apply_SJF() {
+t_entrenador_pokemon* team_planner_apply_SJF() {
 	
-	int least_estimate_index = team_planner_get_least_estimate_index();
-
-	if (exec_entrenador == NULL) {
-		exec_entrenador = list_get(ready_queue, least_estimate_index);
-		list_remove(ready_queue, least_estimate_index);	
-		team_logger_info("Se eliminó a un entrenador de la cola de READY porque es su turno de ejecutar. id:%d", exec_entrenador->id);		
-	}
-	team_planner_exec_trainer();	
+	int least_estimate_index = team_planner_get_least_estimate_index();	
+	t_entrenador_pokemon* entrenador = list_get(ready_queue, least_estimate_index);
+	list_remove(ready_queue, least_estimate_index);	
+	team_logger_info("Se eliminó a un entrenador de la cola de READY porque es su turno de ejecutar. id:%d", entrenador->id);		
+	
+	return team_planner_exec_trainer(entrenador);	
 }
 
 
 //FIFO
-void team_planner_apply_FIFO() {
-	if (exec_entrenador == NULL) {
-		int next_out_index = fifo_index;
-		if (next_out_index <= list_size(ready_queue)) { 
-			exec_entrenador = list_get(ready_queue, next_out_index);
-			list_remove(ready_queue, next_out_index);
-			team_logger_info("Se eliminó a un entrenador de la cola de READY porque es su turno de ejecutar. id:%d", exec_entrenador->id);
-			fifo_index++;
-		}		
-	}
-	team_planner_exec_trainer();
+t_entrenador_pokemon* team_planner_apply_FIFO() {
+	
+	int next_out_index = fifo_index;
+	if (next_out_index <= list_size(ready_queue)) { 
+		t_entrenador_pokemon* entrenador = list_get(ready_queue, next_out_index);
+		list_remove(ready_queue, next_out_index);
+		team_logger_info("Se eliminó a un entrenador de la cola de READY porque es su turno de ejecutar. id:%d", entrenador->id);
+		fifo_index++;
+	}	
+	return team_planner_exec_trainer(entrenador);
 }
 
 
 //RR
-void team_planner_apply_RR() {
-	if (exec_entrenador == NULL) {
-		int next_out_index = fifo_index;
-		if (next_out_index < list_size(ready_queue)) {
-			exec_entrenador = list_get(ready_queue, next_out_index);
-			list_remove(ready_queue, next_out_index);
-			fifo_index++;
-			team_logger_info("Se eliminó a un entrenador de la cola de READY porque es su turno de ejecutar. id:%d", exec_entrenador->id);
-		}
-		team_planner_exec_trainer();
+t_entrenador_pokemon* team_planner_apply_RR() {
+	
+	int next_out_index = fifo_index;
+	if (next_out_index < list_size(ready_queue)) {
+		t_entrenador_pokemon* entrenador = list_get(ready_queue, next_out_index);
+		list_remove(ready_queue, next_out_index);
+		fifo_index++;
+		team_logger_info("Se eliminó a un entrenador de la cola de READY porque es su turno de ejecutar. id:%d", entrenador->id);
 	}
+	return team_planner_exec_trainer(entrenador);	
 }
 
 
-void team_planner_set_algorithm() {
+t_entrenador_pokemon* team_planner_set_algorithm() {
 	switch (team_config->algoritmo_planificacion) {
 		case FIFO:
-			team_planner_apply_FIFO();
+			return team_planner_apply_FIFO();
 			break;
 		case RR:
-			team_planner_apply_RR();
+			return team_planner_apply_RR();
 			break;
 		case SJF_CD:
-			team_planner_apply_SJF();
+			return team_planner_apply_SJF();
 			break;
 		case SJF_SD:
-			team_planner_apply_SJF();
+			return team_planner_apply_SJF();
 			break;
 		default:
 			break;
@@ -639,7 +634,7 @@ char* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador) {
 
 t_list* team_planner_get_trainners() {
 	t_list* trainners = list_create();
-	list_add(trainners, exec_entrenador);
+	//list_add(trainners, exec_entrenador); //TODO: si quiero todos y el exec no existe siempre va a faltar 1
 	list_add_all(trainners, new_queue);
 	list_add_all(trainners, ready_queue);
 	list_add_all(trainners, block_queue);
@@ -720,7 +715,7 @@ void planner_destroy_global_targets(t_dictionary* global_targets) {
 }
 
 void planner_destroy_quees() {
-	planner_destroy_entrenador(exec_entrenador);
+	//planner_destroy_entrenador(exec_entrenador);
 	list_destroy_and_destroy_elements(new_queue, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(ready_queue, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(block_queue, (void*)planner_destroy_entrenador);

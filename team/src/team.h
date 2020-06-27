@@ -39,13 +39,13 @@ void team_retry_connect(void* arg);
 bool pokemon_required(char* name);
 void send_get_message();
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon*);
-int send_message(void* paquete, t_protocol protocolo, t_list* queue);
+int send_message(void* paquete, t_protocol protocolo, t_list*);
 bool trainer_completed_with_success(t_entrenador_pokemon*);
 void delete_from_bloqued_queue(t_entrenador_pokemon*, int);
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon*);
-void send_message_catch(t_catch_pokemon*);
+void send_message_catch(t_catch_pokemon*, t_entrenador_pokemon*);
 void check_SJF_CD_time(t_entrenador_pokemon*);
 void check_RR_burst(t_entrenador_pokemon*);
-void add_to_pokemon_to_catch(t_pokemon_received* pokemon);
+void add_to_pokemon_to_catch(t_pokemon_received*);
 
 #endif /* TEAM_H_ */
