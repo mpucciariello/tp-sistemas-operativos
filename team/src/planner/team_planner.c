@@ -29,8 +29,7 @@ void team_planner_algoritmo_cercania() {
 	int c = -1;
 	int min_steps = 0;
 
-	t_list* entrenadores_disponibles = list_create();
-	entrenadores_disponibles = team_planner_create_ready_queue();
+	t_list*	entrenadores_disponibles = team_planner_create_ready_queue();
 	
 	for (int i = 0; i < list_size(entrenadores_disponibles); i++) {
 		t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
@@ -352,6 +351,8 @@ void planner_load_entrenadores() {
 	int tamanio_objetivos = dictionary_size(team_planner_global_targets);
 	char* objetivos_to_string = planner_print_global_targets();
 	team_logger_info("Hay %d objetivos globales: \n%s", tamanio_objetivos, objetivos_to_string);
+	list_destroy(objetivos);
+	list_destroy(pokemons);
 }
 
 
@@ -432,7 +433,7 @@ t_list* team_planner_create_ready_queue() {
 	}
 	t_list* bloquados_en_cero = filter_block_list_by_0(block_queue, (void*) _is_available);
 	
-	t_list* listo_para_planificar = list_create();
+	t_list* listo_para_planificar; //saque el list_create, podría romper je
 	list_add_all(listo_para_planificar, bloquados_en_cero);
 	list_add_all(listo_para_planificar, new_queue);
 
