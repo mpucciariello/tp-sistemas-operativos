@@ -66,7 +66,7 @@ void team_init() {
 
 	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
 	team_logger_info("Creando un hilo que maneje la PLANIFICACIÓN");
-	pthread_join(planificator, NULL); //para probar
+	pthread_detach(planificator);
 
 	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
 	team_server_init();
