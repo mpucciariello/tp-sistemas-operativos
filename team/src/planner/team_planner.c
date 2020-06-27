@@ -357,13 +357,13 @@ void planner_load_entrenadores() {
 	team_logger_info("Hay %d entrenadores en la cola de NEW", list_size(new_queue));
 	int tamanio_objetivos = dictionary_size(team_planner_global_targets);
 	char* objetivos_to_string = planner_print_global_targets();
-	team_logger_info("Hay %d objetivos globales: \n%s", tamanio_objetivos, objetivos_to_string);
+	team_logger_info("Hay %d objetivos globales: \n%s", tamanio_objetivos, objetivos_to_string); //TODO cambiar
 	free(objetivos_to_string);
 }
 
 
 void planner_init_quees() {
-	//exec_entrenador = malloc(sizeof(t_entrenador_pokemon));
+	exec_entrenador = malloc(sizeof(t_entrenador_pokemon));
 	new_queue = list_create();
 	ready_queue = list_create();
 	block_queue = list_create();
