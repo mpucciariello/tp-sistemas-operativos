@@ -254,7 +254,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 		send_message_catch(catch_send);
 	}
-	pthread_mutex_lock(&exec_entrenador->sem_move_trainers);
+	pthread_mutex_lock(&entrenador->sem_move_trainers);
 	exec_entrenador = NULL;
 	sem_post(&sem_planificador);
 }

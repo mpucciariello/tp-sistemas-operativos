@@ -363,7 +363,7 @@ void planner_load_entrenadores() {
 
 
 void planner_init_quees() {
-	exec_entrenador = malloc(sizeof(t_entrenador_pokemon));
+	//exec_entrenador = malloc(sizeof(t_entrenador_pokemon));
 	new_queue = list_create();
 	ready_queue = list_create();
 	block_queue = list_create();
