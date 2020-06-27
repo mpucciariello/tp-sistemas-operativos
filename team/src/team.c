@@ -31,6 +31,7 @@ void team_init() {
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	sem_init(&sem_message_on_queue, 0, 0);
 	sem_init(&sem_planificador, 0, 1);
+	sem_init(&sem_pokemons_in_ready_queue, 0, 0);
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -409,16 +410,13 @@ void *receive_msg(int fd, int send_to) {
 					return loc_rcv->id_correlacional == id;
 				}
 
-				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon)) {
+				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon)){
 					t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
 					pokemon->name = malloc(sizeof(loc_rcv->tamanio_nombre));
 					pokemon->name = loc_rcv->nombre_pokemon;
 					pokemon->pos = list_create();
 					pokemon->pos = loc_rcv->posiciones;
-					pthread_mutex_lock(&cola_pokemons_a_atrapar);
-					list_add(pokemon_to_catch, pokemon);
-					pthread_mutex_unlock(&cola_pokemons_a_atrapar);
-					sem_post(&sem_message_on_queue);
+					add_to_pokemon_to_catch(pokemon);
 				}
 				break;
 			}
@@ -448,11 +446,7 @@ void *receive_msg(int fd, int send_to) {
 					pokemon->name = appeared_rcv->nombre_pokemon;
 					pokemon->pos = list_create();
 					list_add(pokemon->pos, posicion);
-					pthread_mutex_lock(&cola_pokemons_a_atrapar);
-					team_logger_info("Pokemon a atrapar: %s en la posicion (%d, %d)", pokemon->name, posicion->pos_x, posicion->pos_y);
-					list_add(pokemon_to_catch, pokemon);
-					pthread_mutex_lock(&cola_pokemons_a_atrapar);
-					sem_post(&sem_message_on_queue);
+					add_to_pokemon_to_catch(pokemon);
 				}
 
 				break;
@@ -463,6 +457,15 @@ void *receive_msg(int fd, int send_to) {
 		}
 	}
 	return NULL;
+}
+
+
+void add_to_pokemon_to_catch(t_pokemon_received* pokemon){
+	pthread_mutex_lock(&cola_pokemons_a_atrapar);
+	list_add(pokemon_to_catch, pokemon);
+	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+	sem_post(&sem_message_on_queue);
+	team_logger_info("Se añadió un nuevo pokemon a la cola de POKEMONES A ATRAPAR: %s en la posición (%d, %d)", pokemon->name, posicion->pos_x, posicion->pos_y);
 }
 
 

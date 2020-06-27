@@ -22,7 +22,10 @@ void team_planner_run_planification() {
 
 void team_planner_algoritmo_cercania() {
 	sem_wait(&sem_message_on_queue);
+    team_planner_info("mensaje para algoritmo cercania");
 	sem_wait(&sem_entrenadores_disponibles);
+
+	team_logger_info("Se ejecutará el algoritmo de cercanía!");
 	
 	t_pokemon* pokemon;
 	t_entrenador_pokemon* entrenador;
@@ -84,7 +87,7 @@ void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
 	list_add(ready_queue, entrenador);
 	delete_from_bloqued_queue(entrenador, 0);
 	delete_from_new_queue(entrenador);
-	sem_post(&sem_pokemons_in_ready_queue);	
+	sem_post(&sem_pokemons_in_ready_queue);	//TODO ver
 }
 
 
@@ -667,8 +670,7 @@ void team_planner_print_fullfill_target() {
 void team_planner_init() {
 	team_logger_info("Planificador de TEAM iniciando estructuras!");
 	planner_init_quees();
-	planner_load_entrenadores();
-	sem_init(&sem_pokemons_in_ready_queue, 0, 0);
+	planner_load_entrenadores();	
 }
 
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
