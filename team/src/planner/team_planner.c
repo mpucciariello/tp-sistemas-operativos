@@ -28,8 +28,8 @@ void team_planner_algoritmo_cercania() {
 	
 	t_pokemon* pokemon;
 	t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
-	entrenador->pokemon_a_atrapar = malloc(sizeof(t_pokemon));
-	entrenador->pokemon_a_atrapar->position = malloc(sizeof(t_position));
+
+
 	int c = -1;
 	int min_steps = 0;
 
@@ -64,8 +64,7 @@ void team_planner_algoritmo_cercania() {
 		}
 	}
 
-	team_logger_info("Un entrenador fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía. id: %d", entrenador->id); 	
-	
+
 	if (team_planner_is_SJF_algorithm()) {
 		entrenador->estimated_time = team_planner_calculate_exponential_mean(entrenador->current_burst_time, entrenador->estimated_time);
 		team_logger_info("Estimación recalculada del entrenador: %f", entrenador->estimated_time);
@@ -75,14 +74,12 @@ void team_planner_algoritmo_cercania() {
 	if (team_config->algoritmo_planificacion == RR) {
 		entrenador->current_burst_time = 0;
 	}
-
-	entrenador->pokemon_a_atrapar->name = string_duplicate(pokemon->name);
-	entrenador->pokemon_a_atrapar->position->pos_x = pokemon->position->pos_x;
-	entrenador->pokemon_a_atrapar->position->pos_y = pokemon->position->pos_y;
 	
+	entrenador->pokemon_a_atrapar = pokemon;
+
 	add_to_ready_queue(entrenador);
-	team_logger_info("Se agrego al entrenador: %d a la cola de ready", entrenador->id);
 	list_destroy(entrenadores_disponibles);
+	team_logger_info("Un entrenador fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía. id: %d", entrenador->id);
 }
 
 
@@ -91,7 +88,7 @@ void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
 	list_add(ready_queue, entrenador);
 	delete_from_bloqued_queue(entrenador, 0);
 	delete_from_new_queue(entrenador);
-	sem_post(&sem_pokemons_in_ready_queue);	//TODO ver
+	sem_post(&sem_pokemons_in_ready_queue);
 }
 
 
