@@ -103,6 +103,6 @@ void entrenadores_listos();
 void team_planner_print_fullfill_target();
 void solve_deadlock();
 int team_planner_get_least_estimate_index();
-
+t_pokemon* team_planner_pokemon_create(char* nombre);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

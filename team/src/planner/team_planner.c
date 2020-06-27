@@ -22,7 +22,9 @@ void team_planner_run_planification() {
 
 void team_planner_algoritmo_cercania() {
 	sem_wait(&sem_message_on_queue);
+	team_logger_info("Se hizo wait a message on queue");
 	sem_wait(&sem_entrenadores_disponibles);
+	team_logger_info("Se hizo wait a entrenadores disponibles");
 
 	team_logger_info("Se ejecutará el algoritmo de cercanía!");
 	
@@ -147,7 +149,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 
 t_pokemon* team_planner_pokemon_create(char* nombre) {
 	t_pokemon* pokemon = malloc(sizeof(t_pokemon));
-	pokemon->name = nombre;
+	pokemon->name = string_duplicate(nombre);
 	return pokemon;
 }
 
@@ -265,7 +267,7 @@ char* planner_print_global_targets() {
 
 void team_planner_add_new_trainner(t_entrenador_pokemon* entrenador) {
 	list_add(new_queue, entrenador);
-	team_logger_info("Se añadió a un entrenador a la cola NEW. id: %d", entrenador->id);
+	team_logger_info("Se añadió a un entrenador %d a la cola NEW", entrenador->id);
 	sem_post(&sem_entrenadores_disponibles);
 }
 
@@ -348,8 +350,6 @@ void planner_load_entrenadores() {
 		team_planner_add_new_trainner(entrenador);
 		list_add_all(target_pokemons, objetivos);
 		planner_init_global_targets(objetivos);
-		list_destroy(pokemons);
-		list_destroy(objetivos);
 		i++;
 	}
 	sem_post(&sem_entrenadores_disponibles);
@@ -358,6 +358,7 @@ void planner_load_entrenadores() {
 	int tamanio_objetivos = dictionary_size(team_planner_global_targets);
 	char* objetivos_to_string = planner_print_global_targets();
 	team_logger_info("Hay %d objetivos globales: \n%s", tamanio_objetivos, objetivos_to_string);
+	free(objetivos_to_string);
 }
 
 
@@ -462,7 +463,7 @@ void team_planner_apply_SJF() {
 
 //FIFO
 void team_planner_apply_FIFO() {
-	if (exec_entrenador == NULL && exec_entrenador->pokemon_a_atrapar == NULL) {
+	if (exec_entrenador == NULL) {
 		int next_out_index = fifo_index;
 		if (next_out_index <= list_size(ready_queue)) { 
 			exec_entrenador = list_get(ready_queue, next_out_index);

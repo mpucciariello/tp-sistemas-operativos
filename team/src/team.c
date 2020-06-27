@@ -111,7 +111,8 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 	} else {
 		remove_pokemon_from_catch(catch_send);
 		team_planner_change_block_status_by_trainer(0, entrenador);
-		list_add(entrenador->pokemons, catch_send->nombre_pokemon);
+		t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
+		list_add(entrenador->pokemons, pokemon);
 
 		if (trainer_is_in_deadlock_caught(entrenador)) {
 			entrenador->deadlock = true;
