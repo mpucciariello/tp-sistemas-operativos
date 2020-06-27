@@ -351,8 +351,6 @@ void planner_load_entrenadores() {
 	int tamanio_objetivos = dictionary_size(team_planner_global_targets);
 	char* objetivos_to_string = planner_print_global_targets();
 	team_logger_info("Hay %d objetivos globales: \n%s", tamanio_objetivos, objetivos_to_string);
-	list_destroy(objetivos);
-	list_destroy(pokemons);
 }
 
 
