@@ -66,7 +66,7 @@ void team_init() {
 
 	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
 	team_logger_info("Creando un hilo que maneje la PLANIFICACIÓN");
-	pthread_detach(planificator);
+	pthread_join(planificator, NULL); //para probar
 
 	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
 	team_server_init();
@@ -98,6 +98,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 	entrenador->state = BLOCK;
 	list_add(block_queue, entrenador);
+	team_logger_info("Se añadió a un entrenador a la cola de BLOCK luego de enviar un mensaje CATCH: id %d", entrenador->id);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
@@ -181,21 +182,24 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 
 
 void check_RR_burst(t_entrenador_pokemon* entrenador) {
-	if(exec_entrenador->current_burst_time == team_config->quantum) {
+	if(entrenador->current_burst_time == team_config->quantum) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		sem_post(&sem_planificador);
 		exec_entrenador = NULL;
-		add_to_ready_queue(entrenador);		
+		add_to_ready_queue(entrenador);	
+		team_logger_info("Se añadió a un entrenador a la cola de READY ya que terminó su QUANTUM: id %d", entrenador->id);	
 	}
 }
 
 
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
-	if (exec_entrenador->current_burst_time == team_config->quantum) {
+
+	if (exec_entrenador->estimated_time > team_planner_get_least_estimate_index()) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		sem_post(&sem_planificador);
 		exec_entrenador = NULL;
 		add_to_ready_queue(entrenador);	
+		team_logger_info("Se añadió a un entrenador a la cola de READY ya que será desalojado por otro con ráfaga más corta: id %d", entrenador->id);
 	}
 }
 
@@ -203,7 +207,7 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	team_logger_info("Se creó un hilo para el entrenador %d", entrenador->id);
 
-	pthread_mutex_lock(&exec_entrenador->sem_move_trainers);
+	pthread_mutex_lock(&entrenador->sem_move_trainers);
 
 	int aux_x = exec_entrenador->position->pos_x - exec_entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = exec_entrenador->position->pos_y - exec_entrenador->pokemon_a_atrapar->position->pos_y;
@@ -212,6 +216,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 
 	for (int i = 0; i < steps; i++) {
 		sleep(team_config->retardo_ciclo_cpu);
+		new_cpu_cicle();
 		exec_entrenador->current_burst_time++;
 		exec_entrenador->total_burst_time++; 
 
@@ -224,7 +229,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		}
 	}
 	
-	team_logger_info("Un enternador se movió de (%d, %d) a (%d, %d)", exec_entrenador->position->pos_x,
+	team_logger_info("Un entrenador se movió de (%d, %d) a (%d, %d)", exec_entrenador->position->pos_x,
 																	  exec_entrenador->position->pos_y,
 																	  exec_entrenador->pokemon_a_atrapar->position->pos_x,
 																	  exec_entrenador->pokemon_a_atrapar->position->pos_y);
@@ -456,7 +461,6 @@ void *receive_msg(int fd, int send_to) {
 			default:
 				break;
 		}
-		new_cpu_cicle();
 	}
 	return NULL;
 }

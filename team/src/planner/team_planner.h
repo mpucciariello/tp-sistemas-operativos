@@ -102,6 +102,7 @@ bool all_queues_are_empty_except_block();
 void entrenadores_listos();
 void team_planner_print_fullfill_target();
 void solve_deadlock();
+int team_planner_get_least_estimate_index();
 
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
