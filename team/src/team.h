@@ -20,7 +20,6 @@ int team_socket;
 bool is_connected;
 pthread_t planificator;
 pthread_t algoritmo_cercania_entrenadores;
-sem_t sem_message_on_queue;
 t_list* get_id_corr;
 t_list* keys_list;
 t_list* message_catch_sended;

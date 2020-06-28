@@ -193,7 +193,6 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 }
 
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
-
 	if (entrenador->estimated_time > team_planner_get_least_estimate_index()) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		sem_post(&sem_planificador);
@@ -237,7 +236,6 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_x;
 
 	if (entrenador->deadlock) {
-		
 		sem_post(&sem_deadlock);
 	}
 
@@ -446,12 +444,8 @@ void *receive_msg(int fd, int send_to) {
 					list_add(pokemon->pos, posicion);
 					add_to_pokemon_to_catch(pokemon);
 				}
-
 				break;
 			}
-
-			default:
-				break;
 		}
 	}
 	return NULL;
@@ -487,7 +481,6 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 
 }
 
-
 bool pokemon_required(char* pokemon_name) {
 
 	bool _es_el_mismo(char* name) {
@@ -502,7 +495,6 @@ bool pokemon_required(char* pokemon_name) {
 
 	return !list_any_satisfy(pokemon_to_catch_name, (void*) _es_el_mismo);
 }
-
 
 void team_server_init() {
 
@@ -540,14 +532,12 @@ void team_server_init() {
 	}
 }
 
-
 void *handle_connection(void *arg) {
 	t_handle_connection* connect_handler = (t_handle_connection *) arg;
 	int client_fd = connect_handler->fd;
 	receive_msg(client_fd, connect_handler->bool_val);
 	return NULL;
 }
-
 
 void send_ack(void* arg) {
 	int val = *((int*) arg);
@@ -563,7 +553,6 @@ void send_ack(void* arg) {
 	team_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
 	socket_close_conection(client_fd);
 }
-
 
 void team_exit() {
 	team_planner_print_fullfill_target();

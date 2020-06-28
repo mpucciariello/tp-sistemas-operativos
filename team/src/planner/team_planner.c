@@ -11,7 +11,7 @@ void team_planner_run_planification() {
 			
 	t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
-	team_logger_info("Hay un nuevo entrenador en estado EXEC. Id: %d", entrenador->id);
+	team_logger_info("El entrenador %d se encuentra en estado EXEC", entrenador->id);
 	pthread_mutex_unlock(&entrenador->sem_move_trainers);
 	context_switch_qty++;	
 }
@@ -24,10 +24,9 @@ void team_planner_algoritmo_cercania() {
 	team_logger_info("Se hizo wait a entrenadores disponibles");
 
 	team_logger_info("Se ejecutará el algoritmo de cercanía!");
-	
+
 	t_pokemon* pokemon;
 	t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
-
 
 	int c = -1;
 	int min_steps = 0;
@@ -63,7 +62,6 @@ void team_planner_algoritmo_cercania() {
 		}
 	}
 
-
 	if (team_planner_is_SJF_algorithm()) {
 		entrenador->estimated_time = team_planner_calculate_exponential_mean(entrenador->current_burst_time, entrenador->estimated_time);
 		team_logger_info("Estimación recalculada del entrenador: %f", entrenador->estimated_time);
@@ -78,7 +76,7 @@ void team_planner_algoritmo_cercania() {
 
 	add_to_ready_queue(entrenador);
 	list_destroy(entrenadores_disponibles);
-	team_logger_info("Un entrenador fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía. id: %d", entrenador->id);
+	team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);
 }
 
 void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
@@ -95,10 +93,10 @@ void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) { //0
 		if (entrenador_aux->id == entrenador->id) {
 			list_remove(block_queue, i);
 			if (cola == 0) {
-				team_logger_info("Se eliminó a un entrenador de la cola BLOCK porque pasará a READY. id: %d", entrenador->id);
+				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY", entrenador->id);
 			}
 			if (cola == 1) {
-				team_logger_info("Se eliminó a un entrenador de la cola BLOCK porque pasará a EXIT. id: %d", entrenador->id);
+				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a EXIT", entrenador->id);
 			}
 		}
 	}
@@ -254,7 +252,7 @@ char* planner_print_global_targets() {
 
 void team_planner_add_new_trainner(t_entrenador_pokemon* entrenador) {
 	list_add(new_queue, entrenador);
-	team_logger_info("Se añadió a un entrenador %d a la cola NEW", entrenador->id);
+	team_logger_info("Se añadió al entrenador %d a la cola NEW", entrenador->id);
 	sem_post(&sem_entrenadores_disponibles);
 }
 
@@ -272,7 +270,6 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo)); 
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
-	
 	
 	t_entrenador_pokemon* entrenador = find_trainer_by_id_corr(id_corr);
 	entrenador->state = BLOCK;
@@ -603,7 +600,6 @@ char* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador) {
 
 t_list* team_planner_get_trainners() {
 	t_list* trainners = list_create();
-	//list_add(trainners, exec_entrenador); //TODO: si quiero todos y el exec no existe siempre va a faltar 1
 	list_add_all(trainners, new_queue);
 	list_add_all(trainners, ready_queue);
 	list_add_all(trainners, block_queue);
@@ -663,7 +659,6 @@ bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 	return false;
 }
 
-
 void planner_destroy_pokemons(t_pokemon* pokemon) {
 	free(pokemon->name);
 	free(pokemon);
@@ -683,7 +678,6 @@ void planner_destroy_global_targets(t_dictionary* global_targets) {
 }
 
 void planner_destroy_quees() {
-	//planner_destroy_entrenador(exec_entrenador);
 	list_destroy_and_destroy_elements(new_queue, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(ready_queue, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(block_queue, (void*)planner_destroy_entrenador);
