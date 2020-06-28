@@ -438,7 +438,7 @@ t_list* team_planner_create_ready_queue() {
 	}
 	t_list* bloquados_en_cero = filter_block_list_by_0(block_queue, (void*) _is_available);
 	
-	t_list* listo_para_planificar = list_create(); //saque el list_create, podría romper je
+	t_list* listo_para_planificar = list_create();
 	list_add_all(listo_para_planificar, bloquados_en_cero);
 	list_add_all(listo_para_planificar, new_queue);
 
@@ -462,8 +462,9 @@ t_entrenador_pokemon* team_planner_apply_SJF() {
 t_entrenador_pokemon* team_planner_apply_FIFO() {
 	
 	int next_out_index = fifo_index;
+	t_entrenador_pokemon* entrenador;
 	if (next_out_index <= list_size(ready_queue)) { 
-		t_entrenador_pokemon* entrenador = list_get(ready_queue, next_out_index);
+		entrenador = list_get(ready_queue, next_out_index);
 		list_remove(ready_queue, next_out_index);
 		team_logger_info("Se eliminó a un entrenador de la cola de READY porque es su turno de ejecutar. id:%d", entrenador->id);
 		fifo_index++;
@@ -475,6 +476,7 @@ t_entrenador_pokemon* team_planner_apply_FIFO() {
 //RR
 t_entrenador_pokemon* team_planner_apply_RR() {
 	
+	t_entrenador_pokemon* entrenador;
 	int next_out_index = fifo_index;
 	if (next_out_index < list_size(ready_queue)) {
 		t_entrenador_pokemon* entrenador = list_get(ready_queue, next_out_index);
@@ -500,9 +502,8 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 		case SJF_SD:
 			return team_planner_apply_SJF();
 			break;
-		default:
-			break;
 	}
+	return NULL;
 }
 
 

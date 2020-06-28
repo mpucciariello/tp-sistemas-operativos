@@ -82,7 +82,7 @@ void team_planner_run_planification();
 void team_planner_algoritmo_cercania();
 void move_trainers_and_catch_pokemon();
 void team_planner_change_block_status_by_trainer(int, t_entrenador_pokemon*);
-void team_planner_set_algorithm();
+t_entrenador_pokemon* team_planner_set_algorithm();
 t_list* team_planner_create_ready_queue();
 void team_planner_change_block_status_by_id_corr(int, uint32_t);
 void team_planner_finish_trainner(t_entrenador_pokemon*);
@@ -104,5 +104,8 @@ void team_planner_print_fullfill_target();
 void solve_deadlock();
 int team_planner_get_least_estimate_index();
 t_pokemon* team_planner_pokemon_create(char* nombre);
+t_entrenador_pokemon* team_planner_apply_RR();
+t_entrenador_pokemon* team_planner_apply_FIFO();
+t_entrenador_pokemon* team_planner_apply_SJF();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

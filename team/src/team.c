@@ -232,7 +232,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	team_logger_info("Un entrenador se movió de (%d, %d) a (%d, %d)", entrenador->position->pos_x,
 																	  entrenador->position->pos_y,
 																	  entrenador->pokemon_a_atrapar->position->pos_x,
-																	  eentrenador->pokemon_a_atrapar->position->pos_y);
+																	  entrenador->pokemon_a_atrapar->position->pos_y);
 
 	entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
 	entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_x;
