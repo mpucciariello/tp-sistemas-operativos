@@ -99,7 +99,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 	entrenador->state = BLOCK;
 	list_add(block_queue, entrenador);
-	team_logger_info("Se añadió a un entrenador a la cola de BLOCK luego de intentar un CATCH a la espera de confirmación: id %d", entrenador->id);
+	team_logger_info("Se añadió al entrenador %d a la cola de BLOCK luego de intentar un CATCH a la espera de confirmación", entrenador->id);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
@@ -109,7 +109,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador->list_id_catch, (void*)catch_send->id_correlacional);
 	} else {
-		team_logger_warn("No se ha podido enviar el mensaje CATCH. Se agregará a los pokemons atrapados del entrenador %d, por comportamiento dafault: %s, posición (%d, %d)", entrenador->id, catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
+		team_logger_warn("No se ha podido enviar el mensaje CATCH. Se agregará a los pokemons atrapados del entrenador %d, por comportamiento default: %s, posición (%d, %d)", entrenador->id, catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
 		remove_pokemon_from_catch(catch_send);
 		team_planner_change_block_status_by_trainer(0, entrenador);
 		t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
@@ -134,7 +134,6 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 	usleep(500000);
 }
 
-
 void send_get_message() {
 	
 	sem_wait(&sem_pokemons_to_get);
@@ -149,16 +148,15 @@ void send_get_message() {
 		get_protocol = GET_POKEMON;
 		
 		int i = send_message(get_send, get_protocol, get_id_corr);
-		if(i==0){
-			team_logger_info("Se envió un mensaje GET. Pokemon %s", get_send->nombre_pokemon);
+		if (i==0){
+			team_logger_info("Se envió un mensaje GET del Pokemon %s", get_send->nombre_pokemon);
 		}
 		if (i > 0) {
-			team_logger_info("Se recibió un id correlacional en respuesta a un GET: %d", get_id_corr);
+			team_logger_info("Se recibió id correlacional %d en respuesta al GET", get_id_corr);
 		}
 		usleep(500000);
 	}
 }
-
 
 int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
@@ -185,16 +183,14 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	return 0;
 }
 
-
 void check_RR_burst(t_entrenador_pokemon* entrenador) {
 	if(entrenador->current_burst_time == team_config->quantum) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		sem_post(&sem_planificador);
 		add_to_ready_queue(entrenador);	
-		team_logger_info("Se añadió a un entrenador a la cola de READY ya que terminó su QUANTUM: id %d", entrenador->id);	
+		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que terminó su QUANTUM", entrenador->id);
 	}
 }
-
 
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 
@@ -202,10 +198,9 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		sem_post(&sem_planificador);
 		add_to_ready_queue(entrenador);	
-		team_logger_info("Se añadió a un entrenador a la cola de READY ya que será desalojado por otro con ráfaga más corta: id %d", entrenador->id);
+		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que será desalojado por otro con ráfaga más corta", entrenador->id);
 	}
 }
-
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	team_logger_info("Se creó un hilo para el entrenador %d", entrenador->id);
@@ -232,10 +227,11 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		}
 	}
 	
-	team_logger_info("Un entrenador se movió de (%d, %d) a (%d, %d)", entrenador->position->pos_x,
-																	  entrenador->position->pos_y,
-																	  entrenador->pokemon_a_atrapar->position->pos_x,
-																	  entrenador->pokemon_a_atrapar->position->pos_y);
+	team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador->id,
+																		 entrenador->position->pos_x,
+																		 entrenador->position->pos_y,
+																		 entrenador->pokemon_a_atrapar->position->pos_x,
+																		 entrenador->pokemon_a_atrapar->position->pos_y);
 
 	entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
 	entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_x;
@@ -244,7 +240,6 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		
 		sem_post(&sem_deadlock);
 	}
-
 
 	if (entrenador->blocked_info == 0 && entrenador->deadlock == false) {
 		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
@@ -259,7 +254,6 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	entrenador = NULL;
 	sem_post(&sem_planificador);
 }
-
 
 void subscribe_to(void *arg) {
 
@@ -353,7 +347,7 @@ void *receive_msg(int fd, int send_to) {
 	while (true) {
 		int received_bytes = recv(fd, &protocol, sizeof(int), 0);
 		if (received_bytes <= 0) {
-			team_logger_error("Se perdió la conexión.");
+			team_logger_error("Se perdió la conexión con el socket %d.", fd);
 			return NULL;
 		}
 
@@ -432,8 +426,7 @@ void *receive_msg(int fd, int send_to) {
 				team_logger_info("ID correlacional: %d", appeared_rcv->id_correlacional);
 				team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);
 				team_logger_info("Largo nombre: %d", appeared_rcv->tamanio_nombre);
-				team_logger_info("Posición X: %d", appeared_rcv->pos_x);
-				team_logger_info("Posición Y: %d", appeared_rcv->pos_y);
+				team_logger_info("Posición: (%d, %d)", appeared_rcv->pos_x, appeared_rcv->pos_y);
 				usleep(50000);
 
 				if (is_server == 0) {
@@ -464,16 +457,14 @@ void *receive_msg(int fd, int send_to) {
 	return NULL;
 }
 
-
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
 	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 	sem_post(&sem_message_on_queue);
 	t_position* posicion = list_get(pokemon->pos, 0);
-	team_logger_info("Se añadió un nuevo pokemon a la cola de POKEMONES A ATRAPAR: %s en la posición (%d, %d)", pokemon->name, posicion->pos_x, posicion->pos_y);
+	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar en la posición (%d, %d)", pokemon->name, posicion->pos_x, posicion->pos_y);
 }
-
 
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 	t_list* targets_aux = entrenador->targets;
@@ -482,7 +473,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			char* pokemon_obtenido = list_get(entrenador->pokemons, i);
 
-			for (int j = 0; j < list_size(targets_aux); j++){
+			for (int j = 0; j < list_size(targets_aux); j++) {
 				char* pokemon_objetivo = list_get(targets_aux, j);
 				if (string_equals_ignore_case(pokemon_objetivo, pokemon_obtenido)) {
 					list_remove(target_pokemons, j);
