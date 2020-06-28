@@ -26,7 +26,7 @@ int team_load() {
 
 void team_init() {
 
-	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
+	//pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	sem_init(&sem_message_on_queue, 0, 0);
@@ -85,9 +85,9 @@ void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 			for (int j = 0; j < list_size(posiciones_pokemon); j++) {
 				t_position* position = list_get(posiciones_pokemon, j);
 				if (position->pos_x == catch_message->pos_x && position->pos_y == catch_message->pos_y) {
-					pthread_mutex_lock(&cola_pokemons_a_atrapar);
+					//pthread_mutex_lock(&cola_pokemons_a_atrapar);
 					list_remove(pokemon_to_catch, i);
-					pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+					//pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 				}
 			}
 		}
@@ -458,12 +458,11 @@ void *receive_msg(int fd, int send_to) {
 }
 
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
-	pthread_mutex_lock(&cola_pokemons_a_atrapar);
+	//pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
-	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+	//pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 	sem_post(&sem_message_on_queue);
-	t_position* posicion = list_get(pokemon->pos, 0);
-	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar en la posición (%d, %d)", pokemon->name, posicion->pos_x, posicion->pos_y);
+	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
 
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
