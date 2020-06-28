@@ -109,10 +109,12 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador->list_id_catch, (void*)catch_send->id_correlacional);
 	} else {
+		team_logger_warn("No se ha podido enviar el mensaje CATCH. Se agregará a los pokemons atrapados del entrenador %d, por comportamiento dafault: %s, posición (%d, %d)", entrenador->id, catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
 		remove_pokemon_from_catch(catch_send);
 		team_planner_change_block_status_by_trainer(0, entrenador);
 		t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
 		list_add(entrenador->pokemons, pokemon);
+		team_logger_info("El entrenador %d, atrapó un %s,!!", entrenador->id, catch_send->nombre_pokemon);
 
 		if (trainer_is_in_deadlock_caught(entrenador)) {
 			entrenador->deadlock = true;
@@ -124,6 +126,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 		//DEADLOCK
 		if (all_queues_are_empty_except_block()) {
+			team_logger_info("Ya no es posible atrapar más pokemones debido a que se alcanzó la cantidad del objetivo!");
 			solve_deadlock(); //si ya no quedan más entrenadores en NEW, READY o BLOCK (con status 0 sin deadlock), entonces se corre el algoritmo de intercambio.
 		}		
 	}
@@ -368,7 +371,7 @@ void *receive_msg(int fd, int send_to) {
 				team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
 
 				if(caught_rcv->result) {
-
+					team_logger_info("MENSAJE CAUGHT POSITIVO: El entrenador %d, atrapó un %s,!!", entrenador->id, catch_message->nombre_pokemon);
 					list_add(entrenador->pokemons, catch_message->nombre_pokemon);
 
 					//Completo y terminado
@@ -386,7 +389,9 @@ void *receive_msg(int fd, int send_to) {
 						solve_deadlock();
 					}
 
-				} 
+				} else {
+					team_logger_info("MENSAJE CAUGHT NEGATIVO: El entrenador %d no atrapó a %s, al no tener mensajes pendientes volverá a poder ser planificado.", entrenador->id, catch_message->nombre_pokemon);
+				}
 
 				usleep(50000);
 				break;
@@ -487,7 +492,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 
 		return !list_is_empty(targets_aux);
 	} else {
-		return false; //no está completo, puede seguir
+		return false; 
 	}
 
 }

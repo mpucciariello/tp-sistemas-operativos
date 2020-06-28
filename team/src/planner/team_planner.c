@@ -527,7 +527,6 @@ void solve_deadlock() {
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, i);
 		char* pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante);
 
-		//TENGO QUE BUSCAR QUIEN NECESITA AL POKEMON QUE A MI ME SOBRA
 		t_entrenador_pokemon* entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
 
 		entrenador_bloqueado->pokemon_a_atrapar->name = pokemon_de_entrenador_bloqueante;
@@ -577,7 +576,6 @@ bool block_queue_is_not_empty() {
 }
 
 t_entrenador_pokemon* entrenador_que_necesita(char* pokemon_de_entrenador_bloqueado) {
-	//tengo que fijarme quien lo necesita y no lo tiene
 	int i = 0;
 	bool lo_tiene = true;
 
