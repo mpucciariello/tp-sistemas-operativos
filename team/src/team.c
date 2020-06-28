@@ -114,7 +114,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		team_planner_change_block_status_by_trainer(0, entrenador);
 		t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
 		list_add(entrenador->pokemons, pokemon);
-		team_logger_info("El entrenador %d, atrapó un %s,!!", entrenador->id, catch_send->nombre_pokemon);
+		team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, catch_send->nombre_pokemon);
 
 		if (trainer_is_in_deadlock_caught(entrenador)) {
 			entrenador->deadlock = true;
@@ -371,7 +371,7 @@ void *receive_msg(int fd, int send_to) {
 				team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
 
 				if(caught_rcv->result) {
-					team_logger_info("MENSAJE CAUGHT POSITIVO: El entrenador %d, atrapó un %s,!!", entrenador->id, catch_message->nombre_pokemon);
+					team_logger_info("MENSAJE CAUGHT POSITIVO: El entrenador %d, atrapó un %s!!", entrenador->id, catch_message->nombre_pokemon);
 					list_add(entrenador->pokemons, catch_message->nombre_pokemon);
 
 					//Completo y terminado

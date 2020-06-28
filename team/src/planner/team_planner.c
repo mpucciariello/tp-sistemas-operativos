@@ -11,13 +11,14 @@ void team_planner_run_planification() {
 			
 	t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
-	team_logger_info("Hay un nuevo entrenador en estado EXEC. id: %d", entrenador->id);
+	team_logger_info("Hay un nuevo entrenador en estado EXEC. Id: %d", entrenador->id);
 	pthread_mutex_unlock(&entrenador->sem_move_trainers);
 	context_switch_qty++;	
 }
 
 
 void team_planner_algoritmo_cercania() {
+	team_logger_info("aca empieza");
 	sem_wait(&sem_message_on_queue);
 	team_logger_info("Se hizo wait a message on queue");
 	sem_wait(&sem_entrenadores_disponibles);
