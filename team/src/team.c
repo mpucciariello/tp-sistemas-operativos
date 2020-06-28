@@ -26,10 +26,12 @@ int team_load() {
 
 void team_init() {
 
-	//pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
+	pthread_mutex_init(&sem_message_on_queue, NULL);
+	pthread_mutex_lock(&sem_message_on_queue, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
-	sem_init(&sem_message_on_queue, 0, 0);
+	//sem_init(&sem_message_on_queue, 0, 0);
+
 	sem_init(&sem_planificador, 0, 1);
 	sem_init(&sem_pokemons_in_ready_queue, 0, 0);
 	pthread_attr_t attrs;
@@ -193,6 +195,7 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 }
 
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
+
 	if (entrenador->estimated_time > team_planner_get_least_estimate_index()) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		sem_post(&sem_planificador);
@@ -236,6 +239,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_x;
 
 	if (entrenador->deadlock) {
+		
 		sem_post(&sem_deadlock);
 	}
 
@@ -444,8 +448,12 @@ void *receive_msg(int fd, int send_to) {
 					list_add(pokemon->pos, posicion);
 					add_to_pokemon_to_catch(pokemon);
 				}
+
 				break;
 			}
+
+			default:
+				break;
 		}
 	}
 	return NULL;
@@ -455,9 +463,10 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	//pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
 	//pthread_mutex_unlock(&cola_pokemons_a_atrapar);
-	sem_post(&sem_message_on_queue);
+	pthread_mutex_unlock(sem_message_on_queue); //TODO: ver que estamos tomando al pokemon como uno solo y si trae muchas posiciones en realidad son muchos.
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
+
 
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 	t_list* targets_aux = entrenador->targets;
@@ -481,6 +490,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 
 }
 
+
 bool pokemon_required(char* pokemon_name) {
 
 	bool _es_el_mismo(char* name) {
@@ -495,6 +505,7 @@ bool pokemon_required(char* pokemon_name) {
 
 	return !list_any_satisfy(pokemon_to_catch_name, (void*) _es_el_mismo);
 }
+
 
 void team_server_init() {
 
@@ -532,12 +543,14 @@ void team_server_init() {
 	}
 }
 
+
 void *handle_connection(void *arg) {
 	t_handle_connection* connect_handler = (t_handle_connection *) arg;
 	int client_fd = connect_handler->fd;
 	receive_msg(client_fd, connect_handler->bool_val);
 	return NULL;
 }
+
 
 void send_ack(void* arg) {
 	int val = *((int*) arg);
@@ -553,6 +566,7 @@ void send_ack(void* arg) {
 	team_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
 	socket_close_conection(client_fd);
 }
+
 
 void team_exit() {
 	team_planner_print_fullfill_target();
