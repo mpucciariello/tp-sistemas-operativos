@@ -17,9 +17,7 @@ void team_planner_run_planification() {
 }
 
 void team_planner_algoritmo_cercania() {
-	team_logger_info("aca empieza");
-	//sem_wait(&sem_message_on_queue);
-	pthread_mutex_lock(&sem_message_on_queue);
+	sem_wait(&sem_message_on_queue);
 	team_logger_info("Se hizo wait a message on queue");
 	sem_wait(&sem_entrenadores_disponibles);
 	team_logger_info("Se hizo wait a entrenadores disponibles");
@@ -690,7 +688,7 @@ void planner_destroy_quees() {
 
 void team_planner_destroy() {
 	sem_destroy(&sem_entrenadores_disponibles);
-	pthread_mutex_destroy(&sem_message_on_queue);
+	sem_destroy(&sem_message_on_queue);
 	sem_destroy(&sem_pokemons_in_ready_queue);
 	planner_destroy_quees();
 	planner_destroy_global_targets(team_planner_global_targets);

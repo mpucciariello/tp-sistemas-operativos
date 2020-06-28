@@ -26,12 +26,9 @@ int team_load() {
 
 void team_init() {
 
-	pthread_mutex_init(&sem_message_on_queue, NULL);
-	pthread_mutex_lock(&sem_message_on_queue, NULL);
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
-	//sem_init(&sem_message_on_queue, 0, 0);
-
+	sem_init(&sem_message_on_queue, 0, 0);
 	sem_init(&sem_planificador, 0, 1);
 	sem_init(&sem_pokemons_in_ready_queue, 0, 0);
 	pthread_attr_t attrs;
@@ -78,7 +75,7 @@ void team_init() {
 		;
 }
 
-//t_catch_pokemon es declarada en protocols.
+
 void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
 		t_pokemon_received* pokemon_con_posiciones = list_get(pokemon_to_catch, i);
@@ -87,9 +84,9 @@ void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 			for (int j = 0; j < list_size(posiciones_pokemon); j++) {
 				t_position* position = list_get(posiciones_pokemon, j);
 				if (position->pos_x == catch_message->pos_x && position->pos_y == catch_message->pos_y) {
-					//pthread_mutex_lock(&cola_pokemons_a_atrapar);
+					pthread_mutex_lock(&cola_pokemons_a_atrapar);
 					list_remove(pokemon_to_catch, i);
-					//pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+					pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 				}
 			}
 		}
@@ -105,7 +102,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	
-	if (i == 0) { //acá ya tengo el id correlacional.
+	if (i == 0) {
 		team_logger_info("Mensaje CATCH enviado! Pokemon: %s, posición (%d, %d)", catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
 		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
 		list_add(message_catch_sended, catch_send);
@@ -120,16 +117,15 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 		if (trainer_is_in_deadlock_caught(entrenador)) {
 			entrenador->deadlock = true;
-		} //si tiene la cantidad requerida pero no los que corresponden -> deadlock. Se resuelve al final
+		}
 		
 		if (trainer_completed_with_success(entrenador)) {
 			team_planner_finish_trainner(entrenador);
-		} //si tiene la cantidad requerida y corresponden con el objetivo -> EXIT
+		}
 
-		//DEADLOCK
 		if (all_queues_are_empty_except_block()) {
 			team_logger_info("Ya no es posible atrapar más pokemones debido a que se alcanzó la cantidad del objetivo!");
-			solve_deadlock(); //si ya no quedan más entrenadores en NEW, READY o BLOCK (con status 0 sin deadlock), entonces se corre el algoritmo de intercambio.
+			solve_deadlock();
 		}		
 	}
 
@@ -172,7 +168,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		utils_serialize_and_send(broker_fd_send, protocolo, paquete);
 
 		uint32_t id_corr;
-		int recibido = recv(broker_fd_send, &id_corr, sizeof(uint32_t), MSG_WAITALL); //agrego & al id_corr
+		int recibido = recv(broker_fd_send, &id_corr, sizeof(uint32_t), MSG_WAITALL); //
 		if (recibido > 0 && queue != NULL) {
 			list_add(queue, (void*)id_corr);
 		}
@@ -370,17 +366,15 @@ void *receive_msg(int fd, int send_to) {
 					team_logger_info("MENSAJE CAUGHT POSITIVO: El entrenador %d, atrapó un %s!!", entrenador->id, catch_message->nombre_pokemon);
 					list_add(entrenador->pokemons, catch_message->nombre_pokemon);
 
-					//Completo y terminado
+
 					if(trainer_completed_with_success(entrenador)){
 						team_planner_finish_trainner(entrenador);
 					}
 
-					//Completo pero en deadlock
 					if(trainer_is_in_deadlock_caught(entrenador)){
 						entrenador->deadlock = true;
 					} 
 
-					//LLAMA A DEADLOCK
 					if (all_queues_are_empty_except_block()){
 						solve_deadlock();
 					}
@@ -459,11 +453,12 @@ void *receive_msg(int fd, int send_to) {
 	return NULL;
 }
 
+
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
-	//pthread_mutex_lock(&cola_pokemons_a_atrapar);
+	pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
-	//pthread_mutex_unlock(&cola_pokemons_a_atrapar);
-	pthread_mutex_unlock(sem_message_on_queue); //TODO: ver que estamos tomando al pokemon como uno solo y si trae muchas posiciones en realidad son muchos.
+	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+	sem_post(&sem_message_on_queue); //TODO: ver que estamos tomando al pokemon como uno solo y si trae muchas posiciones en realidad son muchos.
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
 
