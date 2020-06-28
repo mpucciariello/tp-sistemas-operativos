@@ -317,11 +317,11 @@ void planner_load_entrenadores() {
 	while (team_config->posiciones_entrenadores[i] != NULL) {
 		t_position* posicion = team_planner_extract_position(team_config->posiciones_entrenadores[i]);
 		t_list* pokemons = list_create();
-		if(team_config->posiciones_entrenadores[i] != NULL && team_config->pokemon_entrenadores[i] != NULL) {
+		if(team_config->pokemon_entrenadores[i] != NULL) {
 			team_planner_extract_pokemons(pokemons, team_config->pokemon_entrenadores[i]);
 		}
 		t_list* objetivos = list_create();
-		if(team_config->posiciones_entrenadores[i] != NULL && team_config->objetivos_entrenadores[i] != NULL) {
+		if(team_config->objetivos_entrenadores[i] != NULL) {
 			team_planner_extract_pokemons(objetivos, team_config->objetivos_entrenadores[i]);
 		}
 
@@ -337,7 +337,7 @@ void planner_load_entrenadores() {
 	team_logger_info("Hay %d entrenadores en la cola de NEW", list_size(new_queue));
 	int tamanio_objetivos = 0;
 	void add_total_targets(char* ___, int pokemons_qty) {
-		tamanio_objetivos +=pokemons_qty;
+		tamanio_objetivos += pokemons_qty;
 	}
 
 	dictionary_iterator(team_planner_global_targets, (void*) add_total_targets);
