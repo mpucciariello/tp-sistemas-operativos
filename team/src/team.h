@@ -24,22 +24,20 @@ t_list* get_id_corr;
 t_list* keys_list;
 t_list* message_catch_sended;
 
-
-
 int team_load();
 void team_init();
 void team_server_init();
-void *handle_connection(void *arg);
+void *handle_connection(void *);
 void team_exit();
-void *receive_msg(int broker_fd, int send_to);
-void send_ack(void* arg);
-void subscribe_to(void *arg);
+void *receive_msg(int, int);
+void send_ack(void*);
+void subscribe_to(void *);
 void send_message_test();
-void team_retry_connect(void* arg);
-bool pokemon_required(char* name);
+void team_retry_connect(void*);
+bool pokemon_required(char*);
 void send_get_message();
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon*);
-int send_message(void* paquete, t_protocol protocolo, t_list*);
+int send_message(void*, t_protocol, t_list*);
 bool trainer_completed_with_success(t_entrenador_pokemon*);
 void delete_from_bloqued_queue(t_entrenador_pokemon*, int);
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon*);

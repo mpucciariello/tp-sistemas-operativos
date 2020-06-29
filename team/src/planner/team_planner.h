@@ -62,7 +62,7 @@ sem_t sem_pokemons_to_get;
 sem_t sem_deadlock;
 sem_t sem_planificador; 
 
-pthread_mutex_t(cola_pokemons_a_atrapar);
+pthread_mutex_t cola_pokemons_a_atrapar;
 
 t_list* new_queue;
 t_list* ready_queue;
@@ -101,9 +101,10 @@ void entrenadores_listos();
 void team_planner_print_fullfill_target();
 void solve_deadlock();
 int team_planner_get_least_estimate_index();
-t_pokemon* team_planner_pokemon_create(char* nombre);
+t_pokemon* team_planner_pokemon_create(char*);
 t_entrenador_pokemon* team_planner_apply_RR();
 t_entrenador_pokemon* team_planner_apply_FIFO();
 t_entrenador_pokemon* team_planner_apply_SJF();
+t_list* team_planner_trainers_waiting_messages();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

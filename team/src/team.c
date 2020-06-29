@@ -31,6 +31,7 @@ void team_init() {
 	sem_init(&sem_message_on_queue, 0, 0);
 	sem_init(&sem_planificador, 0, 1);
 	sem_init(&sem_trainers_in_ready_queue, 0, 0);
+	sem_init(&sem_deadlock, 0, 0);
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
@@ -93,6 +94,7 @@ void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 	}
 }
 
+
 void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entrenador) {
 	t_protocol catch_protocol = CATCH_POKEMON;	
 
@@ -128,12 +130,11 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 			solve_deadlock();
 		}		
 	}
-
 	usleep(500000);
 }
 
-void send_get_message() {
-	
+
+void send_get_message() {	
 	sem_wait(&sem_pokemons_to_get);
 	t_protocol get_protocol;
 	t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
@@ -155,6 +156,7 @@ void send_get_message() {
 		usleep(500000);
 	}
 }
+
 
 int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
@@ -181,6 +183,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	return 0;
 }
 
+
 void check_RR_burst(t_entrenador_pokemon* entrenador) {
 	if(entrenador->current_burst_time == team_config->quantum) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
@@ -189,6 +192,7 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que terminó su QUANTUM", entrenador->id);
 	}
 }
+
 
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 
@@ -199,6 +203,7 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que será desalojado por otro con ráfaga más corta", entrenador->id);
 	}
 }
+
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	team_logger_info("Se creó un hilo para el entrenador %d", entrenador->id);
@@ -234,8 +239,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
 	entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_x;
 
-	if (entrenador->deadlock) {
-		
+	if (entrenador->deadlock) {		
 		sem_post(&sem_deadlock);
 	}
 
