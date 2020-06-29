@@ -6,7 +6,7 @@ char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
-	while (true) {
+	while (true){
 		sem_wait(&sem_planificador);
 		sem_wait(&sem_trainers_in_ready_queue);
 
@@ -77,8 +77,9 @@ void team_planner_algoritmo_cercania() {
 		add_to_ready_queue(entrenador);
 		list_destroy(entrenadores_disponibles);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);
+
+		sem_post(&sem_trainers_in_ready_queue);
 	}
-	sem_post(&sem_trainers_in_ready_queue);
 }
 
 void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
@@ -332,7 +333,6 @@ void planner_load_entrenadores() {
 		planner_init_global_targets(objetivos);
 		i++;
 	}
-	sem_post(&sem_entrenadores_disponibles);
 
 	team_logger_info("Hay %d entrenadores en la cola de NEW", list_size(new_queue));
 	int tamanio_objetivos = 0;
@@ -687,7 +687,8 @@ void planner_destroy_quees() {
 void team_planner_destroy() {
 	sem_destroy(&sem_entrenadores_disponibles);
 	sem_destroy(&sem_message_on_queue);
-	sem_destroy(&sem_pokemons_in_ready_queue);
+	sem_destroy(&sem_trainers_in_ready_queue);
+	pthread_mutex_destroy(&cola_pokemons_a_atrapar);
 	planner_destroy_quees();
 	planner_destroy_global_targets(team_planner_global_targets);
 }

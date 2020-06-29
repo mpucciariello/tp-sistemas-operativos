@@ -55,13 +55,14 @@ typedef struct {
 } t_pokemon_received;
 
 
-sem_t sem_entrenadores_disponibles; //avisa cuando hay entrenadores en la cola de nuevos
-sem_t sem_message_on_queue; //avisa al algoritmo de cercania cuando hay mensajes encolados
+sem_t sem_entrenadores_disponibles;
+sem_t sem_message_on_queue;
 sem_t sem_trainers_in_ready_queue;
-sem_t sem_pokemons_to_get; //para enviar al mensaje get
-sem_t sem_deadlock; //para controlar deadlock
+sem_t sem_pokemons_to_get;
+sem_t sem_deadlock;
 sem_t sem_planificador; 
 
+pthread_mutex_t(cola_pokemons_a_atrapar);
 
 t_list* new_queue;
 t_list* ready_queue;
