@@ -6,76 +6,81 @@ char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
-	sem_wait(&sem_planificador);
-	sem_wait(&sem_pokemons_in_ready_queue);
-			
-	t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
+	while (true) {
+		sem_wait(&sem_planificador);
+		sem_wait(&sem_pokemons_in_ready_queue);
 
-	team_logger_info("El entrenador %d se encuentra en estado EXEC", entrenador->id);
-	pthread_mutex_unlock(&entrenador->sem_move_trainers);
-	context_switch_qty++;	
+		t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
+
+		team_logger_info("El entrenador %d se encuentra en estado EXEC", entrenador->id);
+		pthread_mutex_unlock(&entrenador->sem_move_trainers);
+		context_switch_qty++;
+	}
 }
 
 void team_planner_algoritmo_cercania() {
-	sem_wait(&sem_message_on_queue);
-	team_logger_info("Se hizo wait a message on queue");
-	sem_wait(&sem_entrenadores_disponibles);
-	team_logger_info("Se hizo wait a entrenadores disponibles");
+	while (true) {
+		sem_wait(&sem_message_on_queue);
+		team_logger_info("Se hizo wait a message on queue");
+		sem_wait(&sem_entrenadores_disponibles);
+		team_logger_info("Se hizo wait a entrenadores disponibles");
 
-	team_logger_info("Se ejecutará el algoritmo de cercanía!");
+		team_logger_info("Se ejecutará el algoritmo de cercanía!");
 
-	t_pokemon* pokemon;
-	t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
+		t_pokemon* pokemon;
+		t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
 
-	int c = -1;
-	int min_steps = 0;
+		int c = -1;
+		int min_steps = 0;
 
-	t_list*	entrenadores_disponibles = team_planner_create_ready_queue();
-	
-	for (int i = 0; i < list_size(entrenadores_disponibles); i++) {
-		t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
-		for (int j = 0; j < list_size(pokemon_to_catch); j++) {
-			t_pokemon_received* pokemon_con_posiciones_aux = list_get(pokemon_to_catch, j);
-			for (int k = 0; k < list_size(pokemon_con_posiciones_aux->pos); k++) {
-				t_position* posicion_aux = list_get(pokemon_con_posiciones_aux->pos, k);
+		t_list*	entrenadores_disponibles = team_planner_create_ready_queue();
 
-				int aux_x = posicion_aux->pos_x - entrenador_aux->position->pos_x;
-				int aux_y = posicion_aux->pos_y - entrenador_aux->position->pos_y;
+		for (int i = 0; i < list_size(entrenadores_disponibles); i++) {
+			t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
+			for (int j = 0; j < list_size(pokemon_to_catch); j++) {
+				t_pokemon_received* pokemon_con_posiciones_aux = list_get(pokemon_to_catch, j);
+				for (int k = 0; k < list_size(pokemon_con_posiciones_aux->pos); k++) {
+					t_position* posicion_aux = list_get(pokemon_con_posiciones_aux->pos, k);
 
-				int closest_sum = fabs(aux_x + aux_y);
+					int aux_x = posicion_aux->pos_x - entrenador_aux->position->pos_x;
+					int aux_y = posicion_aux->pos_y - entrenador_aux->position->pos_y;
 
-				if (c == -1) {
-					min_steps = closest_sum;
-					c = 0;
-				}
+					int closest_sum = fabs(aux_x + aux_y);
 
-				if (closest_sum <= min_steps) {
-					pokemon = malloc(sizeof(t_pokemon));
-					pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
-					pokemon->position = malloc(sizeof(t_position));
-					pokemon->position->pos_x = posicion_aux->pos_x;
-					pokemon->position->pos_y = posicion_aux->pos_y;
-					entrenador = entrenador_aux;
+					if (c == -1) {
+						min_steps = closest_sum;
+						c = 0;
+					}
+
+					if (closest_sum <= min_steps) {
+						pokemon = malloc(sizeof(t_pokemon));
+						pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
+						pokemon->position = malloc(sizeof(t_position));
+						pokemon->position->pos_x = posicion_aux->pos_x;
+						pokemon->position->pos_y = posicion_aux->pos_y;
+						entrenador = entrenador_aux;
+					}
 				}
 			}
 		}
-	}
 
-	if (team_planner_is_SJF_algorithm()) {
-		entrenador->estimated_time = team_planner_calculate_exponential_mean(entrenador->current_burst_time, entrenador->estimated_time);
-		team_logger_info("Estimación recalculada del entrenador: %f", entrenador->estimated_time);
-		entrenador->current_burst_time = 0;
-	}
+		if (team_planner_is_SJF_algorithm()) {
+			entrenador->estimated_time = team_planner_calculate_exponential_mean(entrenador->current_burst_time, entrenador->estimated_time);
+			team_logger_info("Estimación recalculada del entrenador: %f", entrenador->estimated_time);
+			entrenador->current_burst_time = 0;
+		}
 
-	if (team_config->algoritmo_planificacion == RR) {
-		entrenador->current_burst_time = 0;
+		if (team_config->algoritmo_planificacion == RR) {
+			entrenador->current_burst_time = 0;
+		}
+
+		entrenador->pokemon_a_atrapar = pokemon;
+
+		add_to_ready_queue(entrenador);
+		list_destroy(entrenadores_disponibles);
+		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);
 	}
 	
-	entrenador->pokemon_a_atrapar = pokemon;
-
-	add_to_ready_queue(entrenador);
-	list_destroy(entrenadores_disponibles);
-	team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);
 }
 
 void add_to_ready_queue(t_entrenador_pokemon* entrenador) {

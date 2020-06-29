@@ -75,7 +75,6 @@ void team_init() {
 		;
 }
 
-
 void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
 		t_pokemon_received* pokemon_con_posiciones = list_get(pokemon_to_catch, i);
@@ -453,7 +452,6 @@ void *receive_msg(int fd, int send_to) {
 	return NULL;
 }
 
-
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
@@ -461,7 +459,6 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	sem_post(&sem_message_on_queue); //TODO: ver que estamos tomando al pokemon como uno solo y si trae muchas posiciones en realidad son muchos.
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
-
 
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 	t_list* targets_aux = entrenador->targets;
@@ -485,7 +482,6 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 
 }
 
-
 bool pokemon_required(char* pokemon_name) {
 
 	bool _es_el_mismo(char* name) {
@@ -500,7 +496,6 @@ bool pokemon_required(char* pokemon_name) {
 
 	return !list_any_satisfy(pokemon_to_catch_name, (void*) _es_el_mismo);
 }
-
 
 void team_server_init() {
 
@@ -537,7 +532,6 @@ void team_server_init() {
 		}
 	}
 }
-
 
 void *handle_connection(void *arg) {
 	t_handle_connection* connect_handler = (t_handle_connection *) arg;
