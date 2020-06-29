@@ -101,7 +101,6 @@ void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) { //0
 	}
 }
 
-
 void delete_from_new_queue(t_entrenador_pokemon* entrenador) {
 	for (int i = 0; i < list_size(new_queue); i++) {
 		t_entrenador_pokemon* entrenador_aux = list_get(new_queue, i);
@@ -152,7 +151,6 @@ t_pokemon* team_planner_pokemon_appeared_create(char* nombre, int x, int y) {
 	pokemon->position = pos;
 	return pokemon;
 }
-
 
 char* team_planner_entrenador_string(t_entrenador_pokemon* entrenador) {
 	char* entrenador_string = string_new();
@@ -371,17 +369,15 @@ int team_planner_get_least_estimate_index() {
 }
 
 void new_cpu_cicle() {
-	int i = 0;
-
-	for (i = 0; i < list_size(ready_queue); i++) {
-		t_entrenador_pokemon* trainner = list_get(ready_queue, i);
+	void _increase_wait_time_trainner(t_entrenador_pokemon *trainner) {
 		trainner->wait_time++;
 	}
+	list_iterate(ready_queue, (void*) _increase_wait_time_trainner);
 
-	for (i = 0; i < list_size(block_queue); i++) {
-		t_entrenador_pokemon* trainner = list_get(block_queue, i);
+	void _increase_block_time_trainner(t_entrenador_pokemon *trainner) {
 		trainner->blocked_info->blocked_time++;
 	}
+	list_iterate(block_queue, (void*) _increase_block_time_trainner);
 }
 
 float team_planner_calculate_exponential_mean(int burst_time, float tn) {
