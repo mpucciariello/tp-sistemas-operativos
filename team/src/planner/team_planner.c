@@ -8,7 +8,7 @@ int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 void team_planner_run_planification() {
 	while (true) {
 		sem_wait(&sem_planificador);
-		sem_wait(&sem_pokemons_in_ready_queue);
+		sem_wait(&sem_trainers_in_ready_queue);
 
 		t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
@@ -21,9 +21,7 @@ void team_planner_run_planification() {
 void team_planner_algoritmo_cercania() {
 	while (true) {
 		sem_wait(&sem_message_on_queue);
-		team_logger_info("Se hizo wait a message on queue");
 		sem_wait(&sem_entrenadores_disponibles);
-		team_logger_info("Se hizo wait a entrenadores disponibles");
 
 		team_logger_info("Se ejecutará el algoritmo de cercanía!");
 
@@ -80,15 +78,14 @@ void team_planner_algoritmo_cercania() {
 		list_destroy(entrenadores_disponibles);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);
 	}
-	
+	sem_post(&sem_trainers_in_ready_queue);
 }
 
 void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
 	entrenador->state = READY;
 	list_add(ready_queue, entrenador);
 	delete_from_bloqued_queue(entrenador, 0);
-	delete_from_new_queue(entrenador);
-	sem_post(&sem_pokemons_in_ready_queue);
+	delete_from_new_queue(entrenador);	
 }
 
 void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) { //0 = READY. 1 = EXIT

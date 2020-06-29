@@ -30,7 +30,8 @@ void team_init() {
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	sem_init(&sem_message_on_queue, 0, 0);
 	sem_init(&sem_planificador, 0, 1);
-	sem_init(&sem_pokemons_in_ready_queue, 0, 0);
+	sem_init(&sem_trainers_in_ready_queue, 0, 0);
+	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -456,7 +457,10 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
 	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
-	sem_post(&sem_message_on_queue); //TODO: ver que estamos tomando al pokemon como uno solo y si trae muchas posiciones en realidad son muchos.
+
+	for(int i = 0; i < list_size(pokemon->pos); i++){
+		sem_post(&sem_message_on_queue);
+	}
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
 
