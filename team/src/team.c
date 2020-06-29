@@ -63,14 +63,14 @@ void team_init() {
 	pthread_detach(tid3);
 
 	pthread_create(&algoritmo_cercania_entrenadores, NULL, (void*) team_planner_algoritmo_cercania, NULL);
-	team_logger_info("Creando un hilo que maneje el ALGORITMO DE CERCANÍA");
+	team_logger_info("Creando un hilo para el ALGORITMO DE CERCANÍA");
 	pthread_detach(algoritmo_cercania_entrenadores);
 
 	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
-	team_logger_info("Creando un hilo que maneje la PLANIFICACIÓN");
+	team_logger_info("Creando un hilo para la PLANIFICACIÓN");
 	pthread_detach(planificator);
 
-	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
+	team_logger_info("Creando un hilo para poner al Team en modo Servidor"); //TODO: sacar espera activa
 	team_server_init();
 	usleep(500000);
 	for (;;)
@@ -355,7 +355,7 @@ void *receive_msg(int fd, int send_to) {
 
 		switch (protocol) {
 			case CAUGHT_POKEMON: {
-				team_logger_info("Caught received");
+				team_logger_info("Se recibió un CAUGHT!");
 				t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
 				team_logger_info("ID correlacional: %d", caught_rcv->id_correlacional);
 				team_logger_info("Resultado (0/1): %d", caught_rcv->result);
@@ -392,7 +392,7 @@ void *receive_msg(int fd, int send_to) {
 			}
 
 			case LOCALIZED_POKEMON: {
-				team_logger_info("Localized received!");
+				team_logger_info("Se recibió un LOCALIZED!");
 				t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd, protocol);
 				team_logger_info("ID correlacional: %d", loc_rcv->id_correlacional);
 				team_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
@@ -421,7 +421,7 @@ void *receive_msg(int fd, int send_to) {
 			}
 
 			case APPEARED_POKEMON: {
-				team_logger_info("Appeared received!");
+				team_logger_info("Se recibió un APPEARED!");
 				t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd, protocol);
 				team_logger_info("ID correlacional: %d", appeared_rcv->id_correlacional);
 				team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);

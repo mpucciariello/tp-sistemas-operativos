@@ -432,9 +432,7 @@ t_list* team_planner_trainers_waiting_messages() {
 	bool _is_waiting(t_entrenador_pokemon* trainner) {
 		return trainner->blocked_info->status == 1;
 	}
-	t_list* bloquados_en_uno = filter_block_list_by_0(block_queue, (void*) _is_waiting);
-	
-	return bloqueados_en_uno;
+	return filter_block_list_by_1(block_queue, (void*) _is_waiting);
 }
 
 t_entrenador_pokemon* team_planner_apply_SJF() {
@@ -667,14 +665,11 @@ bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 			return true;
 		}
 	}
-	list_destroy(pokemons_target_aux);
 	return false;
 }
 
 void planner_destroy_pokemons(t_pokemon* pokemon) {
 	free(pokemon->name);
-	free(pokemon->position->pos_x);
-	free(pokemon->position->pos_y);
 	free(pokemon->position);
 	free(pokemon);
 }
