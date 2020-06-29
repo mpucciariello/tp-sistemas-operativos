@@ -63,28 +63,28 @@ void team_init() {
 	pthread_detach(tid3);
 
 	pthread_create(&algoritmo_cercania_entrenadores, NULL, (void*) team_planner_algoritmo_cercania, NULL);
-	team_logger_info("Creando un hilo para el ALGORITMO DE CERCANÍA");
+	team_logger_info("Creando un hilo que maneje el ALGORITMO DE CERCANÍA");
 	pthread_detach(algoritmo_cercania_entrenadores);
 
 	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
-	team_logger_info("Creando un hilo para la PLANIFICACIÓN");
+	team_logger_info("Creando un hilo que maneje la PLANIFICACIÓN");
 	pthread_detach(planificator);
 
-	team_logger_info("Creando un hilo para poner al Team en modo Servidor"); //TODO: sacar espera activa
+	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
 	team_server_init();
 	usleep(500000);
 	for (;;)
 		;
 }
 
-void remove_pokemon_from_catch (t_catch_pokemon* catch_message) {
+void remove_pokemon_from_catch (t_pokemon* pokemon) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
 		t_pokemon_received* pokemon_con_posiciones = list_get(pokemon_to_catch, i);
-		if (string_equals_ignore_case(pokemon_con_posiciones->name, catch_message->nombre_pokemon)) {
+		if (string_equals_ignore_case(pokemon_con_posiciones->name, pokemon->name)) {
 			t_list* posiciones_pokemon = pokemon_con_posiciones->pos;
 			for (int j = 0; j < list_size(posiciones_pokemon); j++) {
 				t_position* position = list_get(posiciones_pokemon, j);
-				if (position->pos_x == catch_message->pos_x && position->pos_y == catch_message->pos_y) {
+				if (position->pos_x == pokemon->position->pos_x && position->pos_y ==  pokemon->position->pos_x) {
 					pthread_mutex_lock(&cola_pokemons_a_atrapar);
 					list_remove(pokemon_to_catch, i);
 					pthread_mutex_unlock(&cola_pokemons_a_atrapar);
@@ -111,7 +111,6 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		list_add(entrenador->list_id_catch, (void*)catch_send->id_correlacional);
 	} else {
 		team_logger_warn("No se ha podido enviar el mensaje CATCH. Se agregará a los pokemons atrapados del entrenador %d, por comportamiento default: %s, posición (%d, %d)", entrenador->id, catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
-		remove_pokemon_from_catch(catch_send);
 		team_planner_change_block_status_by_trainer(0, entrenador);
 		t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
 		list_add(entrenador->pokemons, pokemon);
@@ -252,9 +251,9 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 		send_message_catch(catch_send, entrenador);
 	}
-	sem_post(&sem_planificador);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
-
+	entrenador = NULL;
+	sem_post(&sem_planificador);
 }
 
 void subscribe_to(void *arg) {
@@ -355,13 +354,12 @@ void *receive_msg(int fd, int send_to) {
 
 		switch (protocol) {
 			case CAUGHT_POKEMON: {
-				team_logger_info("Se recibió un CAUGHT!");
+				team_logger_info("Caught received");
 				t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
 				team_logger_info("ID correlacional: %d", caught_rcv->id_correlacional);
 				team_logger_info("Resultado (0/1): %d", caught_rcv->result);
 
 				t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);
-				remove_pokemon_from_catch(catch_message);
 				
 				t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
 				team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
@@ -392,7 +390,7 @@ void *receive_msg(int fd, int send_to) {
 			}
 
 			case LOCALIZED_POKEMON: {
-				team_logger_info("Se recibió un LOCALIZED!");
+				team_logger_info("Localized received!");
 				t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd, protocol);
 				team_logger_info("ID correlacional: %d", loc_rcv->id_correlacional);
 				team_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
@@ -421,7 +419,7 @@ void *receive_msg(int fd, int send_to) {
 			}
 
 			case APPEARED_POKEMON: {
-				team_logger_info("Se recibió un APPEARED!");
+				team_logger_info("Appeared received!");
 				t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd, protocol);
 				team_logger_info("ID correlacional: %d", appeared_rcv->id_correlacional);
 				team_logger_info("Nombre Pokemon: %s", appeared_rcv->nombre_pokemon);

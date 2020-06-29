@@ -76,7 +76,7 @@ void team_planner_algoritmo_cercania() {
 
 		add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
-		//list_destroy(entrenadores_disponibles);
+		 remove_pokemon_from_catch (pokemon);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);		
 	}
 }
