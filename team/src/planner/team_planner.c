@@ -7,8 +7,8 @@ int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
 	while (true){
-		sem_wait(&sem_planificador);
 		sem_wait(&sem_trainers_in_ready_queue);
+		sem_wait(&sem_planificador);
 
 		t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
@@ -447,14 +447,11 @@ t_entrenador_pokemon* team_planner_apply_SJF() {
 
 t_entrenador_pokemon* team_planner_apply_FIFO() {
 	
-	int next_out_index = fifo_index;
 	t_entrenador_pokemon* entrenador;
-	if (next_out_index <= list_size(ready_queue)) { 
-		entrenador = list_get(ready_queue, next_out_index);
-		list_remove(ready_queue, next_out_index);
-		team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar", entrenador->id);
-		fifo_index++;
-	}	
+	entrenador = list_get(ready_queue, 0);
+	list_remove(ready_queue, 0);
+	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar", entrenador->id);
+
 	return team_planner_exec_trainer(entrenador);
 }
 
