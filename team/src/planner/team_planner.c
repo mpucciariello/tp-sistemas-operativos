@@ -488,8 +488,8 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 
 bool all_queues_are_empty_except_block() {
 	t_list* entrenadores_disponibles = team_planner_create_ready_queue();
-	t_list* esperan_mensajes = team_planner_trainers_waiting_messages();
-	return list_is_empty(entrenadores_disponibles) && list_is_empty(ready_queue) && list_is_empty(esperan_mensajes); 
+	//t_list* esperan_mensajes = team_planner_trainers_waiting_messages();
+	return list_is_empty(entrenadores_disponibles); //&& list_is_empty(ready_queue) && list_is_empty(esperan_mensajes);
 }
 
 void solve_deadlock() {

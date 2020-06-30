@@ -3,28 +3,6 @@
 int main(int argc, char *argv[]) {
 	if (team_load() < 0)
 		return EXIT_FAILURE;
-	team_init();
-	team_exit();
-
-	return EXIT_SUCCESS;
-}
-
-int team_load() {
-	int response = team_config_load();
-	if (response < 0)
-		return response;
-
-	response = team_logger_create(team_config->log_file);
-	if (response < 0) {
-		team_config_free();
-		return response;
-	}
-	team_print_config();
-
-	return 0;
-}
-
-void team_init() {
 
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
@@ -73,9 +51,29 @@ void team_init() {
 	team_logger_info("Creando un hilo para poner al Team en modo Servidor");
 	team_server_init();
 	usleep(500000);
-	for (;;)
-		;
+
+	team_exit();
+
+	return EXIT_SUCCESS;
 }
+
+int team_load() {
+	int response = team_config_load();
+	if (response < 0)
+		return response;
+
+	response = team_logger_create(team_config->log_file);
+	if (response < 0) {
+		team_config_free();
+		return response;
+	}
+	team_print_config();
+
+	return 0;
+}
+
+/*void team_init() {
+}*/
 
 void remove_pokemon_from_catch (t_pokemon* pokemon) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
