@@ -161,7 +161,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 
 	if (broker_fd_send < 0) {
-		team_logger_warn("No se pudo conectar con BROKER.");
+		//team_logger_warn("No se pudo conectar con BROKER.");
 		socket_close_conection(broker_fd_send);
 		return -1;
 	} else {
@@ -251,9 +251,8 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 		send_message_catch(catch_send, entrenador);
 	}
-	pthread_mutex_lock(&entrenador->sem_move_trainers);
-	entrenador = NULL;
 	sem_post(&sem_planificador);
+	pthread_mutex_lock(&entrenador->sem_move_trainers);
 }
 
 void subscribe_to(void *arg) {
