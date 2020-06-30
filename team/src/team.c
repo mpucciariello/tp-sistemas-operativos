@@ -117,6 +117,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, catch_send->nombre_pokemon);
 
 		if (trainer_is_in_deadlock_caught(entrenador)) {
+			team_logger_info("El entrenador %d está en deadlock!", entrenador->id);
 			entrenador->deadlock = true;
 		}
 		
@@ -124,7 +125,8 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 			team_planner_finish_trainner(entrenador);
 		}
 
-		if (all_queues_are_empty_except_block()) {
+		if (all_queues_are_empty_except_block()) {//TODO: esta funcion debería devolver true si lo unico que tiene elementos es blocked en deadlock, pero no lo hace
+			pthread_mutex_lock(&entrenador->sem_move_trainers);
 			team_logger_info("Ya no es posible atrapar más pokemones debido a que se alcanzó la cantidad del objetivo!");
 			solve_deadlock();
 		}		
@@ -161,7 +163,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 
 	if (broker_fd_send < 0) {
-		//team_logger_warn("No se pudo conectar con BROKER.");
+		team_logger_warn("No se pudo conectar con BROKER.");
 		socket_close_conection(broker_fd_send);
 		return -1;
 	} else {
@@ -169,7 +171,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 		utils_serialize_and_send(broker_fd_send, protocolo, paquete);
 
 		uint32_t id_corr;
-		int recibido = recv(broker_fd_send, &id_corr, sizeof(uint32_t), MSG_WAITALL); //
+		int recibido = recv(broker_fd_send, &id_corr, sizeof(uint32_t), MSG_WAITALL);
 		if (recibido > 0 && queue != NULL) {
 			list_add(queue, (void*)id_corr);
 		}
@@ -209,7 +211,6 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 
-	team_logger_info("ARRANCO");
 	int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
@@ -251,8 +252,9 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		catch_send->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
 		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 		send_message_catch(catch_send, entrenador);
+		sem_post(&sem_planificador);
 	}
-	sem_post(&sem_planificador);
+	
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 }
 
@@ -377,7 +379,8 @@ void *receive_msg(int fd, int send_to) {
 						entrenador->deadlock = true;
 					} 
 
-					if (all_queues_are_empty_except_block()){
+					if (all_queues_are_empty_except_block()) {
+						team_logger_info("Ya no es posible atrapar más pokemones debido a que se alcanzó la cantidad del objetivo!");
 						solve_deadlock();
 					}
 
