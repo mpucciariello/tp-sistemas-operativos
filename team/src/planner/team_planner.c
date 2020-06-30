@@ -12,8 +12,8 @@ void team_planner_run_planification() {
 
 		t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
-		team_logger_info("El entrenador %d se encuentra en estado EXEC", entrenador->id);
 		pthread_mutex_unlock(&entrenador->sem_move_trainers);
+		team_logger_info("El entrenador %d pasará a EXEC!", entrenador-> id);
 		context_switch_qty++;
 	}
 }
@@ -282,7 +282,7 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 }
 
 void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemon* entrenador) {
-	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo)); 
+	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo));
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
 	entrenador->state = BLOCK;

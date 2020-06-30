@@ -45,6 +45,6 @@ void send_message_catch(t_catch_pokemon*, t_entrenador_pokemon*);
 void check_SJF_CD_time(t_entrenador_pokemon*);
 void check_RR_burst(t_entrenador_pokemon*);
 void add_to_pokemon_to_catch(t_pokemon_received*);
-void remove_pokemon_from_catch (t_pokemon*);
+
 
 #endif /* TEAM_H_ */

@@ -209,12 +209,13 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 
+	team_logger_info("ARRANCO");
 	int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 	int	aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
 	int steps = fabs(aux_x + aux_y);
 
-	for (int i = 0; i < steps; i++) {
+	for (int i = 0; i <= steps; i++) {
 		sleep(team_config->retardo_ciclo_cpu);
 		new_cpu_cicle();
 		entrenador->current_burst_time++;
