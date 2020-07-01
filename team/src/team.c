@@ -78,14 +78,23 @@ int team_load() {
 void remove_pokemon_from_catch (t_pokemon* pokemon) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
 		t_pokemon_received* pokemon_con_posiciones = list_get(pokemon_to_catch, i);
+
 		if (string_equals_ignore_case(pokemon_con_posiciones->name, pokemon->name)) {
 			t_list* posiciones_pokemon = pokemon_con_posiciones->pos;
-			for (int j = 0; j < list_size(posiciones_pokemon); j++) {
-				t_position* position = list_get(posiciones_pokemon, j);
-				if (position->pos_x == pokemon->position->pos_x && position->pos_y ==  pokemon->position->pos_x) {
-					pthread_mutex_lock(&cola_pokemons_a_atrapar);
-					list_remove(pokemon_to_catch, i);
-					pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+
+			if(list_size(posiciones_pokemon)=1){
+				pthread_mutex_lock(&cola_pokemons_a_atrapar);
+				list_remove(pokemon_to_catch, i);
+				pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+			} else {
+
+				for (int j = 0; j < list_size(posiciones_pokemon); j++) {
+					t_position* position = list_get(posiciones_pokemon, j);
+					if (position->pos_x == pokemon->position->pos_x && position->pos_y ==  pokemon->position->pos_x) {
+						pthread_mutex_lock(&cola_pokemons_a_atrapar);
+						list_remove(pokemon_to_catch->pos, j);
+						pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+					}
 				}
 			}
 		}
@@ -461,9 +470,9 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	list_add(pokemon_to_catch, pokemon);
 	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 
-	//for(int i = 0; i < list_size(pokemon->pos); i++){
+	for(int i = 0; i < list_size(pokemon->pos); i++){
 		sem_post(&sem_message_on_queue);
-	//}
+	}
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
 
@@ -482,8 +491,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 			}
 		}
 	}
-	//return !list_is_empty(targets_aux);
-	return false;
+	return list_size(targets_aux) == 0;
 }
 
 bool pokemon_required(char* pokemon_name) {
