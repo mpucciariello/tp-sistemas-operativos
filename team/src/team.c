@@ -205,55 +205,57 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
-	team_logger_info("Se creó un hilo para el entrenador %d", entrenador->id);
+	while(true){
+		team_logger_info("Se creó un hilo para el entrenador %d", entrenador->id);
 
-	pthread_mutex_lock(&entrenador->sem_move_trainers);
+		pthread_mutex_lock(&entrenador->sem_move_trainers);
 
-	int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
-	int	aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
+		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
+		int	aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
-	int steps = fabs(aux_x + aux_y);
+		int steps = fabs(aux_x + aux_y);
 
-	for (int i = 0; i <= steps; i++) {
-		sleep(team_config->retardo_ciclo_cpu);
-		new_cpu_cicle();
-		entrenador->current_burst_time++;
-		entrenador->total_burst_time++; 
+		for (int i = 0; i <= steps; i++) {
+			sleep(team_config->retardo_ciclo_cpu);
+			new_cpu_cicle();
+			entrenador->current_burst_time++;
+			entrenador->total_burst_time++; 
 
-		if (team_config->algoritmo_planificacion == RR) {
-			check_RR_burst(entrenador); 
-		} 
+			if (team_config->algoritmo_planificacion == RR) {
+				check_RR_burst(entrenador); 
+			} 
 
-		if (team_config->algoritmo_planificacion == SJF_CD) {
-			check_SJF_CD_time(entrenador); 
+			if (team_config->algoritmo_planificacion == SJF_CD) {
+				check_SJF_CD_time(entrenador); 
+			}
 		}
-	}
-	
-	team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador->id,
-																		 entrenador->position->pos_x,
-																		 entrenador->position->pos_y,
-																		 entrenador->pokemon_a_atrapar->position->pos_x,
-																		 entrenador->pokemon_a_atrapar->position->pos_y);
+		
+		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador->id,
+																			entrenador->position->pos_x,
+																			entrenador->position->pos_y,
+																			entrenador->pokemon_a_atrapar->position->pos_x,
+																			entrenador->pokemon_a_atrapar->position->pos_y);
 
-	entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
-	entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_x;
+		entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
+		entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_x;
 
-	if (entrenador->deadlock) {		
-		sem_post(&sem_deadlock);
-	}
+		if (entrenador->deadlock) {		
+			sem_post(&sem_deadlock);
+		}
 
-	if (entrenador->blocked_info == 0 && entrenador->deadlock == false) {
-		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
-		catch_send->id_correlacional = 0;
-		catch_send->nombre_pokemon = entrenador->pokemon_a_atrapar->name;
-		catch_send->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
-		catch_send->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
-		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
-		send_message_catch(catch_send, entrenador);
-		sem_post(&sem_planificador);
+		if (entrenador->blocked_info == 0 && entrenador->deadlock == false) {
+			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
+			catch_send->id_correlacional = 0;
+			catch_send->nombre_pokemon = entrenador->pokemon_a_atrapar->name;
+			catch_send->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
+			catch_send->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
+			catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
+			send_message_catch(catch_send, entrenador);
+			sem_post(&sem_planificador);
+		}
+		
+		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
-	
-	pthread_mutex_lock(&entrenador->sem_move_trainers);
 }
 
 void subscribe_to(void *arg) {
@@ -483,10 +485,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 		}
 
 		return !list_is_empty(targets_aux);
-	} else {
-		return false; 
 	}
-
 }
 
 bool pokemon_required(char* pokemon_name) {
