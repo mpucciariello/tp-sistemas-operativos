@@ -77,7 +77,7 @@ void team_planner_algoritmo_cercania() {
 		add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
 		remove_pokemon_from_catch(pokemon);
-		//list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
+		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);		
 	}
 }
@@ -655,8 +655,10 @@ bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 				}
 			}
 		}
+		int length = list_size(pokemons_target_aux);
+		list_destroy(pokemons_target_aux);
 
-		if (list_size(pokemons_target_aux) == 0) {
+		if (length == 0) {
 			return true;
 		}
 	}

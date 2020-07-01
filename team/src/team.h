@@ -34,7 +34,7 @@ void subscribe_to(void *);
 void send_message_test();
 void team_retry_connect(void*);
 bool pokemon_required(char*);
-//bool pokemon_not_pendant(char*);
+bool pokemon_not_pendant(char*);
 void send_get_message();
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon*);
 int send_message(void*, t_protocol, t_list*);
@@ -45,7 +45,7 @@ void send_message_catch(t_catch_pokemon*, t_entrenador_pokemon*);
 void check_SJF_CD_time(t_entrenador_pokemon*);
 void check_RR_burst(t_entrenador_pokemon*);
 void add_to_pokemon_to_catch(t_pokemon_received*);
-//void quitar_de_pokemones_pendientes(char*);
+void quitar_de_pokemones_pendientes(char*);
 
 
 #endif /* TEAM_H_ */

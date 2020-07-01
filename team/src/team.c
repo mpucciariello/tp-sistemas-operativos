@@ -35,7 +35,7 @@ void team_init() {
 	sem_init(&sem_deadlock, 0, 0);
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 	message_catch_sended = list_create();
-	//pokemones_pendientes = list_create();
+	pokemones_pendientes = list_create();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -128,7 +128,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
 		list_add(entrenador->pokemons, pokemon);
 		team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, catch_send->nombre_pokemon);
-		//quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
+		quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
 
 		if (trainer_is_in_deadlock_caught(entrenador)) {
 			team_logger_info("El entrenador %d está en deadlock!", entrenador->id);
@@ -139,9 +139,9 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 			team_planner_finish_trainner(entrenador);
 		}
 
-		if (all_queues_are_empty_except_block()) {//TODO: esta funcion debería devolver true si lo unico que tiene elementos es blocked en deadlock, pero no lo hace
+		if (all_queues_are_empty_except_block()) {
 			pthread_mutex_lock(&entrenador->sem_move_trainers);
-			team_logger_info("Ya no es posible atrapar más pokemones debido a que se alcanzó la cantidad del objetivo!");
+			team_logger_info("Ya no es posible atrapar más pokemones!");
 			solve_deadlock();
 		}		
 	}
@@ -149,7 +149,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 }
 
 
-/*bool pokemon_not_pendant(char* pokemon){
+bool pokemon_not_pendant(char* pokemon){
 	for(int i = 0; i < list_size(pokemones_pendientes); i++){
 		char* nombre = list_get(pokemones_pendientes, i);
 
@@ -158,8 +158,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		}
 	}
 	return true;
-}*/
-
+}
 
 void send_get_message() {	
 	sem_wait(&sem_pokemons_to_get);
@@ -391,7 +390,7 @@ void *receive_msg(int fd, int send_to) {
 				t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
 
 				team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
-				//quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
+				quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
 
 				if(caught_rcv->result) {
 					team_logger_info("MENSAJE CAUGHT POSITIVO: El entrenador %d, atrapó un %s!!", entrenador->id, catch_message->nombre_pokemon);
@@ -437,7 +436,7 @@ void *receive_msg(int fd, int send_to) {
 					return loc_rcv->id_correlacional == id;
 				}
 
-				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon)){ //&& pokemon_not_pendant(loc_rcv->nombre_pokemon)){
+				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon) & pokemon_not_pendant(loc_rcv->nombre_pokemon)){
 					t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
 					pokemon->name = malloc(sizeof(loc_rcv->tamanio_nombre));
 					pokemon->name = loc_rcv->nombre_pokemon;
@@ -463,7 +462,7 @@ void *receive_msg(int fd, int send_to) {
 					pthread_detach(tid);
 				}
 
-				if (pokemon_required(appeared_rcv->nombre_pokemon)){ //&& pokemon_not_pendant(appeared_rcv->nombre_pokemon)) {
+				if (pokemon_required(appeared_rcv->nombre_pokemon) && pokemon_not_pendant(appeared_rcv->nombre_pokemon)) {
 					t_position* posicion = malloc(sizeof(t_position));
 					posicion->pos_x = appeared_rcv->pos_x;
 					posicion->pos_y = appeared_rcv->pos_y;
@@ -486,14 +485,15 @@ void *receive_msg(int fd, int send_to) {
 }
 
 
-/*void quitar_de_pokemones_pendientes(char* pokemon){
+void quitar_de_pokemones_pendientes(char* pokemon){
 	for(int i = 0; i < list_size(pokemones_pendientes); i++){
 		char* nombre = list_get(pokemones_pendientes, i);
 		if(string_equals_ignore_case(pokemon, nombre)){
 			list_remove(pokemones_pendientes, i);
 		}
 	}
-}*/
+}
+
 
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
@@ -506,8 +506,10 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
 
-bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
-	t_list* targets_aux = entrenador->targets;
+bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {	
+	t_list* targets_aux = list_create();
+	targets_aux = entrenador->targets;
+
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
 
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
@@ -521,7 +523,10 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 			}
 		}
 	}
-	return list_size(targets_aux) == 0;
+	int length list_size(targets_aux);
+	list_destroy(targets_aux);
+
+	return length == 0;
 }
 
 bool pokemon_required(char* pokemon_name) {
@@ -535,9 +540,11 @@ bool pokemon_required(char* pokemon_name) {
 	}
 
 	t_list* pokemon_to_catch_name = list_map(pokemon_to_catch, (void*) _get_name);
-
 	return !list_any_satisfy(pokemon_to_catch_name, (void*) _es_el_mismo);
-}
+} //TODO: NO MAPEAR DE POKEMON_TO_CATCH. Hacemos un map de la lista de objetivos globales con repetición o mejor de una copia de la lista.
+//Cuando tenemos un positivo -> necesitamos ese pokemon, lo agregamos a pokemon_to_catch (sirve para el algoritmo de cercania). 
+//Aca simplemente evaluamos si lo que llega es o no necesario.
+//Va a haber que borrar de la copia de objetivos totales cada vez que atrapemos uno nuevo (no borrar de la original por las dudas)
 
 void team_server_init() {
 
