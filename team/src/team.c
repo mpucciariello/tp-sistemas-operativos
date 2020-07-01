@@ -82,7 +82,7 @@ void remove_pokemon_from_catch (t_pokemon* pokemon) {
 		if (string_equals_ignore_case(pokemon_con_posiciones->name, pokemon->name)) {
 			t_list* posiciones_pokemon = pokemon_con_posiciones->pos;
 
-			if(list_size(posiciones_pokemon)=1){
+			if(list_size(posiciones_pokemon) == 1){
 				pthread_mutex_lock(&cola_pokemons_a_atrapar);
 				list_remove(pokemon_to_catch, i);
 				pthread_mutex_unlock(&cola_pokemons_a_atrapar);
@@ -92,7 +92,7 @@ void remove_pokemon_from_catch (t_pokemon* pokemon) {
 					t_position* position = list_get(posiciones_pokemon, j);
 					if (position->pos_x == pokemon->position->pos_x && position->pos_y ==  pokemon->position->pos_x) {
 						pthread_mutex_lock(&cola_pokemons_a_atrapar);
-						list_remove(pokemon_to_catch->pos, j);
+						list_remove(pokemon_con_posiciones->pos, j);
 						pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 					}
 				}
