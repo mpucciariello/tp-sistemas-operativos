@@ -206,8 +206,6 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	while(true){
-		team_logger_info("Se creó un hilo para el entrenador %d", entrenador->id);
-
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
@@ -463,9 +461,9 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	list_add(pokemon_to_catch, pokemon);
 	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 
-	for(int i = 0; i < list_size(pokemon->pos); i++){
+	//for(int i = 0; i < list_size(pokemon->pos); i++){
 		sem_post(&sem_message_on_queue);
-	}
+	//}
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
 
@@ -483,9 +481,9 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 				}
 			}
 		}
-
-		return !list_is_empty(targets_aux);
 	}
+	//return !list_is_empty(targets_aux);
+	return false;
 }
 
 bool pokemon_required(char* pokemon_name) {
