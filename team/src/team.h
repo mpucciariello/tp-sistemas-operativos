@@ -22,6 +22,7 @@ pthread_t planificator;
 pthread_t algoritmo_cercania_entrenadores;
 t_list* get_id_corr;
 t_list* keys_list;
+t_list* real_targets_pokemons;
 
 int team_load();
 void team_init();

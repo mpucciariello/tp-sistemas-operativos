@@ -70,9 +70,11 @@ t_list* block_queue;
 t_list* exit_queue;
 t_list* pokemon_to_catch;
 t_list* keys_list;
-t_list* target_pokemons;
+t_list* total_targets_pokemons;
 t_list* message_catch_sended;
 t_list* pokemones_pendientes;
+t_list* got_pokemons;
+t_list* real_targets_pokemons;
 
 t_dictionary* team_planner_global_targets;
 
@@ -109,5 +111,6 @@ t_entrenador_pokemon* team_planner_apply_FIFO();
 t_entrenador_pokemon* team_planner_apply_SJF();
 t_list* team_planner_trainers_waiting_messages();
 void remove_pokemon_from_catch (t_pokemon*);
+void get_real_targets();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

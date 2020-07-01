@@ -36,6 +36,7 @@ void team_init() {
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 	message_catch_sended = list_create();
 	pokemones_pendientes = list_create();
+	//objetivo_global_con_repeticion = list_create();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -518,7 +519,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 			for (int j = 0; j < list_size(targets_aux); j++) {
 				char* pokemon_objetivo = list_get(targets_aux, j);
 				if (string_equals_ignore_case(pokemon_objetivo, pokemon_obtenido)) {
-					list_remove(target_pokemons, j);
+					list_remove(total_targets_pokemons, j);
 				}
 			}
 		}
@@ -538,13 +539,8 @@ bool pokemon_required(char* pokemon_name) {
 	char* _get_name(t_pokemon_received* pokemon) {
 		return pokemon->name;
 	}
-
-	t_list* pokemon_to_catch_name = list_map(pokemon_to_catch, (void*) _get_name);
-	return !list_any_satisfy(pokemon_to_catch_name, (void*) _es_el_mismo);
-} //TODO: NO MAPEAR DE POKEMON_TO_CATCH. Hacemos un map de la lista de objetivos globales con repetición o mejor de una copia de la lista.
-//Cuando tenemos un positivo -> necesitamos ese pokemon, lo agregamos a pokemon_to_catch (sirve para el algoritmo de cercania). 
-//Aca simplemente evaluamos si lo que llega es o no necesario.
-//Va a haber que borrar de la copia de objetivos totales cada vez que atrapemos uno nuevo (no borrar de la original por las dudas)
+	return !list_any_satisfy(real_targets_pokemons, (void*) _es_el_mismo);
+} 
 
 void team_server_init() {
 
