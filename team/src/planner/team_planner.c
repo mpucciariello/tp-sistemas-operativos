@@ -77,7 +77,7 @@ void team_planner_algoritmo_cercania() {
 		add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
 		remove_pokemon_from_catch(pokemon);
-		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
+		//list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);		
 	}
 }
@@ -458,14 +458,11 @@ t_entrenador_pokemon* team_planner_apply_FIFO() {
 
 t_entrenador_pokemon* team_planner_apply_RR() {
 	
-	t_entrenador_pokemon* entrenador = NULL;
-	int next_out_index = fifo_index;
-	if (next_out_index < list_size(ready_queue)) {
-		t_entrenador_pokemon* entrenador = list_get(ready_queue, next_out_index);
-		list_remove(ready_queue, next_out_index);
-		fifo_index++;
-		team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar", entrenador->id);
-	}
+	t_entrenador_pokemon* entrenador;
+	entrenador = list_get(ready_queue, 0);
+	list_remove(ready_queue, 0);
+	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar", entrenador->id);
+
 	return team_planner_exec_trainer(entrenador);	
 }
 
@@ -696,7 +693,7 @@ void planner_destroy_quees() {
 	list_destroy(keys_list);
 	list_destroy(target_pokemons);
 	list_destroy(message_catch_sended);
-	list_destroy(pokemones_pendientes);
+	//list_destroy(pokemones_pendientes);
 }
 
 void team_planner_destroy() {

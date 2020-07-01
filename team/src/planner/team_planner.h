@@ -72,7 +72,7 @@ t_list* pokemon_to_catch;
 t_list* keys_list;
 t_list* target_pokemons;
 t_list* message_catch_sended;
-t_list* pokemones_pendientes;
+//t_list* pokemones_pendientes;
 
 t_dictionary* team_planner_global_targets;
 
