@@ -437,7 +437,7 @@ void *receive_msg(int fd, int send_to) {
 					return loc_rcv->id_correlacional == id;
 				}
 
-				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon) & pokemon_not_pendant(loc_rcv->nombre_pokemon)){
+				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon) && pokemon_not_pendant(loc_rcv->nombre_pokemon)){
 					t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
 					pokemon->name = malloc(sizeof(loc_rcv->tamanio_nombre));
 					pokemon->name = loc_rcv->nombre_pokemon;
@@ -524,7 +524,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 			}
 		}
 	}
-	int length list_size(targets_aux);
+	int length = list_size(targets_aux);
 	list_destroy(targets_aux);
 
 	return length == 0;
