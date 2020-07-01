@@ -22,7 +22,6 @@ pthread_t planificator;
 pthread_t algoritmo_cercania_entrenadores;
 t_list* get_id_corr;
 t_list* keys_list;
-t_list* message_catch_sended;
 
 int team_load();
 void team_init();
@@ -35,6 +34,7 @@ void subscribe_to(void *);
 void send_message_test();
 void team_retry_connect(void*);
 bool pokemon_required(char*);
+bool pokemon_not_pendant(char*);
 void send_get_message();
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon*);
 int send_message(void*, t_protocol, t_list*);
@@ -45,6 +45,7 @@ void send_message_catch(t_catch_pokemon*, t_entrenador_pokemon*);
 void check_SJF_CD_time(t_entrenador_pokemon*);
 void check_RR_burst(t_entrenador_pokemon*);
 void add_to_pokemon_to_catch(t_pokemon_received*);
+void quitar_de_pokemones_pendientes(char*);
 
 
 #endif /* TEAM_H_ */
