@@ -233,9 +233,9 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
-	while(true){
+	while (true) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
-
+		team_logger_info("ENTRA");
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int	aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
@@ -283,6 +283,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
+	team_logger_info("TERMINA");
 }
 
 void subscribe_to(void *arg) {
@@ -544,13 +545,6 @@ bool pokemon_required(char* pokemon_name) {
 	return false;
 }
 
-	//bool _es_el_mismo(char* name) {
-	//	return  string_equals_ignore_case(pokemon_name,name);
-	//}
-
-	//return list_any_satisfy(real_targets_pokemons, (void*) _es_el_mismo);
-//}
-
 
 bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
 
@@ -560,6 +554,7 @@ bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
 
 	return !list_any_satisfy(pokemon_to_catch, (void*) _es_el_mismo);
 } 
+
 
 void team_server_init() {
 
