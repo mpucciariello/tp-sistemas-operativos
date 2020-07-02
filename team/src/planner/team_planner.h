@@ -111,6 +111,6 @@ t_entrenador_pokemon* team_planner_apply_FIFO();
 t_entrenador_pokemon* team_planner_apply_SJF();
 t_list* team_planner_trainers_waiting_messages();
 void remove_pokemon_from_catch (t_pokemon*);
-void get_real_targets();
+t_list* get_real_targets();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
