@@ -437,7 +437,7 @@ void *receive_msg(int fd, int send_to) {
 					return loc_rcv->id_correlacional == id;
 				}
 
-				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon) && pokemon_not_pendant(loc_rcv->nombre_pokemon)){
+				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon) && pokemon_not_pendant(loc_rcv->nombre_pokemon) && pokemon_in_pokemon_to_catch(loc_rcv->nombre_pokemon)){
 					t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
 					pokemon->name = malloc(sizeof(loc_rcv->tamanio_nombre));
 					pokemon->name = loc_rcv->nombre_pokemon;
@@ -463,7 +463,7 @@ void *receive_msg(int fd, int send_to) {
 					pthread_detach(tid);
 				}
 
-				if (pokemon_required(appeared_rcv->nombre_pokemon) && pokemon_not_pendant(appeared_rcv->nombre_pokemon)) {
+				if (pokemon_required(appeared_rcv->nombre_pokemon) && pokemon_not_pendant(appeared_rcv->nombre_pokemon) && pokemon_in_pokemon_to_catch(appeared_rcv->nombre_pokemon)) {
 					t_position* posicion = malloc(sizeof(t_position));
 					posicion->pos_x = appeared_rcv->pos_x;
 					posicion->pos_y = appeared_rcv->pos_y;
@@ -536,10 +536,17 @@ bool pokemon_required(char* pokemon_name) {
 		return  string_equals_ignore_case(pokemon_name,name);
 	}
 
-	char* _get_name(t_pokemon_received* pokemon) {
-		return pokemon->name;
+	return list_any_satisfy(real_targets_pokemons, (void*) _es_el_mismo);
+} 
+
+
+bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
+
+	bool _es_el_mismo(char* name) {
+		return  string_equals_ignore_case(pokemon_name,name);
 	}
-	return !list_any_satisfy(real_targets_pokemons, (void*) _es_el_mismo);
+
+	return list_any_satisfy(pokemon_to_catch, (void*) _es_el_mismo);
 } 
 
 void team_server_init() {
