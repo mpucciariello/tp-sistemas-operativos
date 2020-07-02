@@ -358,7 +358,7 @@ t_list* get_real_targets(){
 	t_list* aux = total_targets_pokemons;
 
 	for(int i = 0; i < list_size(aux); i++){
-		t_pokemon* goat = list_get(aux, i);
+		t_pokemon* goal = list_get(aux, i);
 
 		for(int j = 0; j < list_size(got_pokemons); j++){
 			t_pokemon* got = list_get(got_pokemons, j);
