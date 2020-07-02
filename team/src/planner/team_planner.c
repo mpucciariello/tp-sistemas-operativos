@@ -336,11 +336,6 @@ void planner_load_entrenadores() {
 		i++;
 	}
 
-	/*for(int i = 0; i < list_size(total_targets_pokemons); i++){
-		t_pokemon* a = list_get(total_targets_pokemons, i);
-		team_logger_info("%s", a->name);
-	}*/
-
 	team_logger_info("Hay %d entrenadores en la cola de NEW", list_size(new_queue));
 	int tamanio_objetivos = 0;
 	void add_total_targets(char* ___, int pokemons_qty) {
@@ -361,13 +356,13 @@ t_list* get_real_targets(){
 	aux = total_targets_pokemons;
 
 	for(int i = 0; i < list_size(got_pokemons); i++){
-		t_pokemon* got = list_get(got_pokemons, i); //no detecta error de tipo cuando cambio de char a t_pokemon*
+		t_pokemon* got = list_get(got_pokemons, i);
 
 		for(int j = 0; j < list_size(aux); j++){
 			t_pokemon* goal = list_get(aux, j);
 
 			if(string_equals_ignore_case(got->name, goal->name)){
-				list_remove(aux, i);
+				list_remove(aux, j);
 				break;
 			}
 		}
