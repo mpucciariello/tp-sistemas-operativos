@@ -288,8 +288,6 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo));
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
-//	entrenador->state = BLOCK;
-//	entrenador->pokemon_a_atrapar = NULL;
 	
 	entrenador->blocked_info = info_bloqueo;
 
@@ -338,6 +336,11 @@ void planner_load_entrenadores() {
 		i++;
 	}
 
+	/*for(int i = 0; i < list_size(total_targets_pokemons); i++){
+		t_pokemon* a = list_get(total_targets_pokemons, i);
+		team_logger_info("%s", a->name);
+	}*/
+
 	team_logger_info("Hay %d entrenadores en la cola de NEW", list_size(new_queue));
 	int tamanio_objetivos = 0;
 	void add_total_targets(char* ___, int pokemons_qty) {
@@ -349,19 +352,19 @@ void planner_load_entrenadores() {
 	team_logger_info("Hay %d objetivos globales: \n%s", tamanio_objetivos, objetivos_to_string);
 	free(objetivos_to_string);
 
-	real_targets_pokemons = list_create();
 	real_targets_pokemons = get_real_targets();
 }
 
 
 t_list* get_real_targets(){
-	t_list* aux = total_targets_pokemons;
+	t_list* aux = list_create();
+	aux = total_targets_pokemons;
 
-	for(int i = 0; i < list_size(aux); i++){
-		t_pokemon* goal = list_get(aux, i);
+	for(int i = 0; i < list_size(got_pokemons); i++){
+		t_pokemon* got = list_get(got_pokemons, i); //no detecta error de tipo cuando cambio de char a t_pokemon*
 
-		for(int j = 0; j < list_size(got_pokemons); j++){
-			t_pokemon* got = list_get(got_pokemons, j);
+		for(int j = 0; j < list_size(aux); j++){
+			t_pokemon* goal = list_get(aux, j);
 
 			if(string_equals_ignore_case(got->name, goal->name)){
 				list_remove(aux, i);
@@ -369,7 +372,11 @@ t_list* get_real_targets(){
 			}
 		}
 	}
-//	list_destroy(got_pokemons);
+
+	for(int i = 0; i < list_size(aux); i++){
+			t_pokemon* a = list_get(aux, i);
+			team_logger_info("%s", a->name);
+		}
 	return aux;
 }
 

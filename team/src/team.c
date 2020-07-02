@@ -36,7 +36,7 @@ void team_init() {
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 	message_catch_sended = list_create();
 	pokemones_pendientes = list_create();
-	//objetivo_global_con_repeticion = list_create();
+	real_targets_pokemons = list_create();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -278,6 +278,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 			send_message_catch(catch_send, entrenador);
 			sem_post(&sem_planificador);
+			entrenador->pokemon_a_atrapar = NULL;
 		}
 		
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
@@ -507,6 +508,7 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
 
+
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {	
 	t_list* targets_aux = list_create();
 	targets_aux = entrenador->targets;
@@ -530,14 +532,24 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 	return length == 0;
 }
 
+
 bool pokemon_required(char* pokemon_name) {
 
-	bool _es_el_mismo(char* name) {
-		return  string_equals_ignore_case(pokemon_name,name);
+	for(int i = 0; i < list_size(real_targets_pokemons); i++){
+		t_pokemon* pokemon = list_get(real_targets_pokemons, i);
+		if(string_equals_ignore_case(pokemon_name,pokemon->name)){
+			return true;
+		}
 	}
+	return false;
+}
 
-	return list_any_satisfy(real_targets_pokemons, (void*) _es_el_mismo);
-} 
+	//bool _es_el_mismo(char* name) {
+	//	return  string_equals_ignore_case(pokemon_name,name);
+	//}
+
+	//return list_any_satisfy(real_targets_pokemons, (void*) _es_el_mismo);
+//}
 
 
 bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
@@ -546,7 +558,7 @@ bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
 		return  string_equals_ignore_case(pokemon_name,name);
 	}
 
-	return list_any_satisfy(pokemon_to_catch, (void*) _es_el_mismo);
+	return !list_any_satisfy(pokemon_to_catch, (void*) _es_el_mismo);
 } 
 
 void team_server_init() {
