@@ -165,6 +165,7 @@ char* team_planner_entrenador_string(t_entrenador_pokemon* entrenador) {
 	string_append(&entrenador_string, ", ");
 	char* posy = string_itoa(entrenador->position->pos_y);
 	string_append(&entrenador_string, posy);
+	string_append(&entrenador_string, ")");
 	string_append(&entrenador_string, " OBJETIVOS: ");
 	if(!list_is_empty(entrenador->targets)) {
 		for (int i = 0; i < list_size(entrenador->targets); i++) {
@@ -287,8 +288,8 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo));
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
-	entrenador->state = BLOCK;
-	entrenador->pokemon_a_atrapar = NULL;
+//	entrenador->state = BLOCK;
+//	entrenador->pokemon_a_atrapar = NULL;
 	
 	entrenador->blocked_info = info_bloqueo;
 
@@ -320,8 +321,7 @@ void planner_load_entrenadores() {
 	while (team_config->posiciones_entrenadores[i] != NULL) {
 		t_position* posicion = team_planner_extract_position(team_config->posiciones_entrenadores[i]);
 		t_list* pokemons = list_create();
-		if(team_config->pokemon_entrenadores[i] !=
-		NULL) {
+		if(team_config->pokemon_entrenadores[i] != NULL) {
 			team_planner_extract_pokemons(pokemons, team_config->pokemon_entrenadores[i]);
 		}
 		t_list* objetivos = list_create();
@@ -369,7 +369,7 @@ t_list* get_real_targets(){
 			}
 		}
 	}
-	list_destroy(got_pokemons);
+//	list_destroy(got_pokemons);
 	return aux;
 }
 
