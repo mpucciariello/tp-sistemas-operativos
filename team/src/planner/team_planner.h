@@ -75,6 +75,7 @@ t_list* message_catch_sended;
 t_list* pokemones_pendientes;
 t_list* got_pokemons;
 t_list* real_targets_pokemons;
+t_list* lista_auxiliar;
 
 t_dictionary* team_planner_global_targets;
 
@@ -92,7 +93,7 @@ t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t);
 void delete_from_bloqued_queue(t_entrenador_pokemon*, int);
 float team_planner_calculate_exponential_mean(int, float);
 bool team_planner_is_SJF_algorithm();
-void new_cpu_cicle();
+void new_cpu_cicle(t_entrenador*);
 void add_to_ready_queue(t_entrenador_pokemon*);
 void delete_from_new_queue(t_entrenador_pokemon*);
 t_entrenador_pokemon* entrenador_que_necesita(char*);

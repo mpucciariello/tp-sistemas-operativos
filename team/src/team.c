@@ -37,6 +37,7 @@ void team_init() {
 	message_catch_sended = list_create();
 	pokemones_pendientes = list_create();
 	real_targets_pokemons = list_create();
+	lista_auxiliar = list_create();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -235,7 +236,6 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	while (true) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
-		team_logger_info("ENTRA");
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int	aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
@@ -243,17 +243,9 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 
 		for (int i = 0; i <= steps; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
-			new_cpu_cicle();
+			new_cpu_cicle(entrenador);
 			entrenador->current_burst_time++;
-			entrenador->total_burst_time++; 
-
-			if (team_config->algoritmo_planificacion == RR) {
-				check_RR_burst(entrenador); 
-			} 
-
-			if (team_config->algoritmo_planificacion == SJF_CD) {
-				check_SJF_CD_time(entrenador); 
-			}
+			entrenador->total_burst_time++; 			
 		}
 		
 		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador->id,
@@ -280,10 +272,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			sem_post(&sem_planificador);
 			entrenador->pokemon_a_atrapar = NULL;
 		}
-		
-		//pthread_mutex_unlock(&entrenador->sem_move_trainers);
 	}
-	team_logger_info("TERMINA");
 }
 
 void subscribe_to(void *arg) {
@@ -510,25 +499,24 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 }
 
 
-bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {	
-	t_list* targets_aux = list_create();
-	targets_aux = entrenador->targets;
+bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
+	lista_auxiliar = entrenador->targets;
 
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
 
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			char* pokemon_obtenido = list_get(entrenador->pokemons, i);
 
-			for (int j = 0; j < list_size(targets_aux); j++) {
-				char* pokemon_objetivo = list_get(targets_aux, j);
+			for (int j = 0; j < list_size(lista_auxiliar); j++) {
+				char* pokemon_objetivo = list_get(lista_auxiliar, j);
 				if (string_equals_ignore_case(pokemon_objetivo, pokemon_obtenido)) {
-					list_remove(total_targets_pokemons, j);
+					list_remove(lista_auxiliar, j);
 				}
 			}
 		}
 	}
-	int length = list_size(targets_aux);
-	//list_destroy(targets_aux);
+	int length = list_size(lista_auxiliar);
+	list_clean(lista_auxiliar);
 
 	return length == 0;
 }

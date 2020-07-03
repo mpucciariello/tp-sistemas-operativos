@@ -398,7 +398,7 @@ int team_planner_get_least_estimate_index() {
 	return least_index;
 }
 
-void new_cpu_cicle() {
+void new_cpu_cicle(t_entrenador_pokemon* entrenador) {
 	void _increase_wait_time_trainner(t_entrenador_pokemon *trainner) {
 		trainner->wait_time++;
 	}
@@ -408,6 +408,14 @@ void new_cpu_cicle() {
 		trainner->blocked_info->blocked_time++;
 	}
 	list_iterate(block_queue, (void*) _increase_block_time_trainner);
+
+	if (team_config->algoritmo_planificacion == RR) {
+		check_RR_burst(entrenador); 
+	} 
+
+	if (team_config->algoritmo_planificacion == SJF_CD) {
+		check_SJF_CD_time(entrenador); 
+	}
 }
 
 float team_planner_calculate_exponential_mean(int burst_time, float tn) {
@@ -671,22 +679,22 @@ void team_planner_init() {
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
-		t_list* pokemons_target_aux = list_create();
-		pokemons_target_aux = entrenador->targets;
+		lista_auxiliar = entrenador->targets;
 
 		for (int i = 0; i<list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon = list_get(entrenador->pokemons, i);
 
-			for (int j = 0; j<list_size(pokemons_target_aux); j++) {
-				t_pokemon* pokemon_aux = list_get(pokemons_target_aux, j);
+			for (int j = 0; j<list_size(lista_auxiliar); j++) {
+				t_pokemon* pokemon_aux = list_get(lista_auxiliar, j);
 
 				if (string_equals_ignore_case(pokemon->name, pokemon_aux->name)) {
-					list_remove(pokemons_target_aux, j);
+					list_remove(lista_auxiliar, j);
 				}
 			}
 		}
-		int length = list_size(pokemons_target_aux);
-		list_destroy(pokemons_target_aux);
+		int length = list_size(lista_auxiliar);
+
+		list_clean(lista_auxiliar);
 
 		if (length == 0) {
 			return true;
@@ -727,6 +735,7 @@ void planner_destroy_quees() {
 	list_destroy(message_catch_sended);
 	list_destroy(pokemones_pendientes);
 	list_destroy(real_targets_pokemons);
+	list_destroy(lista_auxiliar);
 }
 
 void team_planner_destroy() {
