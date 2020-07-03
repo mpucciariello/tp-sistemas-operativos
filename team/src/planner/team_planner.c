@@ -421,6 +421,7 @@ t_entrenador_pokemon* team_planner_exec_trainer(t_entrenador_pokemon* entrenador
 	entrenador->wait_time = 0;
 	entrenador->current_burst_time = 0;
 	entrenador->state = EXEC;
+	entrenador->blocked_info = NULL;
 
 	return entrenador;
 }

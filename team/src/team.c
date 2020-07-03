@@ -269,7 +269,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			sem_post(&sem_deadlock);
 		}
 
-		if (entrenador->blocked_info == 0 && entrenador->deadlock == false) {
+		if (entrenador->blocked_info == NULL && entrenador->deadlock == false) {
 			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 			catch_send->id_correlacional = 0;
 			catch_send->nombre_pokemon = entrenador->pokemon_a_atrapar->name;
@@ -281,7 +281,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			entrenador->pokemon_a_atrapar = NULL;
 		}
 		
-		pthread_mutex_lock(&entrenador->sem_move_trainers);
+		//pthread_mutex_unlock(&entrenador->sem_move_trainers);
 	}
 	team_logger_info("TERMINA");
 }
@@ -528,7 +528,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 		}
 	}
 	int length = list_size(targets_aux);
-	list_destroy(targets_aux);
+	//list_destroy(targets_aux);
 
 	return length == 0;
 }
