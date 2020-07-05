@@ -108,8 +108,7 @@ void remove_pokemon_from_catch (t_pokemon* pokemon) {
 }
 
 void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entrenador) {
-	t_protocol catch_protocol = CATCH_POKEMON;
-	
+	t_protocol catch_protocol = CATCH_POKEMON;	
 
 	entrenador->state = BLOCK;
 	list_add(block_queue, entrenador);

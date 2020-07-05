@@ -676,6 +676,7 @@ void team_planner_init() {
 }
 
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
+	team_logger_info("intenta finalizar");
 
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
 		lista_auxiliar = entrenador->targets;
