@@ -267,6 +267,7 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	pthread_cancel(entrenador->hilo_entrenador);
 	delete_from_bloqued_queue(entrenador, 1);
 	list_add(exit_queue, entrenador);
+	team_logger_info("El entrenador %d terminó exitosamente!", entrenador->id);
 }
 
 void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {

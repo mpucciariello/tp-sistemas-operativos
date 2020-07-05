@@ -129,6 +129,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		list_add(entrenador->pokemons, pokemon);
 		team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, catch_send->nombre_pokemon);
 		quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
+		quitar_de_real_target(entrenador->pokemon_a_atrapar->name);
 
 		if (trainer_is_in_deadlock_caught(entrenador)) {
 			team_logger_info("El entrenador %d está en deadlock!", entrenador->id);
@@ -380,6 +381,7 @@ void *receive_msg(int fd, int send_to) {
 				if (caught_rcv->result) {
 					team_logger_info("MENSAJE CAUGHT POSITIVO: El entrenador %d, atrapó un %s!!", entrenador->id, catch_message->nombre_pokemon);
 					list_add(entrenador->pokemons, catch_message->nombre_pokemon);
+					quitar_de_real_target(catch_message->nombre_pokemon);
 
 
 					if (trainer_completed_with_success(entrenador)) {
@@ -478,6 +480,17 @@ void quitar_de_pokemones_pendientes(char* pokemon) {
 	}
 }
 
+
+void quitar_de_real_target(char* pokemon) {
+	for (int i = 0; i < list_size(real_targets_pokemons); i++) {
+		char* nombre = list_get(real_targets_pokemons, i);
+		if (string_equals_ignore_case(pokemon, nombre)) {
+			list_remove(real_targets_pokemons, i);
+		}
+	}
+}
+
+
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
@@ -492,23 +505,23 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 	lista_auxiliar = entrenador->targets;
 
-	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
+	if (list_size(entrenador->pokemons) == list_size(lista_auxiliar)) {
 
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
-			char* pokemon_obtenido = list_get(entrenador->pokemons, i);
+			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);
 
 			for (int j = 0; j < list_size(lista_auxiliar); j++) {
-				char* pokemon_objetivo = list_get(lista_auxiliar, j);
-				if (string_equals_ignore_case(pokemon_objetivo, pokemon_obtenido)) {
+				t_pokemon* pokemon_objetivo = list_get(lista_auxiliar, j);
+				if (string_equals_ignore_case(pokemon_objetivo->name, pokemon_obtenido->name)) {
 					list_remove(lista_auxiliar, j);
 				}
 			}
 		}
+		int length = list_size(lista_auxiliar);
+		return length != 0; //Si es igual a 0 no hay deadlock
 	}
-	int length = list_size(lista_auxiliar);
 	list_clean(lista_auxiliar);
-
-	return length == 0;
+	return false;
 }
 
 bool pokemon_required(char* pokemon_name) {
