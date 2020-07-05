@@ -136,11 +136,11 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		}
 		
 		if (trainer_completed_with_success(entrenador)) {
-			team_planner_finish_trainner(entrenador);
+			team_planner_finish_trainner(entrenador); //TODO ver esta función
 		}
 
 		if (all_queues_are_empty_except_block()) {
-			pthread_mutex_lock(&entrenador->sem_move_trainers);
+			//pthread_mutex_lock(&entrenador->sem_move_trainers);
 			pthread_cancel(algoritmo_cercania_entrenadores);
 			team_logger_info("Ya no es posible atrapar más pokemones!");
 			solve_deadlock();
@@ -501,8 +501,9 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
 }
 
+
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
-	lista_auxiliar = entrenador->targets;
+	t_list* lista_auxiliar = entrenador->targets;
 
 	if (list_size(entrenador->pokemons) == list_size(lista_auxiliar)) {
 

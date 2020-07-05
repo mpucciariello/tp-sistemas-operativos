@@ -678,28 +678,29 @@ void team_planner_init() {
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 	team_logger_info("intenta finalizar");
 
-	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
-		lista_auxiliar = entrenador->targets;
+	t_list* lista_auxiliar = entrenador->targets;
 
-		for (int i = 0; i<list_size(entrenador->pokemons); i++) {
-			t_pokemon* pokemon = list_get(entrenador->pokemons, i);
+	team_logger_info("%d",list_size(entrenador->pokemons));
+	team_logger_info("%d",list_size(entrenador->targets));
 
-			for (int j = 0; j<list_size(lista_auxiliar); j++) {
-				t_pokemon* pokemon_aux = list_get(lista_auxiliar, j);
+	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {//TODO: aca la lista targets tiene valor 0, es raro.
 
-				if (string_equals_ignore_case(pokemon->name, pokemon_aux->name)) {
+		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
+			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);
+
+			for (int j = 0; j < list_size(entrenador->targets); j++) {
+				t_pokemon* pokemon_objetivo = list_get(entrenador->targets, j);
+				if (string_equals_ignore_case(pokemon_objetivo->name, pokemon_obtenido->name)) {
 					list_remove(lista_auxiliar, j);
 				}
 			}
 		}
 		int length = list_size(lista_auxiliar);
-
-		list_clean(lista_auxiliar);
-
-		if (length == 0) {
-			return true;
-		}
+		team_logger_info("pudo %d", length);
+		return length == 0; //Si es igual a 0 finaliza
 	}
+	list_clean(lista_auxiliar);
+	team_logger_info("no pudo");
 	return false;
 }
 
