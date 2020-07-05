@@ -62,6 +62,9 @@ sem_t sem_pokemons_to_get;
 sem_t sem_deadlock;
 sem_t sem_planificador; 
 
+pthread_t planificator;
+pthread_t algoritmo_cercania_entrenadores;
+
 pthread_mutex_t cola_pokemons_a_atrapar;
 
 t_list* new_queue;

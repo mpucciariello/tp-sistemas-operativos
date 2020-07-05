@@ -565,6 +565,7 @@ void solve_deadlock() {
 		i++;
 		deadlocks_resolved++;	
 	}
+	pthread_cancel(planificator);
 	team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 }
 

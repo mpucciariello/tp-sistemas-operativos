@@ -141,6 +141,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 		if (all_queues_are_empty_except_block()) {
 			pthread_mutex_lock(&entrenador->sem_move_trainers);
+			pthread_cancel(algoritmo_cercania_entrenadores);
 			team_logger_info("Ya no es posible atrapar más pokemones!");
 			solve_deadlock();
 		}		
@@ -202,7 +203,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 			t_catch_pokemon *catch_send = (t_catch_pokemon*) paquete;
 			catch_send->id_correlacional = id_corr;
 		}
-		socket_close_conection(broker_fd_send);//cambie broker_fd por broker_fd_send.
+		socket_close_conection(broker_fd_send);
 	}
 	return 0;
 }
