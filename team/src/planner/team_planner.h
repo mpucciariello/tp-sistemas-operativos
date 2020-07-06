@@ -115,7 +115,7 @@ t_entrenador_pokemon* team_planner_apply_FIFO();
 t_entrenador_pokemon* team_planner_apply_SJF();
 t_list* team_planner_trainers_waiting_messages();
 void remove_pokemon_from_catch (t_pokemon*);
-t_list* get_real_targets();
+void get_real_targets();
 void check_SJF_CD_time(t_entrenador_pokemon*);
 void check_RR_burst(t_entrenador_pokemon*);
 

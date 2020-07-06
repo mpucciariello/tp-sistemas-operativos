@@ -136,14 +136,14 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		}
 		
 		if (trainer_completed_with_success(entrenador)) {
-			team_planner_finish_trainner(entrenador); //TODO ver esta función
+			team_planner_finish_trainner(entrenador);
 		}
 
 		if (all_queues_are_empty_except_block()) {
 			//pthread_mutex_lock(&entrenador->sem_move_trainers);
 			pthread_cancel(algoritmo_cercania_entrenadores);
 			team_logger_info("Ya no es posible atrapar más pokemones!");
-			solve_deadlock();
+			//solve_deadlock();
 		}		
 	}
 	usleep(500000);
@@ -485,6 +485,7 @@ void quitar_de_real_target(char* pokemon) {
 		t_pokemon* pok = list_get(real_targets_pokemons, i);
 		if (string_equals_ignore_case(pokemon, pok->name)) {
 			list_remove(real_targets_pokemons, i);
+			i = -1;
 		}
 	}
 }
@@ -498,7 +499,7 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	for (int i = 0; i < list_size(pokemon->pos); i++) {
 		sem_post(&sem_message_on_queue);
 	}
-	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar.", pokemon->name);
+	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar!", pokemon->name);
 }
 
 
@@ -535,12 +536,13 @@ bool pokemon_required(char* pokemon_name) {
 }
 
 bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
-
-	bool _es_el_mismo(char* name) {
-		return string_equals_ignore_case(pokemon_name,name);
+	for(int i = 0; i < list_size(pokemon_to_catch); i ++){
+		t_pokemon* pokemon = list_get(pokemon_to_catch, i);
+		if(string_equals_ignore_case(pokemon_name,pokemon->name)){
+			return false;
+		}
 	}
-
-	return !list_any_satisfy(pokemon_to_catch, (void*) _es_el_mismo);
+	return true;
 } 
 
 void team_server_init() {

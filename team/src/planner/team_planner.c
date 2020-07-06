@@ -349,31 +349,32 @@ void planner_load_entrenadores() {
 	team_logger_info("Hay %d objetivos globales: \n%s", tamanio_objetivos, objetivos_to_string);
 	free(objetivos_to_string);
 
-	real_targets_pokemons = get_real_targets();
+	get_real_targets();
 }
 
-t_list* get_real_targets() {
+void get_real_targets() {
 	t_list* aux = list_create();
 	aux = total_targets_pokemons;
 
-	for (int i = 0; i < list_size(got_pokemons); i++) {
-		t_pokemon* got = list_get(got_pokemons, i);
+	for (int i = 0; i < list_size(aux); i++) {
+		t_pokemon* goal = list_get(aux, i);
 
-		for (int j = 0; j < list_size(aux); j++) {
-			t_pokemon* goal = list_get(aux, j);
+		for (int j = 0; j < list_size(got_pokemons); j++) {
+			t_pokemon* got = list_get(got_pokemons, j);
 
 			if (string_equals_ignore_case(got->name, goal->name)) {
-				list_remove(aux, j);
+				list_remove(aux, i);
 				break;
 			}
 		}
 	}
 
-	for (int i = 0; i < list_size(aux); i++) {
-		t_pokemon* a = list_get(aux, i);
+	real_targets_pokemons = aux;
+
+	for (int i = 0; i < list_size(real_targets_pokemons); i++) {
+		t_pokemon* a = list_get(real_targets_pokemons, i);
 		team_logger_info("%s", a->name);
 	}
-	return aux;
 }
 
 void planner_init_quees() {
@@ -676,6 +677,7 @@ void team_planner_init() {
 }
 
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
+	list_clean(lista_auxiliar);
 	lista_auxiliar = list_duplicate(entrenador->targets);
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {//TODO: aca la lista targets tiene valor 0, es raro.
 

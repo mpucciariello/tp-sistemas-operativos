@@ -37,7 +37,6 @@ bool pokemon_not_pendant(char*);
 void send_get_message();
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon*);
 int send_message(void*, t_protocol, t_list*);
-bool trainer_completed_with_success(t_entrenador_pokemon*);
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon*);
 void send_message_catch(t_catch_pokemon*, t_entrenador_pokemon*);
 void add_to_pokemon_to_catch(t_pokemon_received*);
