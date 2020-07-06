@@ -179,7 +179,7 @@ char* team_planner_entrenador_string(t_entrenador_pokemon* entrenador) {
 		string_append(&entrenador_string, "Ninguno");
 	}
 
-	string_append(&entrenador_string, ") POKEMONS: ");
+	string_append(&entrenador_string, "POKEMONS: ");
 	if (!list_is_empty(entrenador->pokemons)) {
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon = list_get(entrenador->pokemons, i);
@@ -265,7 +265,6 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
 	delete_from_bloqued_queue(entrenador, 1);
-	//pthread_cancel(entrenador->hilo_entrenador);
 	list_add(exit_queue, entrenador);
 	team_logger_info("El entrenador %d terminó exitosamente!", entrenador->id);
 }

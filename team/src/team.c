@@ -610,3 +610,5 @@ void team_exit() {
 	team_config_free();
 	team_logger_destroy();
 }
+//pthread_cancel(entrenador->hilo_entrenador);
+//TODO: función que recorra la lista de EXIT y finalice cada hilo
