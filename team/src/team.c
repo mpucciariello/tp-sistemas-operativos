@@ -448,7 +448,7 @@ void *receive_msg(int fd, int send_to) {
 					pthread_detach(tid);
 				}
 
-				if (pokemon_required(appeared_rcv->nombre_pokemon) && pokemon_not_pendant(appeared_rcv->nombre_pokemon) && pokemon_in_pokemon_to_catch(appeared_rcv->nombre_pokemon)) {
+				if (pokemon_required(appeared_rcv->nombre_pokemon) && pokemon_not_pendant(appeared_rcv->nombre_pokemon) && pokemon_in_pokemon_to_catch(appeared_rcv->nombre_pokemon)) { //si lo necesito, no tengo uno pendiente y no tengo uno en pokemon_to_catch
 					t_position* posicion = malloc(sizeof(t_position));
 					posicion->pos_x = appeared_rcv->pos_x;
 					posicion->pos_y = appeared_rcv->pos_y;
@@ -482,8 +482,8 @@ void quitar_de_pokemones_pendientes(char* pokemon) {
 
 void quitar_de_real_target(char* pokemon) {
 	for (int i = 0; i < list_size(real_targets_pokemons); i++) {
-		char* nombre = list_get(real_targets_pokemons, i);
-		if (string_equals_ignore_case(pokemon, nombre)) {
+		t_pokemon* pok = list_get(real_targets_pokemons, i);
+		if (string_equals_ignore_case(pokemon, pok->name)) {
 			list_remove(real_targets_pokemons, i);
 		}
 	}
