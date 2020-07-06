@@ -503,7 +503,7 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 
 
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
-	t_list* lista_auxiliar = entrenador->targets;
+	t_list* lista_auxiliar = list_duplicate(entrenador->targets);
 
 	if (list_size(entrenador->pokemons) == list_size(lista_auxiliar)) {
 

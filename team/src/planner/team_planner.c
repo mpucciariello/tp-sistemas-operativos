@@ -264,8 +264,8 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->blocked_info->status = 0;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
-	pthread_cancel(entrenador->hilo_entrenador);
 	delete_from_bloqued_queue(entrenador, 1);
+	//pthread_cancel(entrenador->hilo_entrenador);
 	list_add(exit_queue, entrenador);
 	team_logger_info("El entrenador %d terminó exitosamente!", entrenador->id);
 }
@@ -676,13 +676,7 @@ void team_planner_init() {
 }
 
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
-	team_logger_info("intenta finalizar");
-
-	t_list* lista_auxiliar = entrenador->targets;
-
-	team_logger_info("%d",list_size(entrenador->pokemons));
-	team_logger_info("%d",list_size(entrenador->targets));
-
+	lista_auxiliar = list_duplicate(entrenador->targets);
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {//TODO: aca la lista targets tiene valor 0, es raro.
 
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
@@ -696,11 +690,9 @@ bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 			}
 		}
 		int length = list_size(lista_auxiliar);
-		team_logger_info("pudo %d", length);
 		return length == 0; //Si es igual a 0 finaliza
 	}
 	list_clean(lista_auxiliar);
-	team_logger_info("no pudo");
 	return false;
 }
 
