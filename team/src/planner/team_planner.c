@@ -280,7 +280,7 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 
 	entrenador->blocked_info = info_bloqueo;
 
-	if (status == 0 && entrenador->deadlock == false) {
+	if (status == 0 && entrenador->deadlock == false && entrenador->state == BLOCK) {
 		sem_post(&sem_entrenadores_disponibles); 
 	}
 }
@@ -292,7 +292,7 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	
 	entrenador->blocked_info = info_bloqueo;
 
-	if (status == 0 && entrenador->deadlock == false) {		
+	if (status == 0 && entrenador->deadlock == false && entrenador->state == BLOCK) {
 		sem_post(&sem_entrenadores_disponibles);
 	}
 }

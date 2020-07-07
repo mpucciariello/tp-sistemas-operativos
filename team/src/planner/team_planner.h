@@ -120,5 +120,6 @@ void check_SJF_CD_time(t_entrenador_pokemon*);
 void check_RR_burst(t_entrenador_pokemon*);
 t_list* team_planner_get_trainners();
 void team_planner_end_trainer_threads();
+bool all_finished();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

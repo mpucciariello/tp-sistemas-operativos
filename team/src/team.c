@@ -134,37 +134,37 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
 		quitar_de_real_target(entrenador->pokemon_a_atrapar->name);
 
+
+		if (trainer_completed_with_success(entrenador)) {
+			team_planner_finish_trainner(entrenador);
+		}
+
 		if (trainer_is_in_deadlock_caught(entrenador)) {
 			team_logger_info("El entrenador %d está en deadlock!", entrenador->id);
 			entrenador->deadlock = true;
 		}
-		
-		if (trainer_completed_with_success(entrenador)) {
-			pthread_mutex_lock(&entrenador->sem_move_trainers);
-			team_planner_finish_trainner(entrenador);
-		}
 
-		if (all_queues_are_empty_except_block()) {//TODO: revidar que no entre a esta funcion cuando todos finalizan
-			pthread_cancel(algoritmo_cercania_entrenadores);
+		if (all_queues_are_empty_except_block()) {
 			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en DEADLOCK!");
-			solve_deadlock();
+			//solve_deadlock();
 		}
 
 		if(all_finished()){
-			pthread_mutex_lock(&entrenador->sem_move_trainers);
 			pthread_cancel(algoritmo_cercania_entrenadores);
 			pthread_cancel(planificator);
 			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
-			void team_planner_end_trainer_threads();
-			team_exit();
-		}		
+			//void team_planner_end_trainer_threads();
+			//team_exit();
+		}
 	}
 	usleep(500000);
 }
 
 
 bool all_finished(){
-	return list_size(team_planner_get_trainners()) == list_size(exit_queue);
+	int all = list_size(team_planner_get_trainners());
+	int exit = list_size(exit_queue);
+	return  all == exit;
 }
 
 
@@ -299,27 +299,27 @@ void subscribe_to(void *arg) {
 	team_logger_info("tipo Cola: %d ", cola);
 	switch (cola) {
 		case NEW_QUEUE: {
-			team_logger_info("Cola NEW ");
+			//team_logger_info("Cola NEW ");
 			break;
 		}
 		case CATCH_QUEUE: {
-			team_logger_info("Cola CATCH ");
+			//team_logger_info("Cola CATCH ");
 			break;
 		}
 		case CAUGHT_QUEUE: {
-			team_logger_info("Cola CAUGHT ");
+			//team_logger_info("Cola CAUGHT ");
 			break;
 		}
 		case GET_QUEUE: {
-			team_logger_info("Cola GET ");
+			//team_logger_info("Cola GET ");
 			break;
 		}
 		case LOCALIZED_QUEUE: {
-			team_logger_info("Cola LOCALIZED ");
+			//team_logger_info("Cola LOCALIZED ");
 			break;
 		}
 		case APPEARED_QUEUE: {
-			team_logger_info("Cola APPEARED ");
+			//team_logger_info("Cola APPEARED ");
 			break;
 		}
 	}
