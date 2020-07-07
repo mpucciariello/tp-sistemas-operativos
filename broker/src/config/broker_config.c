@@ -7,7 +7,7 @@ int broker_config_load()
 	return config_load(NULL, CONFIG_FILE_PATH, read_config, broker_print_config);
 }
 
-e_algoritmo_memoria broker_algoritmo_memoria_from_string(char* algoritmo)
+e_memory_struct broker_algoritmo_memoria_from_string(char* algoritmo)
 {
 	if(string_equals_ignore_case(algoritmo, "bs"))
 	{
@@ -67,7 +67,7 @@ void read_config(t_config* config_file)
 	broker_config = malloc(sizeof(t_broker_config));
 	broker_config->tamano_memoria = config_get_int_value(config_file, "TAMANO_MEMORIA");
 	broker_config->tamano_minimo_particion = config_get_int_value(config_file, "TAMANO_MINIMO_PARTICION");
-	broker_config->algoritmo_memoria = broker_algoritmo_memoria_from_string(config_get_string_value(config_file, "ALGORITMO_MEMORIA"));
+	broker_config->estrategia_memoria = broker_algoritmo_memoria_from_string(config_get_string_value(config_file, "ALGORITMO_MEMORIA"));
 	broker_config->algoritmo_reemplazo = broker_algoritmo_reemplazo_from_string(config_get_string_value(config_file, "ALGORITMO_REEMPLAZO"));
 	broker_config->algoritmo_particion_libre = broker_algoritmo_particion_libre_from_string(config_get_string_value(config_file, "ALGORITMO_PARTICION_LIBRE"));
 	broker_config->ip_broker = malloc(sizeof(char*));
@@ -79,7 +79,7 @@ void read_config(t_config* config_file)
 
 }
 
-char* broker_algoritmo_memoria_to_string(e_algoritmo_memoria algoritmo)
+char* broker_algoritmo_memoria_to_string(e_memory_struct algoritmo)
 {
 	switch (algoritmo)
 	{
@@ -131,7 +131,7 @@ void broker_print_config()
 {
 	broker_logger_info("TAMANO_MEMORIA: %d", broker_config->tamano_memoria);
 	broker_logger_info("TAMANO_MINIMO_PARTICION: %d", broker_config->tamano_minimo_particion);
-	broker_logger_info("ALGORITMO_MEMORIA: %s", broker_algoritmo_memoria_to_string(broker_config->algoritmo_memoria));
+	broker_logger_info("ALGORITMO_MEMORIA: %s", broker_algoritmo_memoria_to_string(broker_config->estrategia_memoria));
 	broker_logger_info("ALGORITMO_REEMPLAZO: %s", broker_algoritmo_reemplazo_to_string(broker_config->algoritmo_reemplazo));
 	broker_logger_info("ALGORITMO_PARTICION_LIBRE: %s", broker_algoritmo_particion_libre_to_string(broker_config->algoritmo_particion_libre));
 	broker_logger_info("IP_BROKER: %s", broker_config->ip_broker);

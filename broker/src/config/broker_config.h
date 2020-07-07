@@ -21,7 +21,7 @@
 typedef enum
 {
 	BS, PD
-} e_algoritmo_memoria;
+} e_memory_struct;
 
 typedef enum
 {
@@ -37,7 +37,7 @@ typedef struct
 {
 	int tamano_memoria;
 	int tamano_minimo_particion;
-	e_algoritmo_memoria algoritmo_memoria;
+	e_memory_struct estrategia_memoria;
 	e_algoritmo_reemplazo algoritmo_reemplazo;
 	e_algoritmo_particion_libre algoritmo_particion_libre;
 	char* ip_broker;
