@@ -2,13 +2,11 @@
 
 void read_config(t_config* config_file);
 
-int team_config_load()
-{
+int team_config_load() {
 	return config_load(NULL, CONFIG_FILE_PATH, read_config, team_print_config);
 }
 
-void team_config_free()
-{
+void team_config_free() {
 	utils_free_array(team_config->posiciones_entrenadores);
 	utils_free_array(team_config->pokemon_entrenadores);
 	utils_free_array(team_config->objetivos_entrenadores);
@@ -17,32 +15,21 @@ void team_config_free()
 	free(team_config);
 }
 
-e_algoritmo_planificacion team_algoritmo_planificacion_from_string(char* algoritmo)
-{
-	if(string_equals_ignore_case(algoritmo, "fifo"))
-	{
+e_algoritmo_planificacion team_algoritmo_planificacion_from_string(char* algoritmo) {
+	if (string_equals_ignore_case(algoritmo, "fifo")) {
 		return FIFO;
-	}
-	else if(string_equals_ignore_case(algoritmo, "rr"))
-	{
+	} else if (string_equals_ignore_case(algoritmo, "rr")) {
 		return RR;
-	}
-	else if(string_equals_ignore_case(algoritmo, "sjf-cd"))
-	{
+	} else if (string_equals_ignore_case(algoritmo, "sjf-cd")) {
 		return SJF_CD;
-	}
-	else if(string_equals_ignore_case(algoritmo, "sjf-sd"))
-	{
+	} else if (string_equals_ignore_case(algoritmo, "sjf-sd")) {
 		return SJF_SD;
-	}
-	else
-	{
+	} else {
 		return -1;
 	}
 }
 
-void read_config(t_config* config_file)
-{
+void read_config(t_config* config_file) {
 	team_config = malloc(sizeof(t_team_config));
 	team_config->posiciones_entrenadores = config_get_array_value(config_file, "POSICIONES_ENTRENADORES");
 	team_config->pokemon_entrenadores = config_get_array_value(config_file, "POKEMON_ENTRENADORES");
@@ -61,10 +48,8 @@ void read_config(t_config* config_file)
 	team_config->log_file = string_duplicate(config_get_string_value(config_file, "LOG_FILE"));
 }
 
-char* team_algoritmo_planificacion_to_string(e_algoritmo_planificacion algoritmo)
-{
-	switch (algoritmo)
-	{
+char* team_algoritmo_planificacion_to_string(e_algoritmo_planificacion algoritmo) {
+	switch (algoritmo) {
 		case FIFO:
 			return FIFO_STRING;
 			break;
@@ -83,8 +68,7 @@ char* team_algoritmo_planificacion_to_string(e_algoritmo_planificacion algoritmo
 	}
 }
 
-void team_print_config()
-{
+void team_print_config() {
 	team_logger_info("POSICIONES_ENTRENADORES: %s", utils_array_to_string(team_config->posiciones_entrenadores));
 	team_logger_info("POKEMON_ENTRENADORES: %s", utils_array_to_string(team_config->pokemon_entrenadores));
 	team_logger_info("OBJETIVOS_ENTRENADORES: %s", utils_array_to_string(team_config->objetivos_entrenadores));
