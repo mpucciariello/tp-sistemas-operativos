@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
 
 	if (broker_config->estrategia_memoria == 0) {
 		// Init buddy system structure
+		// TODO: Change internal structure to the needed one
 		struct buddy* buddy = NULL;
 		buddy = buddy_new(broker_config->tamano_memoria);
 		// TODO: Link with save in memory implementation (actually make use of the buddy sys)
