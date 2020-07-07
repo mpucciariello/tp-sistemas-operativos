@@ -10,6 +10,7 @@ void team_planner_run_planification() {
 		sem_wait(&sem_trainers_in_ready_queue);
 		sem_wait(&sem_planificador);
 
+		team_logger_info("El entrenador");
 		t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
 		pthread_mutex_unlock(&entrenador->sem_move_trainers);

@@ -146,7 +146,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 		if (all_queues_are_empty_except_block()) {
 			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en DEADLOCK!");
-			//solve_deadlock();
+			solve_deadlock();
 		}
 
 		if(all_finished()){
@@ -232,10 +232,11 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 
 void check_RR_burst(t_entrenador_pokemon* entrenador) {
 	if (entrenador->current_burst_time == team_config->quantum) {
-		pthread_mutex_lock(&entrenador->sem_move_trainers);
+		add_to_ready_queue(entrenador);
+		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
-		add_to_ready_queue(entrenador);	
 		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que terminó su QUANTUM", entrenador->id);
+		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
 }
 
@@ -243,9 +244,11 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 	if (entrenador->estimated_time > team_planner_get_least_estimate_index()) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
+		add_to_ready_queue(entrenador);
+		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
-		add_to_ready_queue(entrenador);	
 		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que será desalojado por otro con ráfaga más corta", entrenador->id);
+		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
 }
 
