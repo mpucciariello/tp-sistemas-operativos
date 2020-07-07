@@ -43,6 +43,7 @@ void add_to_pokemon_to_catch(t_pokemon_received*);
 void quitar_de_pokemones_pendientes(char*);
 bool pokemon_in_pokemon_to_catch(char*);
 void quitar_de_real_target(char*);
+bool all_finished();
 
 
 #endif /* TEAM_H_ */

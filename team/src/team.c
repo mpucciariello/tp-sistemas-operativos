@@ -6,10 +6,11 @@ int main(int argc, char *argv[]) {
 
 	team_init();
 
-	team_exit();
+	//TODO: usar el main para recibir los mensajes
 
 	return EXIT_SUCCESS;
 }
+
 
 int team_load() {
 	int response = team_config_load();
@@ -25,6 +26,7 @@ int team_load() {
 
 	return 0;
 }
+
 
 void team_init() {
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
@@ -80,6 +82,7 @@ void team_init() {
 	usleep(500000);
 }
 
+
 void remove_pokemon_from_catch (t_pokemon* pokemon) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
 		t_pokemon_received* pokemon_con_posiciones = list_get(pokemon_to_catch, i);
@@ -106,6 +109,7 @@ void remove_pokemon_from_catch (t_pokemon* pokemon) {
 		}
 	}
 }
+
 
 void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entrenador) {
 	t_protocol catch_protocol = CATCH_POKEMON;	
@@ -136,18 +140,33 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		}
 		
 		if (trainer_completed_with_success(entrenador)) {
+			pthread_mutex_lock(&entrenador->sem_move_trainers);
 			team_planner_finish_trainner(entrenador);
 		}
 
-		if (all_queues_are_empty_except_block()) {
-			//pthread_mutex_lock(&entrenador->sem_move_trainers);
+		if (all_queues_are_empty_except_block()) {//TODO: revidar que no entre a esta funcion cuando todos finalizan
 			pthread_cancel(algoritmo_cercania_entrenadores);
-			team_logger_info("Ya no es posible atrapar más pokemones!");
-			//solve_deadlock();
+			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en DEADLOCK!");
+			solve_deadlock();
+		}
+
+		if(all_finished()){
+			pthread_mutex_lock(&entrenador->sem_move_trainers);
+			pthread_cancel(algoritmo_cercania_entrenadores);
+			pthread_cancel(planificator);
+			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
+			void team_planner_end_trainer_threads();
+			team_exit();
 		}		
 	}
 	usleep(500000);
 }
+
+
+bool all_finished(){
+	return list_size(team_planner_get_trainners()) == list_size(exit_queue);
+}
+
 
 bool pokemon_not_pendant(char* pokemon) {
 	for (int i = 0; i < list_size(pokemones_pendientes); i++) {
@@ -159,6 +178,7 @@ bool pokemon_not_pendant(char* pokemon) {
 	}
 	return true;
 }
+
 
 void send_get_message() {	
 	sem_wait(&sem_pokemons_to_get);
@@ -182,6 +202,7 @@ void send_get_message() {
 		usleep(500000);
 	}
 }
+
 
 int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
@@ -208,6 +229,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	return 0;
 }
 
+
 void check_RR_burst(t_entrenador_pokemon* entrenador) {
 	if (entrenador->current_burst_time == team_config->quantum) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
@@ -217,6 +239,7 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 	}
 }
 
+
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 	if (entrenador->estimated_time > team_planner_get_least_estimate_index()) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
@@ -225,6 +248,7 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que será desalojado por otro con ráfaga más corta", entrenador->id);
 	}
 }
+
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	while (true) {
@@ -267,6 +291,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		}
 	}
 }
+
 
 void subscribe_to(void *arg) {
 
@@ -320,6 +345,7 @@ void subscribe_to(void *arg) {
 	}
 }
 
+
 void team_retry_connect(void* arg) {
 	void* arg2 = arg;
 	while (true) {
@@ -328,6 +354,7 @@ void team_retry_connect(void* arg) {
 		utils_delay(team_config->tiempo_reconexion);
 	}
 }
+
 
 t_catch_pokemon* filter_msg_catch_by_id_caught(uint32_t id_corr_caught) {
 	for (int i = 0; i < list_size(message_catch_sended); i++) {
@@ -339,6 +366,7 @@ t_catch_pokemon* filter_msg_catch_by_id_caught(uint32_t id_corr_caught) {
 	}
 	return NULL;
 }
+
 
 t_entrenador_pokemon* filter_trainer_by_id_caught(uint32_t id_corr_caught) {
 	for (int i = 0; i < list_size(block_queue); i++) {
@@ -352,6 +380,7 @@ t_entrenador_pokemon* filter_trainer_by_id_caught(uint32_t id_corr_caught) {
 	}
 	return NULL;
 }
+
 
 void *receive_msg(int fd, int send_to) {
 	int protocol;
@@ -392,8 +421,18 @@ void *receive_msg(int fd, int send_to) {
 					} 
 
 					if (all_queues_are_empty_except_block()) {
+						pthread_cancel(algoritmo_cercania_entrenadores);
 						team_logger_info("Ya no es posible atrapar más pokemones debido a que se alcanzó la cantidad del objetivo!");
 						solve_deadlock();
+					}
+
+					if(all_finished()){
+						pthread_mutex_lock(&entrenador->sem_move_trainers);
+						pthread_cancel(algoritmo_cercania_entrenadores);
+						pthread_cancel(planificator);
+						team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
+						void team_planner_end_trainer_threads();
+						team_exit();
 					}
 
 				} else {
@@ -459,16 +498,15 @@ void *receive_msg(int fd, int send_to) {
 					list_add(pokemon->pos, posicion);
 					add_to_pokemon_to_catch(pokemon);
 				}
-
 				break;
 			}
-
 			default:
 				break;
 		}
 	}
 	return NULL;
 }
+
 
 void quitar_de_pokemones_pendientes(char* pokemon) {
 	for (int i = 0; i < list_size(pokemones_pendientes); i++) {
@@ -478,6 +516,7 @@ void quitar_de_pokemones_pendientes(char* pokemon) {
 		}
 	}
 }
+
 
 void quitar_de_real_target(char* pokemon) {
 	for (int i = 0; i < list_size(real_targets_pokemons); i++) {
@@ -489,6 +528,7 @@ void quitar_de_real_target(char* pokemon) {
 	}
 }
 
+
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
@@ -497,7 +537,7 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	for (int i = 0; i < list_size(pokemon->pos); i++) {
 		sem_post(&sem_message_on_queue);
 	}
-	team_logger_info("Se añadió a %s a la cola de pokemons a atrapar!", pokemon->name);
+	team_logger_info("Se añadió a %s a la cola de POKEMONS A ATRAPAR!", pokemon->name);
 }
 
 
@@ -523,6 +563,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 	return false;
 }
 
+
 bool pokemon_required(char* pokemon_name) {
 	for (int i = 0; i < list_size(real_targets_pokemons); i++) {
 		t_pokemon* pokemon = list_get(real_targets_pokemons, i);
@@ -533,6 +574,7 @@ bool pokemon_required(char* pokemon_name) {
 	return false;
 }
 
+
 bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i ++) {
 		t_pokemon* pokemon = list_get(pokemon_to_catch, i);
@@ -542,6 +584,7 @@ bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
 	}
 	return true;
 } 
+
 
 void team_server_init() {
 
@@ -579,12 +622,14 @@ void team_server_init() {
 	}
 }
 
+
 void *handle_connection(void *arg) {
 	t_handle_connection* connect_handler = (t_handle_connection *) arg;
 	int client_fd = connect_handler->fd;
 	receive_msg(client_fd, connect_handler->bool_val);
 	return NULL;
 }
+
 
 void send_ack(void* arg) {
 	int val = *((int*) arg);
@@ -601,12 +646,11 @@ void send_ack(void* arg) {
 	socket_close_conection(client_fd);
 }
 
-void team_exit() {
+
+void team_exit() { //TODO: ver como finalizar correctamente el team una vez que todos los objetivos fueron atrapados
 	team_planner_print_fullfill_target();
 	socket_close_conection(team_socket);
 	team_planner_destroy();
 	team_config_free();
 	team_logger_destroy();
 }
-//pthread_cancel(entrenador->hilo_entrenador);
-//TODO: función que recorra la lista de EXIT y finalice cada hilo
