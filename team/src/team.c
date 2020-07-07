@@ -479,17 +479,15 @@ void quitar_de_pokemones_pendientes(char* pokemon) {
 	}
 }
 
-
 void quitar_de_real_target(char* pokemon) {
 	for (int i = 0; i < list_size(real_targets_pokemons); i++) {
 		t_pokemon* pok = list_get(real_targets_pokemons, i);
 		if (string_equals_ignore_case(pokemon, pok->name)) {
 			list_remove(real_targets_pokemons, i);
-			i = -1;
+			break;
 		}
 	}
 }
-
 
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
@@ -528,7 +526,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 bool pokemon_required(char* pokemon_name) {
 	for (int i = 0; i < list_size(real_targets_pokemons); i++) {
 		t_pokemon* pokemon = list_get(real_targets_pokemons, i);
-		if (string_equals_ignore_case(pokemon_name,pokemon->name)) {
+		if (string_equals_ignore_case(pokemon_name, pokemon->name)) {
 			return true;
 		}
 	}
@@ -536,9 +534,9 @@ bool pokemon_required(char* pokemon_name) {
 }
 
 bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
-	for(int i = 0; i < list_size(pokemon_to_catch); i ++){
+	for (int i = 0; i < list_size(pokemon_to_catch); i ++) {
 		t_pokemon* pokemon = list_get(pokemon_to_catch, i);
-		if(string_equals_ignore_case(pokemon_name,pokemon->name)){
+		if (string_equals_ignore_case(pokemon_name, pokemon->name)) {
 			return false;
 		}
 	}
