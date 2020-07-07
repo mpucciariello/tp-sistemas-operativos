@@ -188,17 +188,6 @@ void buddy_free(struct buddy *self, int offset) {
 	}
 }
 
-int buddy_size(struct buddy *self, int offset) {
-	uint32_t node_size = 1;
-	uint32_t index = offset + self->size - 1;
-
-	for (; self->longest[index]; index = parent(index)) {
-		node_size >>= 1;
-	}
-
-	return node_size;
-}
-
 // Broker init
 int broker_load() {
 	int response = broker_config_load();

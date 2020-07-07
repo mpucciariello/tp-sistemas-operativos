@@ -72,7 +72,6 @@ struct buddy* buddy = NULL;
 struct buddy *buddy_new(int num_of_fragments);
 int buddy_alloc(struct buddy *self, uint32_t size);
 void buddy_free(struct buddy *self, int offset);
-int buddy_size(struct buddy *self, int offset);
 t_subscribe_nodo* check_already_subscribed(char *ip,uint32_t puerto,t_list *list);
 t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
 void *get_from_memory(t_protocol protocol, int posicion, void *message);
