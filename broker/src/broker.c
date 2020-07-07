@@ -44,7 +44,6 @@ int main(int argc, char *argv[]) {
 	if (broker_config->estrategia_memoria == 0) {
 		// Init buddy system structure
 		// TODO: Change internal structure to the needed one
-		struct buddy* buddy = NULL;
 		buddy = buddy_new(broker_config->tamano_memoria);
 		// TODO: Link with save in memory implementation (actually make use of the buddy sys)
 	}
@@ -1114,16 +1113,22 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 
 }
 
+_Bool is_buddy() {
+	return broker_config->estrategia_memoria;
+}
+
 int save_on_memory(t_message_to_void *message_void) {
 	pthread_mutex_lock(&mpointer);
-	int from = pointer;
+	int from = is_buddy() ? buddy_alloc(buddy, message_void->size_message) : pointer;
 
-	if (message_void->size_message < broker_config->tamano_minimo_particion) {
-		pointer += broker_config->tamano_minimo_particion;
-	}
+	if (!is_buddy()) {
+		if (message_void->size_message < broker_config->tamano_minimo_particion) {
+			pointer += broker_config->tamano_minimo_particion;
+		}
 
-	else {
-		pointer += message_void->size_message;
+		else {
+			pointer += message_void->size_message;
+		}
 	}
 
 	memcpy(memory + from, message_void->message, message_void->size_message);
@@ -1136,12 +1141,14 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 
 	nodo_mem->pointer = pointer;
 
-	if (msg_size < broker_config->tamano_minimo_particion) {
-		nodo_mem->size = broker_config->tamano_minimo_particion;
-	}
+	if (!is_buddy()) {
+		if (msg_size < broker_config->tamano_minimo_particion) {
+			nodo_mem->size = broker_config->tamano_minimo_particion;
+		}
 
-	else {
-		nodo_mem->size = msg_size;
+		else {
+			nodo_mem->size = msg_size;
+		}
 	}
 
 	nodo_mem->cola = cola;
