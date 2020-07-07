@@ -1,5 +1,44 @@
 #include "broker.h"
 
+struct buddy {
+    uint32_t size;
+    uint32_t longest[1];
+};
+
+static inline int left_child(int index)
+{
+    /* index * 2 + 1 */
+    return ((index << 1) + 1);
+}
+
+static inline int right_child(int index)
+{
+    /* index * 2 + 2 */
+    return ((index << 1) + 2);
+}
+
+static inline int parent(int index)
+{
+    /* (index+1)/2 - 1 */
+    return (((index+1)>>1) - 1);
+}
+
+static inline bool is_power_of_2(int index)
+{
+    return !(index & (index - 1));
+}
+
+static inline unsigned next_power_of_2(int size)
+{
+    size -= 1;
+    size |= (size >> 1);
+    size |= (size >> 2);
+    size |= (size >> 4);
+    size |= (size >> 8);
+    size |= (size >> 16);
+    return size + 1;
+}
+
 int main(int argc, char *argv[]) {
 	initialize_queue();
 	if (broker_load() < 0)
@@ -13,6 +52,156 @@ int main(int argc, char *argv[]) {
 	return EXIT_SUCCESS;
 }
 
+// Buddy-related code
+
+/** Allocate a new buddy structure
+ * @param total_mem total memory to be managed
+ * @return pointer to the allocated buddy structure */
+struct buddy *buddy_new(int total_mem)
+{
+    struct buddy *self = NULL;
+    uint32_t node_size;
+
+    int i;
+
+    if (!is_power_of_2(total_mem)) {
+        total_mem = next_power_of_2(total_mem);
+    }
+
+    // Allocate an array to represent a complete binary tree
+    self = (struct buddy *) malloc(sizeof(struct buddy)
+                                     + 2 * total_mem * sizeof(uint32_t));
+    self->size = total_mem;
+    node_size = total_mem * 2;
+
+    /* Initialize longest array for buddy structure */
+    int iter_end = total_mem * 2 - 1;
+    for (i = 0; i < iter_end; i++) {
+        if (is_power_of_2(i+1)) {
+            node_size >>= 1;
+        }
+        self->longest[i] = node_size;
+    }
+
+    return self;
+}
+
+void buddy_destroy(struct buddy *self)
+{
+    free(self);
+}
+
+// Choose smallest child greater than size
+unsigned choose_better_child(struct buddy *self, int index, uint32_t size)
+{
+    struct compound {
+        uint32_t size;
+        int index;
+    } children[2];
+
+    children[0].index = left_child(index);
+    children[0].size = self->longest[children[0].index];
+    children[1].index = right_child(index);
+    children[1].size = self->longest[children[1].index];
+
+    int min_idx = (children[0].size <= children[1].size) ? 0: 1;
+
+    if (size > children[min_idx].size) {
+        min_idx = 1 - min_idx;
+    }
+
+    return children[min_idx].index;
+}
+
+/** @param size to alloc
+ * @param self source buddy system
+ * @return the offset from the beginning of memory to be managed */
+int buddy_alloc(struct buddy *self, uint32_t size)
+{
+    if (self == NULL || self->size < size) {
+    	broker_logger_error("Data couldn't be stored. Reason: Insufficient memory");
+        return -1;
+    }
+    size = next_power_of_2(size);
+
+    uint32_t index = 0;
+    if (self->longest[index] < size) {
+    	broker_logger_error("Data couldn't be stored. Reason: External fragmentation");
+        return -1;
+    }
+
+    // Search recursively for the child
+    uint32_t node_size = 0;
+    for (node_size = self->size; node_size != size; node_size >>= 1) {
+        index = choose_better_child(self, index, size);
+    }
+
+    // Update the longest value back
+    self->longest[index] = 0;
+    int offset = (index + 1)*node_size - self->size;
+
+    while (index) {
+        index = parent(index);
+        self->longest[index] =
+            max(self->longest[left_child(index)],
+                self->longest[right_child(index)]);
+    }
+
+    return offset;
+}
+
+void buddy_free(struct buddy *self, int offset)
+{
+    if (self == NULL || offset < 0 || offset > self->size) {
+    	broker_logger_error("Error: value out of bounds");
+        return;
+    }
+
+    uint32_t node_size;
+    uint32_t index;
+
+    /* get the corresponding index from offset */
+    node_size = 1;
+    index = offset + self->size - 1;
+
+    for (; self->longest[index] != 0; index = parent(index)) {
+        node_size <<= 1;    /* node_size *= 2; */
+
+        if (index == 0) {
+            break;
+        }
+    }
+
+    self->longest[index] = node_size;
+
+    while (index) {
+        index = parent(index);
+        node_size <<= 1;
+
+        uint32_t left_longest = self->longest[left_child(index)];
+        uint32_t right_longest = self->longest[right_child(index)];
+
+        if (left_longest + right_longest == node_size) {
+            self->longest[index] = node_size;
+        } else {
+            self->longest[index] = max(left_longest, right_longest);
+        }
+    }
+}
+
+int buddy_size(struct buddy *self, int offset)
+{
+	uint32_t node_size = 1;
+	uint32_t index = offset + self->size - 1;
+
+    for (; self->longest[index]; index = parent(index)) {
+        node_size >>= 1;
+    }
+
+    return node_size;
+}
+
+// Broker init
 int broker_load() {
 	int response = broker_config_load();
 	if (response < 0)
