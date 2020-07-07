@@ -235,6 +235,7 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 		add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
+		team_logger_info("El entrenador %d realizó %d movimientos!", entrenador->id, team_config->quantum);
 		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que terminó su QUANTUM", entrenador->id);
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
@@ -424,18 +425,16 @@ void *receive_msg(int fd, int send_to) {
 					} 
 
 					if (all_queues_are_empty_except_block()) {
-						pthread_cancel(algoritmo_cercania_entrenadores);
 						team_logger_info("Ya no es posible atrapar más pokemones debido a que se alcanzó la cantidad del objetivo!");
 						solve_deadlock();
 					}
 
 					if(all_finished()){
-						pthread_mutex_lock(&entrenador->sem_move_trainers);
 						pthread_cancel(algoritmo_cercania_entrenadores);
 						pthread_cancel(planificator);
 						team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
-						void team_planner_end_trainer_threads();
-						team_exit();
+						//void team_planner_end_trainer_threads();
+						pthread_mutex_lock(&entrenador->sem_move_trainers);
 					}
 
 				} else {
