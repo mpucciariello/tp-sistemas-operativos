@@ -50,7 +50,6 @@ void team_init() {
 	pthread_t algoritmo_cercania_entrenadores;
 	team_planner_init();
 	send_get_message();
-	sem_wait(&sem_entrenadores_disponibles);  
 
 	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
 	t_cola cola_appeared = APPEARED_QUEUE;

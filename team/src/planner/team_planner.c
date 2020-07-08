@@ -20,9 +20,9 @@ void team_planner_run_planification() {
 
 void team_planner_algoritmo_cercania() {
 	while (true) {
+
 		sem_wait(&sem_message_on_queue);
 		sem_wait(&sem_entrenadores_disponibles);
-
 		team_logger_info("Se ejecutará el algoritmo de cercanía!");
 
 		t_pokemon* pokemon;
