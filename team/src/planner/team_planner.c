@@ -414,11 +414,11 @@ void new_cpu_cicle(t_entrenador_pokemon* entrenador) {
 	}
 	list_iterate(block_queue, (void*) _increase_block_time_trainner);
 
-	if (team_config->algoritmo_planificacion == RR) {
+	if (team_config->algoritmo_planificacion == RR && !entrenador->deadlock) {
 		check_RR_burst(entrenador); 
 	} 
 
-	if (team_config->algoritmo_planificacion == SJF_CD) {
+	if (team_config->algoritmo_planificacion == SJF_CD && !entrenador->deadlock) {
 		check_SJF_CD_time(entrenador); 
 	}
 }
@@ -542,9 +542,11 @@ void solve_deadlock() {
 		team_logger_info("%s", pokemon_de_entrenador_bloqueante->name);
 		t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
 		entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
-		team_logger_info("%s", entrenador_bloqueado->id);
+		team_logger_info("%d", entrenador_bloqueado->id);
 
-		entrenador_bloqueado->pokemon_a_atrapar->name = pokemon_de_entrenador_bloqueante->name;
+		entrenador_bloqueado->pokemon_a_atrapar = malloc(sizeof(t_pokemon));
+		entrenador_bloqueado->pokemon_a_atrapar->name = string_duplicate(pokemon_de_entrenador_bloqueante->name);
+		entrenador_bloqueado->pokemon_a_atrapar->position = malloc(sizeof(t_position));
 		entrenador_bloqueado->pokemon_a_atrapar->position->pos_x = entrenador_bloqueante->position->pos_x;
 		entrenador_bloqueado->pokemon_a_atrapar->position->pos_y = entrenador_bloqueante->position->pos_y;
 

@@ -282,7 +282,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			sem_post(&sem_deadlock);
 		}
 
-		if (entrenador->blocked_info == NULL && entrenador->deadlock == false) {
+		if (entrenador->blocked_info == NULL && !entrenador->deadlock) {
 			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 			catch_send->id_correlacional = 0;
 			catch_send->nombre_pokemon = entrenador->pokemon_a_atrapar->name;
