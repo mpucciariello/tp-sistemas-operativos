@@ -320,11 +320,11 @@ void planner_load_entrenadores() {
 	while (team_config->posiciones_entrenadores[i] != NULL) {
 		t_position* posicion = team_planner_extract_position(team_config->posiciones_entrenadores[i]);
 		t_list* pokemons = list_create();
-		if (!string_equals_ignore_case(utils_array_to_string(team_config->pokemon_entrenadores), "[]")) {
+		if (!string_equals_ignore_case(utils_array_to_string(team_config->pokemon_entrenadores), "[]") && team_config->pokemon_entrenadores[i] != NULL) {
 			team_planner_extract_pokemons(pokemons, team_config->pokemon_entrenadores[i]);
 		}
 		t_list* objetivos = list_create();
-		if (!string_equals_ignore_case(utils_array_to_string(team_config->objetivos_entrenadores), "[]")) {
+		if (!string_equals_ignore_case(utils_array_to_string(team_config->objetivos_entrenadores), "[]") && team_config->objetivos_entrenadores[i] != NULL) {
 			team_planner_extract_pokemons(objetivos, team_config->objetivos_entrenadores[i]);
 		}
 

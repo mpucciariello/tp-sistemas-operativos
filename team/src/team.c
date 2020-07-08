@@ -49,6 +49,7 @@ void team_init() {
 	pthread_t planificator;
 	pthread_t algoritmo_cercania_entrenadores;
 	team_planner_init();
+	//saque un semaforo para arreglar cercanía. Si tira error va a haber que sincronizar la carga de entrenadores con esta funcion
 	send_get_message();
 
 	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
