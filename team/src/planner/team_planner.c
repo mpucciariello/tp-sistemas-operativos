@@ -232,7 +232,7 @@ void planner_init_global_targets(t_list* objetivos) {
 	sem_post(&sem_pokemons_to_get);
 }
 
-char* planner_print_global_targets() {
+char* planner_print_global_targets() {//TODO revisar
 	char* global_targets_string = string_new();
 	string_append(&global_targets_string, "POKEMON			|CANTIDAD		\n");
 	for (int i = 0; i < list_size(keys_list); i++) {
@@ -343,12 +343,12 @@ void planner_load_entrenadores() {
 		tamanio_objetivos += pokemons_qty;
 	}
 
+	get_real_targets();
+
 	dictionary_iterator(team_planner_global_targets, (void*) add_total_targets);
 	char* objetivos_to_string = planner_print_global_targets();
-	team_logger_info("Hay %d objetivos globales: \n%s", tamanio_objetivos, objetivos_to_string);
+	team_logger_info("Hay %d objetivos globales: \n%s", list_size(real_targets_pokemons), objetivos_to_string);
 	free(objetivos_to_string);
-
-	get_real_targets();
 
 	for(int i = 0; i < list_size(new_queue); i++){
 		sem_post(&sem_entrenadores_disponibles);
@@ -536,11 +536,12 @@ void solve_deadlock() {
 	int i = 0;
 
 	while (block_queue_is_not_empty()) {
-
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, i);
-		t_pokemon* pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante);
+		t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
+		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante);
 		team_logger_info("%s", pokemon_de_entrenador_bloqueante->name);
-		t_entrenador_pokemon* entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
+		t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
+		entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
 		team_logger_info("%s", entrenador_bloqueado->id);
 
 		entrenador_bloqueado->pokemon_a_atrapar->name = pokemon_de_entrenador_bloqueante->name;
@@ -574,7 +575,6 @@ void solve_deadlock() {
 	if(all_finished()){
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
-		//team_planner_end_trainer_threads();
 	}
 	team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 }
@@ -620,6 +620,7 @@ t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_b
 				lo_tiene = false;
 			}
 			if (!lo_tiene) {
+				team_logger_info("entrenador %d", entrenador->id);
 				return entrenador;
 			}
 		}
