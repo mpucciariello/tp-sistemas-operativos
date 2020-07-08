@@ -608,9 +608,24 @@ bool block_queue_is_not_empty() {
 }
 
 t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_bloqueado) {
-	int cantidad_repetidos = 0;
+	int contador = 0;
 	bool _necesitan_pokemon_bloquante(t_entrenador_pokemon* trainner) {
-		cantidad_repetidos = 0;
+		contador = 0;
+		for (int i = 0; i < list_size(trainner->targets); i++) {
+			t_pokemon* pokemon_objetivo = list_get(trainner->targets, i);
+			if (!string_equals_ignore_case(pokemon_objetivo->name, pokemon_de_entrenador_bloqueado->name)) {
+				continue;
+			} else {
+				contador++;
+			}
+		}
+		return contador > 0;
+	}
+	t_list* entrenadores_pokemon_bloqueante = list_filter(block_queue, (void*) _necesitan_pokemon_bloquante);
+
+	int _entrenador_no_tiene_pokemon_bloqueante(t_entrenador_pokemon *trainner) {
+
+		int cantidad_repetidos = 0;
 		for (int i = 0; i < list_size(trainner->targets); i++) {
 			t_pokemon* pokemon_objetivo = list_get(trainner->targets, i);
 			if (!string_equals_ignore_case(pokemon_objetivo->name, pokemon_de_entrenador_bloqueado->name)) {
@@ -619,11 +634,7 @@ t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_b
 				cantidad_repetidos++;
 			}
 		}
-		return cantidad_repetidos > 0;
-	}
-	t_list* entrenadores_pokemon_bloqueante = list_filter(block_queue, (void*) _necesitan_pokemon_bloquante);
 
-	int _entrenador_no_tiene_pokemon_bloqueante(t_entrenador_pokemon *trainner) {
 		for (int i = 0; i < list_size(trainner->pokemons); i++) {
 			t_pokemon* pokemon_obtenido = list_get(trainner->pokemons, i);
 			if (string_equals_ignore_case(pokemon_obtenido->name, pokemon_de_entrenador_bloqueado->name)) {
@@ -633,6 +644,7 @@ t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_b
 		}
 		return cantidad_repetidos > 0 ? 1 : 0;
 	}
+
 	return list_find(entrenadores_pokemon_bloqueante, (void*) _entrenador_no_tiene_pokemon_bloqueante);
 }
 
