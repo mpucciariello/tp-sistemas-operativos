@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <time.h>
 
 #include "config/broker_config.h"
 #include "logger/broker_logger.h"
@@ -13,6 +14,7 @@
 
 int broker_socket;
 int uid_subscribe = 0;
+time_t base_time;
 
 int broker_load();
 void broker_server_init();
@@ -59,6 +61,7 @@ typedef struct {
 	int size;
 	t_cola cola;
 	int id;
+	time_t timestamp;
 } t_nodo_memory;
 
 typedef struct {
@@ -78,6 +81,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message);
 int save_on_memory(t_message_to_void *message_void);
 void save_node_list_memory(int pointer, int size,t_cola cola,int id);
 void send_message_to_queue(t_subscribe *subscriber,t_protocol protocol);
+void purge_msg();
 int generar_id();
 _Bool is_buddy();
 void create_message_ack(int id,t_list *cola,t_cola unCola);
