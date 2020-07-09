@@ -48,7 +48,6 @@ void team_init() {
 	pthread_t planificator;
 	pthread_t algoritmo_cercania_entrenadores;
 	team_planner_init();
-	//saque un semaforo para arreglar cercanía. Si tira error va a haber que sincronizar la carga de entrenadores con esta funcion
 	send_get_message();
 
 	team_logger_info("Creando un hilo para subscribirse a la cola APPEARED del broker %d");
@@ -150,11 +149,10 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		}
 
 		if(all_finished()){
-			pthread_exit(&algoritmo_cercania_entrenadores);
-			pthread_exit(&planificator);
+			pthread_cancel(algoritmo_cercania_entrenadores);
+			pthread_cancel(planificator);
 			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
-			void team_planner_end_trainer_threads();
-			//team_exit();
+			team_planner_end_trainer_threads();
 		}
 	}
 	usleep(500000);

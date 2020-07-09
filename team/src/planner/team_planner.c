@@ -583,8 +583,6 @@ void solve_deadlock() {
 
 		context_switch_qty++;
 
-		///////////////////////////////////////////////////////
-
 		t_pokemon* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
 		team_logger_info("%s", pokemon_de_entrenador_bloqueado-> name);
 		sleep((team_config->retardo_ciclo_cpu)*5);
@@ -595,7 +593,7 @@ void solve_deadlock() {
 		list_add(entrenador_bloqueante->pokemons, pokemon_de_entrenador_bloqueado);
 		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueante->id, pokemon_de_entrenador_bloqueado->name, entrenador_bloqueado->id);
 
-		//a partir de acá rompe
+
 		remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
 		remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
 
@@ -620,7 +618,7 @@ void solve_deadlock() {
 void team_planner_end_trainer_threads(){
 	for (int i = 0; i < list_size(exit_queue); i++){
 		t_entrenador_pokemon* entrenador = list_get(exit_queue, i);
-		pthread_exit(&entrenador->hilo_entrenador);
+		pthread_cancel(entrenador->hilo_entrenador);
 	}
 }
 
