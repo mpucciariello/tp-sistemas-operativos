@@ -530,7 +530,7 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 
 
 bool all_queues_are_empty_except_block() {
-	return list_is_empty(team_planner_create_ready_queue()) && list_is_empty(ready_queue)&& !list_is_empty(block_queue);// && list_is_empty(team_planner_trainers_waiting_messages())
+	return list_is_empty(new_queue) && list_is_empty(ready_queue) && !list_is_empty(block_queue) && list_is_empty(team_planner_trainers_waiting_messages());
 }
 
 
@@ -555,8 +555,6 @@ void solve_deadlock() {
 		deadlocks_detected++;	
 
 		team_logger_info("Se detectó un deadlock. El entrenador %d está bloqueando al entrenador %d", entrenador_bloqueante->id, entrenador_bloqueado->id);
-
-		//SIMULA LA FUNCION MOVER
 
 		add_to_ready_queue(entrenador_bloqueado);
 		list_remove(ready_queue, 0);
@@ -583,17 +581,16 @@ void solve_deadlock() {
 
 		context_switch_qty++;
 
-		///////////////////////////////////////////////////////
 
 		t_pokemon* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
 
 		sleep((team_config->retardo_ciclo_cpu)*5);
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
-		team_logger_info("El entrenador %d ahora tiene un %s!", entrenador_bloqueado->id, pokemon_de_entrenador_bloqueante->name);
+		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueado->id, pokemon_de_entrenador_bloqueante->name, entrenador_bloqueante->id);
 
 		list_add(entrenador_bloqueante->pokemons, pokemon_de_entrenador_bloqueado);
-		team_logger_info("El entrenador %d ahora tiene un %s!", entrenador_bloqueante->id, pokemon_de_entrenador_bloqueado->name);
+		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueante->id, pokemon_de_entrenador_bloqueado->name, entrenador_bloqueado->id);
 
 		remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
 		remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
@@ -683,26 +680,27 @@ t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_b
 
 t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador) {
 	bool le_sirve = true;
+	t_pokemon* pokemon_a_entregar;
 
 	for(int i = 0; i < list_size(entrenador->pokemons); i++){
-		t_pokemon* pokemon_a_entregar = list_get(entrenador->pokemons, i);
+		pokemon_a_entregar = list_get(entrenador->pokemons, i);
 		
 		for (int j = 0; j < list_size(entrenador->targets); j++) {
 			t_pokemon* pokemon_objetivo = list_get(entrenador->targets, j);
 			if (string_equals_ignore_case(pokemon_objetivo->name, pokemon_a_entregar->name)) {
 				le_sirve = true;
-				break;
 			} else {
 				le_sirve = false;
 			}
 		}
 
-		if (le_sirve) {
-			i++;
-		} else {
-			i = -1;
-			return pokemon_a_entregar;
+		if(!le_sirve){
+			break;
 		}
+	}
+
+	if (!le_sirve) {
+		return pokemon_a_entregar;
 	}
 	return NULL;
 }
