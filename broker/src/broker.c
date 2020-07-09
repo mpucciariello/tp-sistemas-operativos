@@ -125,10 +125,11 @@ int buddy_alloc(struct buddy *self, uint32_t size) {
 	size = next_power_of_2(size);
 
 	uint32_t index = 0;
-	if (self->longest[index] < size) {
+	while (self->longest[index] < size) {
 		broker_logger_error(
 				"Data couldn't be stored. Reason: External fragmentation");
-		return -1;
+		broker_logger_info("Freeing memory...");
+		purge_msg();
 	}
 
 	// Search recursively for the child
@@ -159,12 +160,12 @@ void buddy_free(struct buddy *self, int offset) {
 	uint32_t node_size;
 	uint32_t index;
 
-	/* get the corresponding index from offset */
+	// get the corresponding index from offset
 	node_size = 1;
 	index = offset + self->size - 1;
 
 	for (; self->longest[index] != 0; index = parent(index)) {
-		node_size <<= 1; /* node_size *= 2; */
+		node_size <<= 1; // node_size *= 2
 
 		if (index == 0) {
 			break;
@@ -215,6 +216,7 @@ int broker_load() {
 
 void broker_server_init() {
 
+	base_time = time(NULL);
 	broker_socket = socket_create_listener(broker_config->ip_broker,
 			broker_config->puerto_broker);
 	if (broker_socket < 0) {
@@ -320,7 +322,7 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					new_receive);
 			int from = save_on_memory(message_void);
-			broker_logger_info("POINTER VALUE AFTER NEW_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
 			save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
 					new_receive->id_correlacional);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
@@ -375,7 +377,7 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
 			int from = save_on_memory(message_void);
-			broker_logger_info("POINTER VALUE AFTER APPEARED_POKEMON: %d",
+			broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d",
 					from);
 			save_node_list_memory(from, message_void->size_message,
 					APPEARED_QUEUE, appeared_rcv->id_correlacional);
@@ -427,7 +429,7 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					get_rcv);
 			int from = save_on_memory(message_void);
-			broker_logger_info("POINTER VALUE AFTER GET_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
 			save_node_list_memory(from, message_void->size_message, GET_QUEUE,
 					get_rcv->id_correlacional);
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
@@ -482,7 +484,7 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					catch_rcv);
 			int from = save_on_memory(message_void);
-			broker_logger_info("POINTER VALUE AFTER CATCH_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
 			catch_rcv->id_correlacional = generar_id();
 			save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
 					catch_rcv->id_correlacional);
@@ -546,7 +548,7 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					loc_rcv);
 			int from = save_on_memory(message_void);
-			broker_logger_info("POINTER VALUE AFTER LOCALIZED_POKEMON: %d",
+			broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d",
 					from);
 			save_node_list_memory(from, message_void->size_message,
 					LOCALIZED_QUEUE, loc_rcv->id_correlacional);
@@ -598,7 +600,6 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
 			broker_logger_info("IP Recibido: %s", ip);
 			sub_rcv->f_desc = client_fd;
-			// TODO: Check dictionary
 			search_queue(sub_rcv);
 			//free(sub_rcv->ip);
 			//free(sub_rcv);
@@ -618,7 +619,8 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					caught_rcv);
 			int from = save_on_memory(message_void);
-			broker_logger_info("POINTER VALUE AFTER CAUGHT_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d",
+					from);
 			save_node_list_memory(from, message_void->size_message,
 					CAUGHT_QUEUE, caught_rcv->id_correlacional);
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from,
@@ -704,7 +706,7 @@ void add_to(t_list *list, t_subscribe* subscriber) {
 		nodo->f_desc = subscriber->f_desc;
 		list_add(list, nodo);
 	} else {
-		broker_logger_info("Ya esta Subscripto");
+		broker_logger_info("Ya esta suscripto");
 		node->f_desc = subscriber->f_desc;
 	}
 }
@@ -713,42 +715,42 @@ void search_queue(t_subscribe *subscriber) {
 
 	switch (subscriber->cola) {
 	case NEW_QUEUE: {
-		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola NEW ",
+		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola NEW ",
 				subscriber->ip, subscriber->puerto);
 		add_to(new_queue, subscriber);
 		send_message_to_queue(subscriber, NEW_POKEMON);
 		break;
 	}
 	case CATCH_QUEUE: {
-		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
+		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
 				subscriber->ip, subscriber->puerto);
 		add_to(catch_queue, subscriber);
 		send_message_to_queue(subscriber, CATCH_POKEMON);
 		break;
 	}
 	case CAUGHT_QUEUE: {
-		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
+		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
 				subscriber->ip, subscriber->puerto);
 		add_to(caught_queue, subscriber);
 		send_message_to_queue(subscriber, CAUGHT_POKEMON);
 		break;
 	}
 	case GET_QUEUE: {
-		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola GET ",
+		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola GET ",
 				subscriber->ip, subscriber->puerto);
 		add_to(get_queue, subscriber);
 		send_message_to_queue(subscriber, GET_POKEMON);
 		break;
 	}
 	case LOCALIZED_QUEUE: {
-		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
+		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(localized_queue, subscriber);
 		send_message_to_queue(subscriber, LOCALIZED_POKEMON);
 		break;
 	}
 	case APPEARED_QUEUE: {
-		broker_logger_info("Subscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
+		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(appeared_queue, subscriber);
 		send_message_to_queue(subscriber, APPEARED_POKEMON);
@@ -1103,15 +1105,87 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 }
 
 _Bool is_buddy() {
-	return broker_config->estrategia_memoria;
+	return broker_config->estrategia_memoria == 0;
+}
+
+int compare_timings(const void* a, const void* b) {
+	return (((t_nodo_memory*) a)->timestamp > ((t_nodo_memory*) b)->timestamp) ? -1 : 1;
+}
+
+void update_timings(t_nodo_memory* node) {
+	if(broker_config->algoritmo_reemplazo == 1) {
+		time(&node->timestamp);
+	}
+
+	else return;
+}
+
+char* get_queue_name(t_cola q) {
+
+	char* out = string_duplicate("");
+
+	switch(q) {
+
+	case NEW_QUEUE:
+		out = "NEW_QUEUE";
+		break;
+
+	case LOCALIZED_QUEUE:
+		out = "LOCALIZED_QUEUE";
+		break;
+
+	case CATCH_QUEUE:
+		out = "CATCH_QUEUE";
+		break;
+
+	case CAUGHT_QUEUE:
+		out = "CAUGHT_QUEUE";
+		break;
+
+	case APPEARED_QUEUE:
+		out = "APPEARED_QUEUE";
+		break;
+
+	case GET_QUEUE:
+		out = "GET_QUEUE";
+		break;
+	}
+	return out;
+}
+
+void purge_msg() {
+
+	list_sort(list_memory, (void*) compare_timings);
+
+	/**
+	 * For debugging purposes, will be removed afterwards
+	 * for (int i=0; i< list_memory->elements_count; i++) {
+	 * t_nodo_memory* nd = (t_nodo_memory*)list_get(list_memory, i);
+	 * broker_logger_warn("%.2f", (float) nd->timestamp);
+	 * }
+	 *
+	 **/
+
+	t_nodo_memory* node = (t_nodo_memory*) list_get(list_memory, 0);
+	broker_logger_warn(
+			"The message with ID %d from %s, last modified at instant T=%d will be removed",
+			node->id, get_queue_name(node->cola), (int) (node->timestamp - base_time));
+	list_remove(list_memory, 0);
+
+	// TODO: Free mem?
+
+	buddy_free(buddy, node->pointer);
+	broker_logger_info("Message removed succesfully");
+	broker_logger_info("Memory consolidated");
 }
 
 int save_on_memory(t_message_to_void *message_void) {
 	pthread_mutex_lock(&mpointer);
-	int from = is_buddy() ? buddy_alloc(buddy, message_void->size_message) : pointer;
+	int from = is_buddy() ?	buddy_alloc(buddy, message_void->size_message) : pointer;
 
 	if (!is_buddy()) {
-		if (message_void->size_message < broker_config->tamano_minimo_particion) {
+		if (message_void->size_message
+				< broker_config->tamano_minimo_particion) {
 			pointer += broker_config->tamano_minimo_particion;
 		}
 
@@ -1142,6 +1216,7 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 
 	nodo_mem->cola = cola;
 	nodo_mem->id = id;
+	nodo_mem->timestamp = time(NULL);
 	list_add(list_memory, nodo_mem);
 }
 
@@ -1149,6 +1224,7 @@ void send_message_to_queue(t_subscribe *subscriber, t_protocol protocol) {
 	int cant = list_size(list_memory);
 	for (int i = 0; i < cant; i++) {
 		t_nodo_memory *nodo_mem = list_get(list_memory, i);
+		update_timings(nodo_mem);
 		switch (subscriber->cola) {
 		case NEW_QUEUE: {
 			t_new_pokemon* new_snd = get_from_memory(protocol,
