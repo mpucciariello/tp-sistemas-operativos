@@ -122,5 +122,6 @@ void check_RR_burst(t_entrenador_pokemon*);
 t_list* team_planner_get_trainners();
 void team_planner_end_trainer_threads();
 bool all_finished();
+void eliminar_pokemon_de_objetivos(t_list*, char*);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
