@@ -583,6 +583,10 @@ void solve_deadlock() {
 
 		context_switch_qty++;
 
+<<<<<<< Updated upstream
+=======
+		///////////////////////////////////////////////////////
+>>>>>>> Stashed changes
 
 		t_pokemon* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
 		team_logger_info("%s", pokemon_de_entrenador_bloqueado-> name);
@@ -764,9 +768,11 @@ void team_planner_init() {
 
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {//TODO: rompe con la config actual al enviar un Pikachu en 1 2
 	list_clean(lista_auxiliar);
+	team_logger_info("1");
 	lista_auxiliar = list_duplicate(entrenador->targets);
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
 
+		team_logger_info("2");
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);
 
