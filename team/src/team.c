@@ -137,6 +137,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 
 
 		if (trainer_completed_with_success(entrenador)) {
+			team_logger_info("paso");
 			team_planner_finish_trainner(entrenador);
 		}
 
@@ -300,7 +301,7 @@ void subscribe_to(void *arg) {
 	team_logger_info("tipo Cola: %d ", cola);
 	switch (cola) {
 		case NEW_QUEUE: {
-			//team_logger_info("Cola NEW ");
+			team_logger_info("Cola NEW ");
 			break;
 		}
 		case CATCH_QUEUE: {
