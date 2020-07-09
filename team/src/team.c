@@ -245,7 +245,6 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 	if (entrenador->estimated_time > team_planner_get_least_estimate_index()) {
-		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
@@ -277,11 +276,8 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 																			entrenador->pokemon_a_atrapar->position->pos_y);
 
 		entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
-		entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_x;
+		entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
 
-		if (entrenador->deadlock) {		
-			sem_post(&sem_deadlock);
-		}
 
 		if (entrenador->blocked_info == NULL && !entrenador->deadlock) {
 			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
@@ -431,6 +427,7 @@ void *receive_msg(int fd, int send_to) {
 					}
 
 					if(all_finished()){
+						team_logger_info("no funciona bien");
 						pthread_cancel(algoritmo_cercania_entrenadores);
 						pthread_cancel(planificator);
 						team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");

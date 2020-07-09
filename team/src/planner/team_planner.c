@@ -533,16 +533,14 @@ bool all_queues_are_empty_except_block() {
 void solve_deadlock() {
 
 	team_logger_info("Se iniciará la detección y resolución de deadlocks!");
-	int i = 0;
+	int a = 0;
 
 	while (block_queue_is_not_empty()) {
-		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, i);
+		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
 		t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
 		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante);
-		team_logger_info("%s", pokemon_de_entrenador_bloqueante->name);
 		t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
 		entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
-		team_logger_info("%d", entrenador_bloqueado->id);
 
 		entrenador_bloqueado->pokemon_a_atrapar = malloc(sizeof(t_pokemon));
 		entrenador_bloqueado->pokemon_a_atrapar->name = string_duplicate(pokemon_de_entrenador_bloqueante->name);
@@ -552,15 +550,47 @@ void solve_deadlock() {
 
 		deadlocks_detected++;	
 
-		team_logger_info("Se detectó un deadlock. El entrenador %d", entrenador_bloqueante->id, " está bloqueando al entrenador %d", entrenador_bloqueado->id);
+		team_logger_info("Se detectó un deadlock. El entrenador %d está bloqueando al entrenador %d", entrenador_bloqueante->id, entrenador_bloqueado->id);
+
+		//SIMULA LA FUNCION MOVER
 
 		add_to_ready_queue(entrenador_bloqueado);
+		list_remove(ready_queue, 0);
 
-		sem_wait(&sem_deadlock);
+		team_logger_info("El entrenador %d pasará a EXEC!", entrenador_bloqueado-> id);
+
+		int aux_x = entrenador_bloqueado->position->pos_x - entrenador_bloqueado->pokemon_a_atrapar->position->pos_x;
+		int	aux_y = entrenador_bloqueado->position->pos_y - entrenador_bloqueado->pokemon_a_atrapar->position->pos_y;
+
+		int steps = fabs(aux_x + aux_y);
+
+		for (int i = 0; i <= steps; i++) {
+			sleep(team_config->retardo_ciclo_cpu);
+		}
+
+		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador_bloqueado->id,
+																		entrenador_bloqueado->position->pos_x,
+																		entrenador_bloqueado->position->pos_y,
+																		entrenador_bloqueado->pokemon_a_atrapar->position->pos_x,
+																		entrenador_bloqueado->pokemon_a_atrapar->position->pos_y);
+
+		entrenador_bloqueado->position->pos_x = entrenador_bloqueado->pokemon_a_atrapar->position->pos_x;
+		entrenador_bloqueado->position->pos_y = entrenador_bloqueado->pokemon_a_atrapar->position->pos_y;
+
+		context_switch_qty++;
+
+		//
+
 		t_pokemon* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
 
+		sleep((team_config->retardo_ciclo_cpu)*5);
+
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
+		team_logger_info("El entrenador %d ahora tiene un %s!", entrenador_bloqueado->id, pokemon_de_entrenador_bloqueante->name);
+
 		list_add(entrenador_bloqueante->pokemons, pokemon_de_entrenador_bloqueado);
+		team_logger_info("El entrenador %d ahora tiene un %s!", entrenador_bloqueante->id, pokemon_de_entrenador_bloqueado->name);
+
 		remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
 		remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
 
@@ -571,7 +601,7 @@ void solve_deadlock() {
 		if (trainer_completed_with_success(entrenador_bloqueante)) {
 			team_planner_finish_trainner(entrenador_bloqueante);
 		}
-		i++;
+		a++;
 		deadlocks_resolved++;	
 	}
 	if(all_finished()){
@@ -603,8 +633,7 @@ void remove_from_pokemons_list(t_entrenador_pokemon* entrenador, t_pokemon* poke
 
 
 bool block_queue_is_not_empty() {
-	bool vacia = list_is_empty(block_queue);
-	return !vacia;
+	return !list_is_empty(block_queue);
 }
 
 t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_bloqueado) {
