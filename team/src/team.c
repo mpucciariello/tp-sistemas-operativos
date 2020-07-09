@@ -123,16 +123,16 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		list_add(entrenador->list_id_catch, (void*)catch_send->id_correlacional);
 	} else {
 		team_logger_warn("No se ha podido enviar el mensaje CATCH. Se agregará a los pokemons atrapados del entrenador %d, por comportamiento default: %s, posición (%d, %d)", entrenador->id, catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
-		atrapar_pokemon(entrenador);
+		atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
 	}
 	usleep(500000);
 }
 
-void atrapar_pokemon(t_entrenador_pokemon* entrenador){
+void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name){
 	team_planner_change_block_status_by_trainer(0, entrenador);
-	t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
+	t_pokemon* pokemon = team_planner_pokemon_create(pokemon_name);
 	list_add(entrenador->pokemons, pokemon);
-	team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, catch_send->nombre_pokemon);
+	team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, pokemon_name);
 	quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
 	quitar_de_real_target(entrenador->pokemon_a_atrapar->name);
 
@@ -408,7 +408,7 @@ void *receive_msg(int fd, int send_to) {
 				if (caught_rcv->result) {
 					team_logger_info("MENSAJE CAUGHT POSITIVO: El entrenador %d, atrapó un %s!!", entrenador->id, catch_message->nombre_pokemon);
 					list_add(entrenador->pokemons, catch_message->nombre_pokemon);
-					atrapar_pokemon(entrenador);
+					atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
 
 				} else {
 					team_logger_info("MENSAJE CAUGHT NEGATIVO: El entrenador %d no atrapó a %s, al no tener mensajes pendientes volverá a poder ser planificado.", entrenador->id, catch_message->nombre_pokemon);
