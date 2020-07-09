@@ -125,10 +125,11 @@ int buddy_alloc(struct buddy *self, uint32_t size) {
 	size = next_power_of_2(size);
 
 	uint32_t index = 0;
-	if (self->longest[index] < size) {
+	while (self->longest[index] < size) {
 		broker_logger_error(
 				"Data couldn't be stored. Reason: External fragmentation");
-		return -1;
+		broker_logger_info("Freeing memory...");
+		purge_msg();
 	}
 
 	// Search recursively for the child
@@ -618,7 +619,8 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					caught_rcv);
 			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d",
+					from);
 			save_node_list_memory(from, message_void->size_message,
 					CAUGHT_QUEUE, caught_rcv->id_correlacional);
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from,
@@ -1107,25 +1109,38 @@ _Bool is_buddy() {
 }
 
 int compare_timings(const void* a, const void* b) {
-	return (((t_nodo_memory*)a)->timestamp > ((t_nodo_memory*)b)->timestamp) ? 1: -1;
+	return (((t_nodo_memory*) a)->timestamp > ((t_nodo_memory*) b)->timestamp) ?
+			1 : -1;
+}
+
+void update_timings(t_nodo_memory* node) {
+	time(&node->timestamp);
 }
 
 void purge_msg() {
 
 	list_sort(list_memory, (void*) compare_timings);
-	uint32_t size_to_clear = ((t_nodo_memory*)list_get(list_memory, 0))->size;
-	uint32_t from_to_clear = ((t_nodo_memory*)list_get(list_memory, 0))->pointer;
+	t_nodo_memory* node = (t_nodo_memory*) list_get(list_memory, 0);
 
+	broker_logger_warn(
+			"The message with ID %d from %s, last modified at %.2f will be removed",
+			node->id, node->cola, (float) (node->timestamp - base_time));
 	list_remove(list_memory, 0);
-	memset(memory + from_to_clear, '\0', size_to_clear);
+	memset(memory + node->pointer, '\0', node->size);
+	buddy_free(buddy, node->pointer);
+	broker_logger_info("Message removed succesfully");
+	broker_logger_info("Memory consolidated");
 }
 
 int save_on_memory(t_message_to_void *message_void) {
 	pthread_mutex_lock(&mpointer);
-	int from = is_buddy() ? buddy_alloc(buddy, message_void->size_message) : pointer;
+	int from =
+			is_buddy() ?
+					buddy_alloc(buddy, message_void->size_message) : pointer;
 
 	if (!is_buddy()) {
-		if (message_void->size_message < broker_config->tamano_minimo_particion) {
+		if (message_void->size_message
+				< broker_config->tamano_minimo_particion) {
 			pointer += broker_config->tamano_minimo_particion;
 		}
 
@@ -1163,6 +1178,7 @@ void send_message_to_queue(t_subscribe *subscriber, t_protocol protocol) {
 	int cant = list_size(list_memory);
 	for (int i = 0; i < cant; i++) {
 		t_nodo_memory *nodo_mem = list_get(list_memory, i);
+		update_timings(nodo_mem);
 		switch (subscriber->cola) {
 		case NEW_QUEUE: {
 			t_new_pokemon* new_snd = get_from_memory(protocol,
