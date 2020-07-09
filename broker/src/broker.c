@@ -1109,24 +1109,71 @@ _Bool is_buddy() {
 }
 
 int compare_timings(const void* a, const void* b) {
-	return (((t_nodo_memory*) a)->timestamp > ((t_nodo_memory*) b)->timestamp) ?
-			1 : -1;
+	return (((t_nodo_memory*) a)->timestamp > ((t_nodo_memory*) b)->timestamp) ? -1 : 1;
 }
 
 void update_timings(t_nodo_memory* node) {
-	time(&node->timestamp);
+	if(broker_config->algoritmo_reemplazo == 1) {
+		time(&node->timestamp);
+	}
+
+	else return;
+}
+
+char* get_queue_name(t_cola q) {
+
+	char* out = string_duplicate("");
+
+	switch(q) {
+
+	case NEW_QUEUE:
+		out = "NEW_QUEUE";
+		break;
+
+	case LOCALIZED_QUEUE:
+		out = "LOCALIZED_QUEUE";
+		break;
+
+	case CATCH_QUEUE:
+		out = "CATCH_QUEUE";
+		break;
+
+	case CAUGHT_QUEUE:
+		out = "CAUGHT_QUEUE";
+		break;
+
+	case APPEARED_QUEUE:
+		out = "APPEARED_QUEUE";
+		break;
+
+	case GET_QUEUE:
+		out = "GET_QUEUE";
+		break;
+	}
+	return out;
 }
 
 void purge_msg() {
 
 	list_sort(list_memory, (void*) compare_timings);
-	t_nodo_memory* node = (t_nodo_memory*) list_get(list_memory, 0);
 
+	/**
+	 * For debugging purposes, will be removed afterwards
+	 * for (int i=0; i< list_memory->elements_count; i++) {
+	 * t_nodo_memory* nd = (t_nodo_memory*)list_get(list_memory, i);
+	 * broker_logger_warn("%.2f", (float) nd->timestamp);
+	 * }
+	 *
+	 **/
+
+	t_nodo_memory* node = (t_nodo_memory*) list_get(list_memory, 0);
 	broker_logger_warn(
-			"The message with ID %d from %s, last modified at %.2f will be removed",
-			node->id, node->cola, (float) (node->timestamp - base_time));
+			"The message with ID %d from %s, last modified at instant T=%d will be removed",
+			node->id, get_queue_name(node->cola), (int) (node->timestamp - base_time));
 	list_remove(list_memory, 0);
-	memset(memory + node->pointer, '\0', node->size);
+
+	// TODO: Free mem?
+
 	buddy_free(buddy, node->pointer);
 	broker_logger_info("Message removed succesfully");
 	broker_logger_info("Memory consolidated");
@@ -1134,9 +1181,7 @@ void purge_msg() {
 
 int save_on_memory(t_message_to_void *message_void) {
 	pthread_mutex_lock(&mpointer);
-	int from =
-			is_buddy() ?
-					buddy_alloc(buddy, message_void->size_message) : pointer;
+	int from = is_buddy() ?	buddy_alloc(buddy, message_void->size_message) : pointer;
 
 	if (!is_buddy()) {
 		if (message_void->size_message
@@ -1171,6 +1216,7 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 
 	nodo_mem->cola = cola;
 	nodo_mem->id = id;
+	nodo_mem->timestamp = time(NULL);
 	list_add(list_memory, nodo_mem);
 }
 
