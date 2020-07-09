@@ -40,6 +40,7 @@ void team_init() {
 	pokemones_pendientes = list_create();
 	real_targets_pokemons = list_create();
 	lista_auxiliar = list_create();
+	pokemons_localized = list_create();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -307,23 +308,23 @@ void subscribe_to(void *arg) {
 			break;
 		}
 		case CATCH_QUEUE: {
-			//team_logger_info("Cola CATCH ");
+			team_logger_info("Cola CATCH ");
 			break;
 		}
 		case CAUGHT_QUEUE: {
-			//team_logger_info("Cola CAUGHT ");
+			team_logger_info("Cola CAUGHT ");
 			break;
 		}
 		case GET_QUEUE: {
-			//team_logger_info("Cola GET ");
+			team_logger_info("Cola GET ");
 			break;
 		}
 		case LOCALIZED_QUEUE: {
-			//team_logger_info("Cola LOCALIZED ");
+			team_logger_info("Cola LOCALIZED ");
 			break;
 		}
 		case APPEARED_QUEUE: {
-			//team_logger_info("Cola APPEARED ");
+			team_logger_info("Cola APPEARED ");
 			break;
 		}
 	}
@@ -463,13 +464,14 @@ void *receive_msg(int fd, int send_to) {
 					return loc_rcv->id_correlacional == id;
 				}
 
-				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon) && pokemon_not_pendant(loc_rcv->nombre_pokemon) && pokemon_in_pokemon_to_catch(loc_rcv->nombre_pokemon)){
+				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo) && pokemon_required(loc_rcv->nombre_pokemon) && pokemon_not_pendant(loc_rcv->nombre_pokemon) && pokemon_in_pokemon_to_catch(loc_rcv->nombre_pokemon) && pokemon_not_localized(loc_rcv->nombre_pokemon)){
 					t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
 					pokemon->name = malloc(sizeof(loc_rcv->tamanio_nombre));
 					pokemon->name = loc_rcv->nombre_pokemon;
 					pokemon->pos = list_create();
 					pokemon->pos = loc_rcv->posiciones;
 					add_to_pokemon_to_catch(pokemon);
+					list_add(pokemons_localized, pokemon->name);
 				}
 				break;
 			}
@@ -507,6 +509,18 @@ void *receive_msg(int fd, int send_to) {
 		}
 	}
 	return NULL;
+}
+
+
+bool pokemon_not_localized(char* nombre){
+	for(int i = 0; i < list_size(pokemons_localized); i++){
+		char* pokemon = list_get(pokemons_localized, i);
+		if(string_equals_ignore_case(pokemon, nombre)){
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
