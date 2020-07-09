@@ -6,8 +6,6 @@ int main(int argc, char *argv[]) {
 
 	team_init();
 
-	//TODO: usar el main para recibir los mensajes
-
 	return EXIT_SUCCESS;
 }
 
@@ -152,10 +150,10 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		}
 
 		if(all_finished()){
-			pthread_cancel(algoritmo_cercania_entrenadores);
-			pthread_cancel(planificator);
+			pthread_exit(&algoritmo_cercania_entrenadores);
+			pthread_exit(&planificator);
 			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
-			//void team_planner_end_trainer_threads();
+			void team_planner_end_trainer_threads();
 			//team_exit();
 		}
 	}
@@ -428,11 +426,10 @@ void *receive_msg(int fd, int send_to) {
 					}
 
 					if(all_finished()){
-						team_logger_info("no funciona bien");
-						pthread_cancel(algoritmo_cercania_entrenadores);
-						pthread_cancel(planificator);
+						pthread_exit(&algoritmo_cercania_entrenadores);
+						pthread_exit(&planificator);
 						team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
-						//void team_planner_end_trainer_threads();
+						team_planner_end_trainer_threads();
 						pthread_mutex_lock(&entrenador->sem_move_trainers);
 					}
 
@@ -571,7 +568,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 			}
 		}
 		int length = list_size(lista_auxiliar);
-		return length != 0; //Si es igual a 0 no hay deadlock
+		return length != 0;
 	}
 	list_clean(lista_auxiliar);
 	return false;
@@ -661,7 +658,7 @@ void send_ack(void* arg) {
 }
 
 
-void team_exit() { //TODO: ver como finalizar correctamente el team una vez que todos los objetivos fueron atrapados
+void team_exit() {
 	team_planner_print_fullfill_target();
 	socket_close_conection(team_socket);
 	team_planner_destroy();

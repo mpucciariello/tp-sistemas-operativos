@@ -583,10 +583,7 @@ void solve_deadlock() {
 
 		context_switch_qty++;
 
-<<<<<<< Updated upstream
-=======
 		///////////////////////////////////////////////////////
->>>>>>> Stashed changes
 
 		t_pokemon* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
 		team_logger_info("%s", pokemon_de_entrenador_bloqueado-> name);
@@ -623,7 +620,7 @@ void solve_deadlock() {
 void team_planner_end_trainer_threads(){
 	for (int i = 0; i < list_size(exit_queue); i++){
 		t_entrenador_pokemon* entrenador = list_get(exit_queue, i);
-		pthread_cancel(entrenador->hilo_entrenador);
+		pthread_exit(&entrenador->hilo_entrenador);
 	}
 }
 
@@ -766,13 +763,11 @@ void team_planner_init() {
 	planner_load_entrenadores();	
 }
 
-bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {//TODO: rompe con la config actual al enviar un Pikachu en 1 2
+bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 	list_clean(lista_auxiliar);
-	team_logger_info("1");
 	lista_auxiliar = list_duplicate(entrenador->targets);
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
 
-		team_logger_info("2");
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);
 
@@ -783,7 +778,7 @@ bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {//TODO: r
 				}
 			}
 		}
-		return list_is_empty(lista_auxiliar); //Si es igual a 0 finaliza
+		return list_is_empty(lista_auxiliar);
 	}
 	list_clean(lista_auxiliar);
 	return false;
