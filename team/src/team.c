@@ -56,13 +56,11 @@ void team_init() {
 	pthread_detach(tid1);
 
 	team_logger_info("Creando un hilo para subscribirse a la cola LOCALIZED del broker %d");
-
 	t_cola cola_localized = LOCALIZED_QUEUE;
 	pthread_create(&tid2, NULL, (void*) team_retry_connect, (void*) &cola_localized);
 	pthread_detach(tid2);
 
 	team_logger_info("Creando un hilo para subscribirse a la cola CAUGHT del broker %d");
-
 	t_cola cola_caught = CAUGHT_QUEUE;
 	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
 	pthread_detach(tid3);
@@ -125,37 +123,40 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		list_add(entrenador->list_id_catch, (void*)catch_send->id_correlacional);
 	} else {
 		team_logger_warn("No se ha podido enviar el mensaje CATCH. Se agregará a los pokemons atrapados del entrenador %d, por comportamiento default: %s, posición (%d, %d)", entrenador->id, catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
-		team_planner_change_block_status_by_trainer(0, entrenador);
-		t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
-		list_add(entrenador->pokemons, pokemon);
-		team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, catch_send->nombre_pokemon);
-		quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
-		quitar_de_real_target(entrenador->pokemon_a_atrapar->name);
-
-
-		if (trainer_completed_with_success(entrenador)) {
-			team_logger_info("paso");
-			team_planner_finish_trainner(entrenador);
-		}
-
-		if (trainer_is_in_deadlock_caught(entrenador)) {
-			team_logger_info("El entrenador %d está en deadlock!", entrenador->id);
-			entrenador->deadlock = true;
-		}
-
-		if (all_queues_are_empty_except_block()) {
-			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en DEADLOCK!");
-			solve_deadlock();
-		}
-
-		if(all_finished()){
-			pthread_cancel(algoritmo_cercania_entrenadores);
-			pthread_cancel(planificator);
-			team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
-			team_planner_end_trainer_threads();
-		}
+		atrapar_pokemon(entrenador);
 	}
 	usleep(500000);
+}
+
+void atrapar_pokemon(t_entrenador_pokemon* entrenador){
+	team_planner_change_block_status_by_trainer(0, entrenador);
+	t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
+	list_add(entrenador->pokemons, pokemon);
+	team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, catch_send->nombre_pokemon);
+	quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
+	quitar_de_real_target(entrenador->pokemon_a_atrapar->name);
+
+
+	if (trainer_completed_with_success(entrenador)) {
+		team_planner_finish_trainner(entrenador);
+	}
+
+	if (trainer_is_in_deadlock_caught(entrenador)) {
+		team_logger_info("El entrenador %d está en deadlock!", entrenador->id);
+		entrenador->deadlock = true;
+	}
+
+	if (all_queues_are_empty_except_block()) {
+		team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en DEADLOCK!");
+		solve_deadlock();
+	}
+
+	if(all_finished()){
+		pthread_cancel(algoritmo_cercania_entrenadores);
+		pthread_cancel(planificator);
+		team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
+		team_planner_end_trainer_threads();
+	}
 }
 
 
@@ -407,29 +408,7 @@ void *receive_msg(int fd, int send_to) {
 				if (caught_rcv->result) {
 					team_logger_info("MENSAJE CAUGHT POSITIVO: El entrenador %d, atrapó un %s!!", entrenador->id, catch_message->nombre_pokemon);
 					list_add(entrenador->pokemons, catch_message->nombre_pokemon);
-					quitar_de_real_target(catch_message->nombre_pokemon);
-
-
-					if (trainer_completed_with_success(entrenador)) {
-						team_planner_finish_trainner(entrenador);
-					}
-
-					if (trainer_is_in_deadlock_caught(entrenador)) {
-						entrenador->deadlock = true;
-					} 
-
-					if (all_queues_are_empty_except_block()) {
-						team_logger_info("Ya no es posible atrapar más pokemones debido a que se alcanzó la cantidad del objetivo!");
-						solve_deadlock();
-					}
-
-					if(all_finished()){
-						pthread_exit(&algoritmo_cercania_entrenadores);
-						pthread_exit(&planificator);
-						team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
-						team_planner_end_trainer_threads();
-						pthread_mutex_lock(&entrenador->sem_move_trainers);
-					}
+					atrapar_pokemon(entrenador);
 
 				} else {
 					team_logger_info("MENSAJE CAUGHT NEGATIVO: El entrenador %d no atrapó a %s, al no tener mensajes pendientes volverá a poder ser planificado.", entrenador->id, catch_message->nombre_pokemon);
