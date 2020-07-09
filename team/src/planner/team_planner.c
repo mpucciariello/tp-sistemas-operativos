@@ -748,23 +748,20 @@ void team_planner_init() {
 
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {//TODO: rompe con la config actual al enviar un Pikachu en 1 2
 	list_clean(lista_auxiliar);
-	team_logger_info("1");
 	lista_auxiliar = list_duplicate(entrenador->targets);
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
 
-		team_logger_info("2");
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);
 
-			for (int j = 0; j < list_size(entrenador->targets); j++) {
-				t_pokemon* pokemon_objetivo = list_get(entrenador->targets, j);
+			for (int j = 0; j < list_size(lista_auxiliar); j++) {
+				t_pokemon* pokemon_objetivo = list_get(lista_auxiliar, j);
 				if (string_equals_ignore_case(pokemon_objetivo->name, pokemon_obtenido->name)) {
 					list_remove(lista_auxiliar, j);
 				}
 			}
 		}
-		int length = list_size(lista_auxiliar);
-		return length == 0; //Si es igual a 0 finaliza
+		return list_is_empty(lista_auxiliar); //Si es igual a 0 finaliza
 	}
 	list_clean(lista_auxiliar);
 	return false;
