@@ -151,7 +151,7 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name){
 		solve_deadlock();
 	}
 
-	if(all_finished()){
+	if(all_finished()){ //TODO: no finaliza, controlar que termine con exito
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
 		team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");

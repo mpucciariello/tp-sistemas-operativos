@@ -260,6 +260,7 @@ void team_planner_add_new_trainner(t_entrenador_pokemon* entrenador) {
 
 void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->state = EXIT;
+	entrenador->blocked_info = malloc(sizeof(t_entrenador_info_bloqueo));
 	entrenador->blocked_info->blocked_time = 0;
 	entrenador->blocked_info->status = 0;
 	entrenador->pokemon_a_atrapar = NULL;
@@ -541,9 +542,11 @@ void solve_deadlock() {
 
 	while (block_queue_is_not_empty()) {
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
-		t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
-		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante); //ROMPE ACA: RETORNA NULL
+		t_pokemon* pokemon_de_entrenador_bloqueado = malloc(sizeof(t_pokemon));
+		t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon)); //TODO: limpiar mm
 		t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
+
+		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante); //ROMPE ACA: RETORNA NULL
 		entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
 
 		entrenador_bloqueado->pokemon_a_atrapar = malloc(sizeof(t_pokemon));
@@ -583,8 +586,7 @@ void solve_deadlock() {
 
 		context_switch_qty++;
 
-		t_pokemon* pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
-		team_logger_info("%s", pokemon_de_entrenador_bloqueado-> name);
+		pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado);
 		sleep((team_config->retardo_ciclo_cpu)*5);
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
@@ -608,8 +610,10 @@ void solve_deadlock() {
 		deadlocks_resolved++;	
 	}
 	if(all_finished()){
+		team_logger_info("No hay más deadlocks!");
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
+		team_planner_end_trainer_threads();
 	}
 	team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 }
