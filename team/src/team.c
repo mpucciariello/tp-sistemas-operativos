@@ -128,6 +128,7 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 	usleep(500000);
 }
 
+
 void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name){
 	team_planner_change_block_status_by_trainer(0, entrenador);
 	t_pokemon* pokemon = team_planner_pokemon_create(pokemon_name);

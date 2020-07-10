@@ -550,13 +550,14 @@ void solve_deadlock() {
 	team_logger_info("Se iniciará la detección y resolución de deadlocks!");
 	int a = 0;
 
+	t_pokemon* pokemon_de_entrenador_bloqueado = malloc(sizeof(t_pokemon));
+	t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
+	t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
+
 	while (block_queue_is_not_empty()) {
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
-		t_pokemon* pokemon_de_entrenador_bloqueado = malloc(sizeof(t_pokemon));
-		t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon)); //TODO: limpiar mm
-		t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
 
-		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante); //ROMPE ACA: RETORNA NULL
+		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante); //Rompe aca despues de la 3ra vuelta
 		entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
 
 		entrenador_bloqueado->pokemon_a_atrapar = malloc(sizeof(t_pokemon));
@@ -618,13 +619,11 @@ void solve_deadlock() {
 		}
 		a++;
 		deadlocks_resolved++;
-
+	}
+	if(all_finished()){
 		free(pokemon_de_entrenador_bloqueado);
 		free(pokemon_de_entrenador_bloqueante);
 		free(entrenador_bloqueado);
-	}
-	if(all_finished()){
-		team_logger_info("No hay más deadlocks!");
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
 		team_planner_end_trainer_threads();
@@ -683,6 +682,7 @@ t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_b
 		return contador > 0;
 	}
 	t_list* entrenadores_pokemon_bloqueante = list_filter(block_queue, (void*) _necesitan_pokemon_bloquante);
+
 
 	int _entrenador_no_tiene_pokemon_bloqueante(t_entrenador_pokemon *trainner) {
 
