@@ -43,9 +43,7 @@ int main(int argc, char *argv[]) {
 
 	if (broker_config->estrategia_memoria == 0) {
 		// Init buddy system structure
-		// TODO: Change internal structure to the needed one
 		buddy = buddy_new(broker_config->tamano_memoria);
-		// TODO: Link with save in memory implementation (actually make use of the buddy sys)
 	}
 
 	pointer = 0;
@@ -309,7 +307,6 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("NEW RECEIVED FROM GB");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
-			broker_logger_info("ID recibido: %d", new_receive->id);
 			broker_logger_info("ID Correlacional: %d",
 					new_receive->id_correlacional);
 			broker_logger_info("Cantidad: %d", new_receive->cantidad);
@@ -326,8 +323,8 @@ static void *handle_connection(void *arg) {
 			save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
 					new_receive->id_correlacional);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
-			new_snd->id = new_receive->id_correlacional;
-			create_message_ack(new_snd->id, new_queue, NEW_QUEUE);
+			new_snd->id_correlacional = new_receive->id_correlacional;
+			create_message_ack(new_snd->id_correlacional, new_queue, NEW_QUEUE);
 
 			//free(message_void->message);
 			//free(message_void);
@@ -718,42 +715,42 @@ void search_queue(t_subscribe *subscriber) {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola NEW ",
 				subscriber->ip, subscriber->puerto);
 		add_to(new_queue, subscriber);
-		send_message_to_queue(subscriber);
+		send_all_messages(subscriber);
 		break;
 	}
 	case CATCH_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
 				subscriber->ip, subscriber->puerto);
 		add_to(catch_queue, subscriber);
-		send_message_to_queue(subscriber);
+		send_all_messages(subscriber);
 		break;
 	}
 	case CAUGHT_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
 				subscriber->ip, subscriber->puerto);
 		add_to(caught_queue, subscriber);
-		send_message_to_queue(subscriber);
+		send_all_messages(subscriber);
 		break;
 	}
 	case GET_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola GET ",
 				subscriber->ip, subscriber->puerto);
 		add_to(get_queue, subscriber);
-		send_message_to_queue(subscriber);
+		send_all_messages(subscriber);
 		break;
 	}
 	case LOCALIZED_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(localized_queue, subscriber);
-		send_message_to_queue(subscriber);
+		send_all_messages(subscriber);
 		break;
 	}
 	case APPEARED_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(appeared_queue, subscriber);
-		send_message_to_queue(subscriber);
+		send_all_messages(subscriber);
 		break;
 	}
 
@@ -1241,7 +1238,7 @@ t_nodo_memory* find_node(t_nodo_memory* node) {
 	return list_get(list_memory, ret_pos);
 }
 
-void send_message_to_queue(t_subscribe *subscriber) {
+void send_all_messages(t_subscribe *subscriber) {
 	_Bool msg_match(t_nodo_memory *node) {
 		return node->cola == subscriber->cola;
 	}
@@ -1258,12 +1255,14 @@ void send_message_to_queue(t_subscribe *subscriber) {
 		case NEW_QUEUE: {
 			t_new_pokemon* new_snd = get_from_memory(NEW_POKEMON,
 					nodo_mem->pointer, memory);
+			new_snd->id_correlacional = nodo_mem->id;
 			utils_serialize_and_send(subscriber->f_desc, NEW_POKEMON, new_snd);
 			break;
 		}
 		case CATCH_QUEUE: {
 			t_catch_pokemon* catch_snd = get_from_memory(CATCH_POKEMON,
 					nodo_mem->pointer, memory);
+			catch_snd->id_correlacional = nodo_mem->id;
 			utils_serialize_and_send(subscriber->f_desc, CATCH_POKEMON,
 					catch_snd);
 			break;
@@ -1271,6 +1270,7 @@ void send_message_to_queue(t_subscribe *subscriber) {
 		case CAUGHT_QUEUE: {
 			t_caught_pokemon* caught_snd = get_from_memory(CAUGHT_POKEMON,
 					nodo_mem->pointer, memory);
+			caught_snd->id_correlacional = nodo_mem->id;
 			utils_serialize_and_send(subscriber->f_desc, CAUGHT_POKEMON,
 					caught_snd);
 			break;
@@ -1278,12 +1278,14 @@ void send_message_to_queue(t_subscribe *subscriber) {
 		case GET_QUEUE: {
 			t_get_pokemon* get_snd = get_from_memory(GET_POKEMON,
 					nodo_mem->pointer, memory);
+			get_snd->id_correlacional = nodo_mem->id;
 			utils_serialize_and_send(subscriber->f_desc, GET_POKEMON, get_snd);
 			break;
 		}
 		case LOCALIZED_QUEUE: {
 			t_localized_pokemon* localized_snd = get_from_memory(
 					LOCALIZED_POKEMON, nodo_mem->pointer, memory);
+			localized_snd->id_correlacional = nodo_mem->id;
 			utils_serialize_and_send(subscriber->f_desc, LOCALIZED_POKEMON,
 					localized_snd);
 			break;
@@ -1291,6 +1293,7 @@ void send_message_to_queue(t_subscribe *subscriber) {
 		case APPEARED_QUEUE: {
 			t_appeared_pokemon* appeared_snd = get_from_memory(APPEARED_POKEMON,
 					nodo_mem->pointer, memory);
+			appeared_snd->id_correlacional = nodo_mem->id;
 			utils_serialize_and_send(subscriber->f_desc, APPEARED_POKEMON,
 					appeared_snd);
 			break;

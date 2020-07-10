@@ -75,7 +75,6 @@ typedef struct {
 	uint32_t cantidad;
 	uint32_t pos_x;
 	uint32_t pos_y;
-	uint32_t id;
 	uint32_t id_correlacional;
 } t_new_pokemon;
 

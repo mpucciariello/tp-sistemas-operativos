@@ -23,7 +23,7 @@
 #define SUBSCRIBER "SUBSCRIBE"
 #define EXIT_KEY "EXIT"
 #define SPLIT_CHAR " "
-#define INPUT_SIZE 100
+#define INPUT_SIZE 200
 
 
 int game_boy_broker_fd;

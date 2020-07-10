@@ -158,7 +158,6 @@ void *recv_game_card(int fd, int respond_to) {
 		case NEW_POKEMON: {
 			game_card_logger_info("NEW received");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(client_fd, protocol);
-			game_card_logger_info("ID recibido: %d", new_receive->id);
 			game_card_logger_info("ID Correlacional: %d", new_receive->id_correlacional);
 			game_card_logger_info("Cantidad: %d", new_receive->cantidad);
 			game_card_logger_info("Nombre Pokemon: %s", new_receive->nombre_pokemon);
