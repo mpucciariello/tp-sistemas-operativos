@@ -91,6 +91,7 @@ void move_trainers_and_catch_pokemon();
 void team_planner_change_block_status_by_trainer(int, t_entrenador_pokemon*);
 t_entrenador_pokemon* team_planner_set_algorithm();
 t_list* team_planner_create_ready_queue();
+t_list* team_planner_get_trainners();
 void team_planner_change_block_status_by_id_corr(int, uint32_t);
 void team_planner_finish_trainner(t_entrenador_pokemon*);
 t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t);
@@ -123,5 +124,6 @@ t_list* team_planner_get_trainners();
 void team_planner_end_trainer_threads();
 bool all_finished();
 void eliminar_pokemon_de_objetivos(t_list*, char*);
+t_list* filter_by_deadlock();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
