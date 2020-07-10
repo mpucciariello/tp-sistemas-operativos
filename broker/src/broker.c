@@ -683,6 +683,27 @@ t_subscribe_nodo* check_already_subscribed(char *ip, uint32_t puerto,
 	return list_find(list, (void*) find_subscribed);
 }
 
+void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
+	_Bool is_gb_subscriber(t_subscribe_nodo* sub) {
+		return sub->endtime != -1;
+	}
+
+	int sub_time = (int) time(NULL);
+	for (;;) {
+		if((int) time(NULL) > (sub_time + n)) {
+
+			// TODO: Sync!
+			t_empty* noop = malloc(sizeof(t_empty));
+			t_protocol noop_protocol = NOOP;
+			utils_serialize_and_send(sub->f_desc, noop_protocol, noop);
+
+			list_remove_by_condition(q, (void*) is_gb_subscriber);
+			broker_logger_info("Game boy has been kicked from subscribers list");
+			return;
+		}
+	}
+}
+
 void add_to(t_list *list, t_subscribe* subscriber) {
 
 	t_subscribe_nodo* node = check_already_subscribed(subscriber->ip,
@@ -695,6 +716,10 @@ void add_to(t_list *list, t_subscribe* subscriber) {
 		nodo->id = uid_subscribe;
 		uid_subscribe++;
 
+		void broker_handle_removal() {
+			remove_after_n_secs(nodo, list, subscriber->seconds);
+		}
+
 		if (subscriber->proceso == GAME_BOY) {
 			nodo->endtime = time(NULL) + subscriber->seconds;
 		} else {
@@ -703,6 +728,11 @@ void add_to(t_list *list, t_subscribe* subscriber) {
 
 		nodo->f_desc = subscriber->f_desc;
 		list_add(list, nodo);
+
+		pthread_t sub_tid;
+		pthread_create(&sub_tid, NULL, (void*) broker_handle_removal, (void*) 0);
+		pthread_detach(sub_tid);
+		usleep(100000);
 	} else {
 		broker_logger_info("Ya esta suscripto");
 		node->f_desc = subscriber->f_desc;
