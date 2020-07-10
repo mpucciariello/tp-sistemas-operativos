@@ -46,6 +46,9 @@ void quitar_de_real_target(char*);
 bool all_finished();
 bool pokemon_not_localized(char*);
 void atrapar_pokemon(t_entrenador_pokemon*);
+bool todavia_quedan_pokemones_restantes(char*);
+void remover_totalmente_de_pokemon_to_catch(char*);
+bool tengo_en_pokemon_to_catch(char*);
 
 
 #endif /* TEAM_H_ */

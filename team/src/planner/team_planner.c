@@ -76,7 +76,7 @@ void team_planner_algoritmo_cercania() {
 
 		add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
-		remove_pokemon_from_catch(pokemon);
+		remove_pokemon_from_catch(pokemon); //remuevo de pokemon to catch una vez que asigne ese pokemon a alguien.
 		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);		
 	}
@@ -809,8 +809,8 @@ void planner_destroy_quees() {
 	list_destroy_and_destroy_elements(block_queue, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(exit_queue, (void*)planner_destroy_entrenador);	
 	list_destroy_and_destroy_elements(pokemon_to_catch, (void*)planner_destroy_entrenador);
+	list_destroy_and_destroy_elements(total_targets_pokemons, (void*)planner_destroy_entrenador);
 	list_destroy(keys_list);
-	list_destroy(total_targets_pokemons);
 	list_destroy(message_catch_sended);
 	list_destroy(pokemones_pendientes);
 	list_destroy(real_targets_pokemons);

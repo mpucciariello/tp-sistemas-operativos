@@ -128,6 +128,39 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 	usleep(500000);
 }
 
+
+bool todavia_quedan_pokemones_restantes(char* tipo){
+	for(int i = 0; i < list_size(real_targets_pokemons); i++){
+		t_pokemon* pokemon = list_get(real_targets_pokemons, i);
+		if(string_equals_ignore_case(pokemon->name, tipo)){
+			return true;
+		}
+	}
+	return false;
+}
+
+
+void remover_totalmente_de_pokemon_to_catch(char* tipo){
+	for(int i = 0; i < list_size(pokemon_to_catch); i++){
+		t_pokemon_received* pokemon = list_get(pokemon_to_catch, i);
+		if(string_equals_ignore_case(pokemon->name, tipo)){
+			list_remove(pokemon_to_catch, i);
+		}
+	}
+}
+
+
+bool tengo_en_pokemon_to_catch(char* tipo){
+	for(int i = 0; i < list_size(pokemon_to_catch); i++){
+		t_pokemon_received* pokemon = list_get(pokemon_to_catch, i);
+		if(string_equals_ignore_case(pokemon->name, tipo)){
+			return true;
+		}
+	}
+	return false;
+}
+
+
 void atrapar_pokemon(t_entrenador_pokemon* entrenador){
 	team_planner_change_block_status_by_trainer(0, entrenador);
 	t_pokemon* pokemon = team_planner_pokemon_create(catch_send->nombre_pokemon);
@@ -135,6 +168,16 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador){
 	team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, catch_send->nombre_pokemon);
 	quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
 	quitar_de_real_target(entrenador->pokemon_a_atrapar->name);
+
+	if(todavia_quedan_pokemones_restantes(entrenador->pokemon_a_atrapar->name)){ //me fijo si sigo necesitando ese tipo de pokemon, puede ser que en un localized tenga una posición extra
+		if(tengo_en_pokemon_to_catch(entrenador->pokemon_a_atrapar->name)){
+			sem_post(&sem_message_on_queue); //activa al algoritmo de cercanía
+		}
+	}else{ //no necesito más de ese tipo de pokemon
+		if(tengo_en_pokemon_to_catch(entrenador->pokemon_a_atrapar->name)){ //si sigo teniendo posiciones, las borro
+			remover_totalmente_de_pokemon_to_catch(entrenador->pokemon_a_atrapar->name);
+		}
+	}
 
 
 	if (trainer_completed_with_success(entrenador)) {
@@ -522,14 +565,14 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	list_add(pokemon_to_catch, pokemon);
 	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 
-	for (int i = 0; i < list_size(pokemon->pos); i++) {
-		sem_post(&sem_message_on_queue);
-	}
+	sem_post(&sem_message_on_queue); //sólo una vez
+	
 	team_logger_info("Se añadió a %s a la cola de POKEMONS A ATRAPAR!", pokemon->name);
 }
 
 
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
+	list_clean(lista_auxiliar);
 	t_list* lista_auxiliar = list_duplicate(entrenador->targets);
 
 	if (list_size(entrenador->pokemons) == list_size(lista_auxiliar)) {
@@ -544,8 +587,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 				}
 			}
 		}
-		int length = list_size(lista_auxiliar);
-		return length != 0;
+		return list_size(lista_auxiliar) != 0;
 	}
 	list_clean(lista_auxiliar);
 	return false;

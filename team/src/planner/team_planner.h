@@ -77,9 +77,9 @@ t_list* total_targets_pokemons;
 t_list* message_catch_sended;
 t_list* pokemones_pendientes;
 t_list* got_pokemons;
-t_list* real_targets_pokemons;
 t_list* lista_auxiliar;
 t_list* pokemons_localized;
+t_list* real_targets_pokemons;
 
 t_dictionary* team_planner_global_targets;
 
