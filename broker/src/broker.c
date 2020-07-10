@@ -718,42 +718,42 @@ void search_queue(t_subscribe *subscriber) {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola NEW ",
 				subscriber->ip, subscriber->puerto);
 		add_to(new_queue, subscriber);
-		send_message_to_queue(subscriber, NEW_POKEMON);
+		send_message_to_queue(subscriber);
 		break;
 	}
 	case CATCH_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
 				subscriber->ip, subscriber->puerto);
 		add_to(catch_queue, subscriber);
-		send_message_to_queue(subscriber, CATCH_POKEMON);
+		send_message_to_queue(subscriber);
 		break;
 	}
 	case CAUGHT_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
 				subscriber->ip, subscriber->puerto);
 		add_to(caught_queue, subscriber);
-		send_message_to_queue(subscriber, CAUGHT_POKEMON);
+		send_message_to_queue(subscriber);
 		break;
 	}
 	case GET_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola GET ",
 				subscriber->ip, subscriber->puerto);
 		add_to(get_queue, subscriber);
-		send_message_to_queue(subscriber, GET_POKEMON);
+		send_message_to_queue(subscriber);
 		break;
 	}
 	case LOCALIZED_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(localized_queue, subscriber);
-		send_message_to_queue(subscriber, LOCALIZED_POKEMON);
+		send_message_to_queue(subscriber);
 		break;
 	}
 	case APPEARED_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
 				subscriber->ip, subscriber->puerto);
 		add_to(appeared_queue, subscriber);
-		send_message_to_queue(subscriber, APPEARED_POKEMON);
+		send_message_to_queue(subscriber);
 		break;
 	}
 
@@ -1109,22 +1109,24 @@ _Bool is_buddy() {
 }
 
 int compare_timings(const void* a, const void* b) {
-	return (((t_nodo_memory*) a)->timestamp > ((t_nodo_memory*) b)->timestamp) ? -1 : 1;
+	return (((t_nodo_memory*) a)->timestamp > ((t_nodo_memory*) b)->timestamp) ?
+			-1 : 1;
 }
 
 void update_timings(t_nodo_memory* node) {
-	if(broker_config->algoritmo_reemplazo == 1) {
+	if (broker_config->algoritmo_reemplazo == 1) {
 		time(&node->timestamp);
 	}
 
-	else return;
+	else
+		return;
 }
 
 char* get_queue_name(t_cola q) {
 
 	char* out = string_duplicate("");
 
-	switch(q) {
+	switch (q) {
 
 	case NEW_QUEUE:
 		out = "NEW_QUEUE";
@@ -1169,19 +1171,20 @@ void purge_msg() {
 	t_nodo_memory* node = (t_nodo_memory*) list_get(list_memory, 0);
 	broker_logger_warn(
 			"The message with ID %d from %s, last modified at instant T=%d will be removed",
-			node->id, get_queue_name(node->cola), (int) (node->timestamp - base_time));
+			node->id, get_queue_name(node->cola),
+			(int) (node->timestamp - base_time));
 	list_remove(list_memory, 0);
 
-	// TODO: Free mem?
-
 	buddy_free(buddy, node->pointer);
-	broker_logger_info("Message removed succesfully");
+	broker_logger_info("Message removed successfully");
 	broker_logger_info("Memory consolidated");
 }
 
 int save_on_memory(t_message_to_void *message_void) {
 	pthread_mutex_lock(&mpointer);
-	int from = is_buddy() ?	buddy_alloc(buddy, message_void->size_message) : pointer;
+	int from =
+			is_buddy() ?
+					buddy_alloc(buddy, message_void->size_message) : pointer;
 
 	if (!is_buddy()) {
 		if (message_void->size_message
@@ -1220,40 +1223,76 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 	list_add(list_memory, nodo_mem);
 }
 
-void send_message_to_queue(t_subscribe *subscriber, t_protocol protocol) {
-	int cant = list_size(list_memory);
+t_nodo_memory* find_node(t_nodo_memory* node) {
+
+	int ret_pos = 0;
+
+	for (int i = 0; i < list_size(list_memory); i++) {
+		t_nodo_memory* nodo_mem = list_get(list_memory, i);
+		int id_nodo_mem = nodo_mem->id;
+		t_cola queue_nodo_mem = nodo_mem->cola;
+
+		if (node->id == id_nodo_mem && node->cola == queue_nodo_mem) {
+			ret_pos = i;
+			break;
+		}
+	}
+
+	return list_get(list_memory, ret_pos);
+}
+
+void send_message_to_queue(t_subscribe *subscriber) {
+	_Bool msg_match(t_nodo_memory *node) {
+		return node->cola == subscriber->cola;
+	}
+
+	t_list* list_cpy = list_filter(list_memory, (void*) msg_match);
+	int cant = list_size(list_cpy);
 	for (int i = 0; i < cant; i++) {
-		t_nodo_memory *nodo_mem = list_get(list_memory, i);
+		t_nodo_memory *nodo_cpy = list_get(list_cpy, i);
+
+		t_nodo_memory *nodo_mem = find_node(nodo_cpy);
 		update_timings(nodo_mem);
+
 		switch (subscriber->cola) {
 		case NEW_QUEUE: {
-			t_new_pokemon* new_snd = get_from_memory(protocol,
+			t_new_pokemon* new_snd = get_from_memory(NEW_POKEMON,
 					nodo_mem->pointer, memory);
+			utils_serialize_and_send(subscriber->f_desc, NEW_POKEMON, new_snd);
 			break;
 		}
 		case CATCH_QUEUE: {
-			t_catch_pokemon* catch_snd = get_from_memory(protocol,
+			t_catch_pokemon* catch_snd = get_from_memory(CATCH_POKEMON,
 					nodo_mem->pointer, memory);
+			utils_serialize_and_send(subscriber->f_desc, CATCH_POKEMON,
+					catch_snd);
 			break;
 		}
 		case CAUGHT_QUEUE: {
-			t_caught_pokemon* caught_snd = get_from_memory(protocol,
+			t_caught_pokemon* caught_snd = get_from_memory(CAUGHT_POKEMON,
 					nodo_mem->pointer, memory);
+			utils_serialize_and_send(subscriber->f_desc, CAUGHT_POKEMON,
+					caught_snd);
 			break;
 		}
 		case GET_QUEUE: {
-			t_get_pokemon* get_snd = get_from_memory(protocol,
+			t_get_pokemon* get_snd = get_from_memory(GET_POKEMON,
 					nodo_mem->pointer, memory);
+			utils_serialize_and_send(subscriber->f_desc, GET_POKEMON, get_snd);
 			break;
 		}
 		case LOCALIZED_QUEUE: {
-			t_localized_pokemon* localized_snd = get_from_memory(protocol,
-					nodo_mem->pointer, memory);
+			t_localized_pokemon* localized_snd = get_from_memory(
+					LOCALIZED_POKEMON, nodo_mem->pointer, memory);
+			utils_serialize_and_send(subscriber->f_desc, LOCALIZED_POKEMON,
+					localized_snd);
 			break;
 		}
 		case APPEARED_QUEUE: {
-			t_appeared_pokemon* new_snd = get_from_memory(protocol,
+			t_appeared_pokemon* appeared_snd = get_from_memory(APPEARED_POKEMON,
 					nodo_mem->pointer, memory);
+			utils_serialize_and_send(subscriber->f_desc, APPEARED_POKEMON,
+					appeared_snd);
 			break;
 		}
 
