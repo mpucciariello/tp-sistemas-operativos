@@ -344,7 +344,6 @@ void planner_load_entrenadores() {
 		team_planner_add_new_trainner(entrenador);
 		list_add_all(total_targets_pokemons, objetivos);
 		list_add_all(got_pokemons, pokemons);
-		planner_init_global_targets(objetivos);
 		i++;
 	}
 
@@ -355,6 +354,7 @@ void planner_load_entrenadores() {
 	}
 
 	get_real_targets();
+	planner_init_global_targets(real_targets_pokemons);
 
 	dictionary_iterator(team_planner_global_targets, (void*) add_total_targets);
 	char* objetivos_to_string = planner_print_global_targets();
