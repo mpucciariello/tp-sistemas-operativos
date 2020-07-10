@@ -34,6 +34,12 @@ static inline unsigned next_power_of_2(int size) {
 	return size + 1;
 }
 
+void signal_handler(int signum) {
+	if (signum == SIGUSR1) {
+		dump();
+	}
+}
+
 int main(int argc, char *argv[]) {
 	initialize_queue();
 	if (broker_load() < 0)
@@ -222,6 +228,7 @@ void broker_server_init() {
 		return;
 	}
 
+	signal(SIGUSR1, signal_handler);
 	broker_logger_info("Server creado correctamente!! Esperando conexiones...");
 
 	struct sockaddr_in client_info;
@@ -730,7 +737,7 @@ void add_to(t_list *list, t_subscribe* subscriber) {
 		list_add(list, nodo);
 
 		pthread_t sub_tid;
-		pthread_create(&sub_tid, NULL, (void*) broker_handle_removal, (void*) 0);
+		pthread_create(&sub_tid, NULL, (void*) broker_handle_removal, NULL);
 		pthread_detach(sub_tid);
 		usleep(100000);
 	} else {
@@ -1141,6 +1148,11 @@ int compare_timings(const void* a, const void* b) {
 			-1 : 1;
 }
 
+int compare_memory_position(const void* a, const void* b) {
+	return (((t_nodo_memory*) a)->pointer > ((t_nodo_memory*) b)->pointer) ?
+			-1 : 1;
+}
+
 void update_timings(t_nodo_memory* node) {
 	if (broker_config->algoritmo_reemplazo == 1) {
 		time(&node->timestamp);
@@ -1350,8 +1362,79 @@ void create_message_ack(int id, t_list *cola, t_cola unCola) {
 		ack_subscriptor->subscribe = subscriptor;
 		ack_subscriptor->ack = false;
 		list_add(message_node->list, ack_subscriptor);
-
 	}
+}
+
+void dump() {
+
+	int last_size = 0;
+	int last_pointer = 0;
+
+	FILE *f = NULL;
+	f = fopen("memdump.txt", "a");
+
+	if (f == NULL) {
+		broker_logger_error("Operation failed: Couldn't dump memory contents");
+		return;
+	}
+	if (ftell(f) != 0) {
+		fprintf(f, "------------------------------------------------------------------------------------------\n");
+	}
+	time_t _time = time(NULL);
+	struct tm *tm = localtime(&_time);
+	char s[64];
+	strftime(s, sizeof(s), "%c", tm);
+	fprintf(f, "Dump %s\n", s);
+	t_list* list_clone = list_duplicate(list_memory);
+	list_sort(list_clone, (void*) compare_memory_position);
+	for (int i=0; i < list_size(list_clone); ++i) {
+
+		t_nodo_memory* node = list_get(list_clone, i);
+
+		// If first elem is free
+		if (i == 0 && node->pointer != 0) {
+			fprintf(f, "Particion %d: %d - %d\t\t", i+1, 0, (node->pointer -1));
+			fprintf(f, "[L]\t\t");
+			fprintf(f, "Size: %d B\n", node->pointer);
+			fprintf(f, "Particion %d: %d - %d\t\t", i+2, node->pointer, node->pointer + (node->size -1));
+			fprintf(f, "[X]\t\t");
+			fprintf(f, "Size: %d B\t\t", node->size);
+			fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
+			fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
+			fprintf(f, "ID: %d\n", node->id);
+			last_pointer = node->pointer + node->size;
+			last_size = i+2;
+		}
+
+		else {
+			// If there's a hole in the middle
+			if (node->pointer > last_pointer) {
+				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1, last_pointer, node->pointer -1);
+				fprintf(f, "[L]\t\t");
+				fprintf(f, "Size: %d B\n", node->pointer - last_pointer);
+				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 2, node->pointer, (node->size -1));
+				fprintf(f, "[X]\t\t");
+				fprintf(f, "Size: %d B\t\t", node->size);
+				fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
+				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
+				fprintf(f, "ID: %d\n", node->id);
+				last_size += 2;
+			}
+
+			else {
+				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1, node->pointer, node->pointer + (node->size -1));
+				fprintf(f, "[X]\t\t");
+				fprintf(f, "Size: %d B\t\t", node->size);
+				fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
+				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
+				fprintf(f, "ID: %d\n", node->id);
+				last_size =+ 1;
+			}
+			last_pointer = node->pointer + node->size;
+		}
+	}
+	fclose(f);
+	return;
 }
 
 int generar_id() {

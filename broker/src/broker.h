@@ -83,6 +83,7 @@ void save_node_list_memory(int pointer, int size,t_cola cola,int id);
 void send_all_messages(t_subscribe *subscriber);
 void purge_msg();
 int generar_id();
+void dump();
 _Bool is_buddy();
 void create_message_ack(int id,t_list *cola,t_cola unCola);
 #endif  /* BROKER_H_ */

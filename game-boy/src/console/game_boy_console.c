@@ -61,7 +61,7 @@ void broker_catch_pokemon_command(char** arguments, int arguments_size) {
 	catch_snd->pos_y = atoi(arguments[4]);
 
 	utils_serialize_and_send(game_boy_broker_fd, CATCH_POKEMON, catch_snd);
-	game_boy_logger_info("Envio de CATCH_POKEMON Pokemon");
+	game_boy_logger_info("Envio de CATCH_POKEMON");
 }
 
 void broker_caught_pokemon_command(char** arguments, int arguments_size) {
