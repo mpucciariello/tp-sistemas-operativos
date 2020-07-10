@@ -697,7 +697,7 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 
 	int sub_time = (int) time(NULL);
 	for (;;) {
-		if((int) time(NULL) > (sub_time + n)) {
+		if ((int) time(NULL) > (sub_time + n)) {
 
 			// TODO: Sync!
 			t_empty* noop = malloc(sizeof(t_empty));
@@ -705,7 +705,8 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 			utils_serialize_and_send(sub->f_desc, noop_protocol, noop);
 
 			list_remove_by_condition(q, (void*) is_gb_subscriber);
-			broker_logger_info("Game boy has been kicked from subscribers list");
+			broker_logger_info(
+					"Game boy has been kicked from subscribers list");
 			return;
 		}
 	}
@@ -1247,15 +1248,11 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 
 	nodo_mem->pointer = pointer;
 
-	if (!is_buddy()) {
-		if (msg_size < broker_config->tamano_minimo_particion) {
-			nodo_mem->size = broker_config->tamano_minimo_particion;
-		}
-
-		else {
-			nodo_mem->size = msg_size;
-		}
-	}
+	nodo_mem->size =
+			!is_buddy() ?
+					((msg_size < broker_config->tamano_minimo_particion) ?
+							broker_config->tamano_minimo_particion : msg_size) :
+					msg_size;
 
 	nodo_mem->cola = cola;
 	nodo_mem->id = id;
@@ -1378,7 +1375,8 @@ void dump() {
 		return;
 	}
 	if (ftell(f) != 0) {
-		fprintf(f, "------------------------------------------------------------------------------------------\n");
+		fprintf(f,
+				"------------------------------------------------------------------------------------------\n");
 	}
 	time_t _time = time(NULL);
 	struct tm *tm = localtime(&_time);
@@ -1387,32 +1385,37 @@ void dump() {
 	fprintf(f, "Dump %s\n", s);
 	t_list* list_clone = list_duplicate(list_memory);
 	list_sort(list_clone, (void*) compare_memory_position);
-	for (int i=0; i < list_size(list_clone); ++i) {
+
+	for (int i = 0; i < list_size(list_clone); ++i) {
 
 		t_nodo_memory* node = list_get(list_clone, i);
 
 		// If first elem is free
 		if (i == 0 && node->pointer != 0) {
-			fprintf(f, "Particion %d: %d - %d\t\t", i+1, 0, (node->pointer -1));
+			fprintf(f, "Particion %d: %d - %d\t\t", i + 1, 0,
+					(node->pointer - 1));
 			fprintf(f, "[L]\t\t");
 			fprintf(f, "Size: %d B\n", node->pointer);
-			fprintf(f, "Particion %d: %d - %d\t\t", i+2, node->pointer, node->pointer + (node->size -1));
+			fprintf(f, "Particion %d: %d - %d\t\t", i + 2, node->pointer,
+					node->pointer + (node->size - 1));
 			fprintf(f, "[X]\t\t");
 			fprintf(f, "Size: %d B\t\t", node->size);
 			fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
 			fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
 			fprintf(f, "ID: %d\n", node->id);
 			last_pointer = node->pointer + node->size;
-			last_size = i+2;
+			last_size = i + 2;
 		}
 
 		else {
 			// If there's a hole in the middle
 			if (node->pointer > last_pointer) {
-				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1, last_pointer, node->pointer -1);
+				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1,
+						last_pointer, node->pointer - 1);
 				fprintf(f, "[L]\t\t");
 				fprintf(f, "Size: %d B\n", node->pointer - last_pointer);
-				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 2, node->pointer, (node->size -1));
+				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 2,
+						node->pointer, (node->size - 1));
 				fprintf(f, "[X]\t\t");
 				fprintf(f, "Size: %d B\t\t", node->size);
 				fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
@@ -1422,13 +1425,14 @@ void dump() {
 			}
 
 			else {
-				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1, node->pointer, node->pointer + (node->size -1));
+				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1,
+						node->pointer, node->pointer + (node->size - 1));
 				fprintf(f, "[X]\t\t");
 				fprintf(f, "Size: %d B\t\t", node->size);
 				fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
 				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
 				fprintf(f, "ID: %d\n", node->id);
-				last_size =+ 1;
+				last_size = +1;
 			}
 			last_pointer = node->pointer + node->size;
 		}
