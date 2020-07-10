@@ -142,8 +142,28 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 
 
 int calcular_diferencia(t_entrenador_pokemon* entrenador){
-	return 0;
-} //TODO
+	int diferencia = 0;
+	bool lo_tiene = false;
+
+	for (int i = 0; i < list_size(entrenador->pokemons); i++){
+		t_pokemon* pokemon_default = list_get(entrenador->pokemons, i);
+
+		for(int j = 0; j < list_size(entrenador->targets); j++){
+			t_pokemon* pokemon_objetivo = list_get(entrenador->targets, i);
+			if(!string_equals_ignore_case(pokemon_default->name, pokemon_objetivo->name)){
+				continue;
+			}else{
+				lo_tiene = true;
+				break;
+			}
+		}
+
+		if(!lo_tiene){
+			diferencia++;
+		}
+	}
+	return diferencia;
+}
 
 t_pokemon* team_planner_pokemon_create(char* nombre) {
 	t_pokemon* pokemon = malloc(sizeof(t_pokemon));
