@@ -22,6 +22,7 @@ void broker_exit();
 void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
 void add_to(t_list *list, t_subscribe* sub);
+void compactacion();
 
 pthread_mutex_t mpointer, mid, msubs, msave, mget, mappeared, mloc, mcatch, mcaught, mnew, mmem;
 
@@ -61,6 +62,7 @@ typedef struct {
 	t_cola cola;
 	int id;
 	time_t timestamp;
+	bool libre;
 } t_nodo_memory;
 
 typedef struct {

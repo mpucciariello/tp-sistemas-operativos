@@ -1373,6 +1373,9 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 	nodo_mem->id = id;
 	nodo_mem->timestamp = time(NULL);
 
+	if (!is_buddy()) {
+		nodo_mem->libre = true;
+	}
 	pthread_mutex_lock(&mmem);
 	list_add(list_memory, nodo_mem);
 	pthread_mutex_unlock(&mmem);
@@ -1673,36 +1676,53 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 	int size_free;
 	int pointer_busy;
 	t_list *new_list = list_create();
-	int flag =0;
 
 	int position;
 	int size = 0;
 	int flag_first = 0;
 
+
 	for(int i=0;i<list_size(list_memory);i++){
 		t_nodo_memory* memory_node = list_get(list_memory,i);
-		if(memory_node->id == 0  &&  message->size_message > memory_node->size && flag == 0 ){
+		if(memory_node->libre == true  && max(message->size_message,broker_config->tamano_minimo_particion) > memory_node->size){
+
 			if(flag_first == 0){
 				position = i;
 				size = memory_node->size ;
+				flag_first = 1;
 			}
 			if (memory_node->size < size){
 				position = i;
+				size=memory_node->size;
 			}
 		}
+	}
+	if(flag_first == 0){
+		return -1;
 	}
 	for(int i=0;i<list_size(list_memory);i++){
 		t_nodo_memory* memory_node = list_get(list_memory,i);
 		if (i == position){
 			memory_node->cola = cola;
 			memory_node->id = id_correlacional;
-			size_free = message->size_message -  memory_node->size;
-			memory_node->size = message->size_message ;
+			if(message->size_message > broker_config->tamano_minimo_particion){
+				size_free = memory_node->size - message->size_message ;
+				memory_node->size = message->size_message ;
+
+
+			}
+			else{
+				size_free = memory_node->size - broker_config->tamano_minimo_particion;
+				memory_node->size = broker_config->tamano_minimo_particion;
+
+			}
+			memory_node->libre = false;
 			pointer_busy = memory_node->pointer;
 			list_add(new_list,memory_node);
 			int pointer = memory_node->pointer + message->size_message;
 			memory_node->cola = cola;
 			memory_node->id = 0;
+			memory_node->libre = true;
 			memory_node->pointer = pointer;
 			memory_node->size = size_free;
 			list_add(new_list,memory_node);
@@ -1711,7 +1731,7 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 			list_add(new_list,memory_node);
 		}
 	}
-	list_destroy(list_memory );
+	list_destroy(list_memory);
 	list_memory = new_list ;
 	return pointer_busy;
 }
@@ -1724,17 +1744,28 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 	int flag =0 ;
 	for(int i=0;i<list_size(list_memory);i++){
 		t_nodo_memory* memory_node = list_get(list_memory,i);
-		if(memory_node->id == 0  &&  message->size_message > memory_node->size && flag == 0 ){
+		if(memory_node->libre == true  &&  max(message->size_message,broker_config->tamano_minimo_particion) < memory_node->size && flag == 0 ){
 			flag = 1;
 			memory_node->cola = cola;
 			memory_node->id = id_correlacional;
-			size_free = message->size_message -  memory_node->size;
-			memory_node->size = message->size_message ;
+			if(message->size_message > broker_config->tamano_minimo_particion){
+				size_free = memory_node->size - message->size_message ;
+				memory_node->size = message->size_message ;
+
+
+			}
+			else{
+				size_free = memory_node->size - broker_config->tamano_minimo_particion;
+				memory_node->size = broker_config->tamano_minimo_particion;
+
+			}
 			pointer_busy = memory_node->pointer;
+			memory_node->libre = false;
 			list_add(new_list,memory_node);
 			int pointer = memory_node->pointer + message->size_message;
 			memory_node->cola = cola;
 			memory_node->id = 0;
+			memory_node->libre = true;
 			memory_node->pointer = pointer;
 			memory_node->size = size_free;
 			list_add(new_list,memory_node);
@@ -1745,6 +1776,9 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 		}
 	}
 	list_destroy(list_memory );
+	if(flag == 0){
+		pointer_busy =  -1;
+	}
 	list_memory = new_list ;
 	return pointer_busy;
 }
@@ -1755,6 +1789,58 @@ void liberar_memoria(int id_correlacional,t_cola cola){
 		t_nodo_memory* memory_node = list_get(list_memory,i);
 		if(memory_node->id == id_correlacional  && memory_node->cola == cola){
 			memory_node->id = 0;
+			memory_node->libre = true;
 		}
 	}
 }
+
+void compactacion(){
+	t_list *new_list = list_create();
+	for(int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory* memory_node_free = list_get(list_memory,i);
+		if(memory_node_free->libre == true){
+
+			t_nodo_memory* memory_node_add;
+			t_nodo_memory* memory_node_next = NULL;
+			int last_pointer;
+			if(i+1<list_size(list_memory)){
+				memory_node_next= list_get(list_memory,i+1);
+			}
+			if(memory_node_next != NULL && memory_node_next->libre==true){
+				memory_node_free->size =  memory_node_free->size + memory_node_next->size;
+				list_remove(list_memory,i+1);
+				i--;
+
+			}
+			else{
+				for(int k=i+1;k<list_size(list_memory);k++){
+					memory_node_add= list_get(list_memory,k);
+					memcpy(memory+memory_node_free->pointer,memory+memory_node_add->pointer,memory_node_add->size);
+					last_pointer = memory_node_add->pointer  - memory_node_free->size +memory_node_add->size ;
+					memory_node_add->pointer = memory_node_free->pointer;
+					if(i==0){
+					  memory_node_add->pointer =0;
+					}
+					list_add(new_list,memory_node_add);
+				}
+			}
+			memory_node_free->pointer = last_pointer;
+			list_add(new_list,memory_node_free);
+			list_memory =  new_list;
+			 list_destroy(new_list);
+			if(i+1 == list_size(list_memory)){
+				new_list = list_create();
+			}
+
+		}
+		else{
+			list_add(new_list,memory_node_free);
+		}
+	}
+	if(new_list!= NULL){
+		list_memory =  new_list;
+	}
+
+}
+
+
