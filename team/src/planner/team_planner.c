@@ -355,7 +355,7 @@ void planner_load_entrenadores() {
 	team_logger_info("Hay %d objetivos globales: \n%s", list_size(real_targets_pokemons), objetivos_to_string);
 	free(objetivos_to_string);
 
-	for(int i = 0; i < list_size(new_queue); i++){
+	for (int i = 0; i < list_size(new_queue); i++) {
 		sem_post(&sem_entrenadores_disponibles);
 	}
 }
@@ -456,7 +456,6 @@ t_list* filter_block_list_by_0() {
 	return blocked_but_to_exec;
 }
 
-
 t_list* filter_by_deadlock() {
 	bool _is_locked(t_entrenador_pokemon* trainner) {
 		return trainner->blocked_info->status == 0 && trainner->deadlock == true;
@@ -464,7 +463,6 @@ t_list* filter_by_deadlock() {
 	t_list* blocked_in_deadlock = list_filter(block_queue, (void*) _is_locked);
 	return blocked_in_deadlock;
 }
-
 
 t_list* team_planner_create_ready_queue() {	
 	bool _is_available(t_entrenador_pokemon* trainner) {
@@ -539,14 +537,12 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 	return NULL;
 }
 
-
 bool all_queues_are_empty_except_block() {
 	int bloqueados = list_size(block_queue);
 	int total = list_size(team_planner_get_trainners());
 	int deadlock = total - bloqueados;
 	return list_size(filter_by_deadlock()) == deadlock;
 }
-
 
 void solve_deadlock() {
 
@@ -623,7 +619,7 @@ void solve_deadlock() {
 		a++;
 		deadlocks_resolved++;
 	}
-	if(all_finished()){
+	if (all_finished()) {
 		free(pokemon_de_entrenador_bloqueado);
 		free(pokemon_de_entrenador_bloqueante);
 		free(entrenador_bloqueado);
@@ -634,14 +630,12 @@ void solve_deadlock() {
 	team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 }
 
-
-void team_planner_end_trainer_threads(){
-	for (int i = 0; i < list_size(exit_queue); i++){
+void team_planner_end_trainer_threads() {
+	for (int i = 0; i < list_size(exit_queue); i++) {
 		t_entrenador_pokemon* entrenador = list_get(exit_queue, i);
 		pthread_cancel(entrenador->hilo_entrenador);
 	}
 }
-
 
 void remove_from_pokemons_list(t_entrenador_pokemon* entrenador, t_pokemon* pokemon) {
 	for (int i = 0; i < list_size(entrenador->pokemons); i++) {
@@ -654,17 +648,15 @@ void remove_from_pokemons_list(t_entrenador_pokemon* entrenador, t_pokemon* poke
 	}
 }
 
-
-void eliminar_pokemon_de_objetivos(t_list* list, char* nombre){
-	for(int i = 0; i < list_size(list); i++){
+void eliminar_pokemon_de_objetivos(t_list* list, char* nombre) {
+	for (int i = 0; i < list_size(list); i++) {
 		t_pokemon* pok = list_get(list, i);
-		if (string_equals_ignore_case(pok->name, nombre)){
+		if (string_equals_ignore_case(pok->name, nombre)) {
 			list_remove(list, i);
 			break;
 		}
 	}
 }
-
 
 bool block_queue_is_not_empty() {
 	return !list_is_empty(block_queue);
@@ -712,14 +704,13 @@ t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_b
 	return list_find(entrenadores_pokemon_bloqueante, (void*) _entrenador_no_tiene_pokemon_bloqueante);
 }
 
-
 t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador) {
 	bool le_sirve = true;
 	list_clean(lista_auxiliar);
 	t_pokemon* pokemon_a_entregar;
 	lista_auxiliar = list_duplicate(entrenador->targets);
 
-	for(int i = 0; i < list_size(entrenador->pokemons); i++){
+	for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 		pokemon_a_entregar = list_get(entrenador->pokemons, i);
 		
 		for (int j = 0; j < list_size(entrenador->targets); j++) {
@@ -732,7 +723,7 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador) {
 			}
 		}
 
-		if(!le_sirve){
+		if(!le_sirve) {
 			break;
 		}
 	}
@@ -744,7 +735,6 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador) {
 	return NULL;
 }
 
-
 t_list* team_planner_get_trainners() {
 	t_list* trainners = list_create();
 	list_add_all(trainners, new_queue);
@@ -754,7 +744,6 @@ t_list* team_planner_get_trainners() {
 
 	return trainners;
 }
-
 
 void team_planner_print_fullfill_target() {
 	t_list* trainners = team_planner_get_trainners();
@@ -775,7 +764,6 @@ void team_planner_print_fullfill_target() {
 	list_destroy(trainners);
 	team_logger_info("Deadlocks producidos: %d  y resueltos: %d", deadlocks_detected, deadlocks_resolved);
 }
-
 
 void team_planner_init() {
 	team_logger_info("Planificador de TEAM iniciando estructuras!");
