@@ -307,6 +307,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("NEW RECEIVED FROM GB");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
+			new_receive->id_correlacional = generar_id();
 			broker_logger_info("ID Correlacional: %d",
 					new_receive->id_correlacional);
 			broker_logger_info("Cantidad: %d", new_receive->cantidad);
