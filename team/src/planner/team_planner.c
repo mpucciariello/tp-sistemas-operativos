@@ -541,7 +541,10 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 
 
 bool all_queues_are_empty_except_block() {
-	return list_size(filter_by_deadlock()) == list_size(team_planner_get_trainners());
+	int bloqueados = list_size(block_queue);
+	int total = list_size(team_planner_get_trainners());
+	int deadlock = total - bloqueados;
+	return list_size(filter_by_deadlock()) == deadlock;
 }
 
 

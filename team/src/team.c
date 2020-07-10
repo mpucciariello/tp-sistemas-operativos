@@ -129,7 +129,6 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 }
 
 
-<<<<<<< HEAD
 bool todavia_quedan_pokemones_restantes(char* tipo){
 	for(int i = 0; i < list_size(real_targets_pokemons); i++){
 		t_pokemon* pokemon = list_get(real_targets_pokemons, i);
@@ -162,27 +161,23 @@ bool tengo_en_pokemon_to_catch(char* tipo){
 }
 
 
-void atrapar_pokemon(t_entrenador_pokemon* entrenador){
-=======
 void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name){
->>>>>>> d0d3cff9bd2a9de257e967edf62358ad351a3079
 	team_planner_change_block_status_by_trainer(0, entrenador);
 	t_pokemon* pokemon = team_planner_pokemon_create(pokemon_name);
 	list_add(entrenador->pokemons, pokemon);
 	team_logger_info("El entrenador %d atrapó un %s!!", entrenador->id, pokemon_name);
-	quitar_de_pokemones_pendientes(entrenador->pokemon_a_atrapar->name);
-	quitar_de_real_target(entrenador->pokemon_a_atrapar->name);
+	quitar_de_pokemones_pendientes(pokemon_name);
+	quitar_de_real_target(pokemon_name);
 
-	if(todavia_quedan_pokemones_restantes(entrenador->pokemon_a_atrapar->name)){ //me fijo si sigo necesitando ese tipo de pokemon, puede ser que en un localized tenga una posición extra
-		if(tengo_en_pokemon_to_catch(entrenador->pokemon_a_atrapar->name)){
+	if(todavia_quedan_pokemones_restantes(pokemon_name)){ //me fijo si sigo necesitando ese tipo de pokemon, puede ser que en un localized tenga una posición extra
+		if(tengo_en_pokemon_to_catch(pokemon_name)){
 			sem_post(&sem_message_on_queue); //activa al algoritmo de cercanía
 		}
 	}else{ //no necesito más de ese tipo de pokemon
-		if(tengo_en_pokemon_to_catch(entrenador->pokemon_a_atrapar->name)){ //si sigo teniendo posiciones, las borro
-			remover_totalmente_de_pokemon_to_catch(entrenador->pokemon_a_atrapar->name);
+		if(tengo_en_pokemon_to_catch(pokemon_name)){ //si sigo teniendo posiciones, las borro
+			remover_totalmente_de_pokemon_to_catch(pokemon_name);
 		}
 	}
-
 
 	if (trainer_completed_with_success(entrenador)) {
 		team_planner_finish_trainner(entrenador);
