@@ -151,8 +151,6 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package,
 				((t_new_pokemon*) package_send)->nombre_pokemon,
 				strlen(((t_new_pokemon*) package_send)->nombre_pokemon) + 1);
-		utils_package_add(package, &((t_new_pokemon*) package_send)->id,
-				sizeof(uint32_t));
 		utils_package_add(package,
 				&((t_new_pokemon*) package_send)->id_correlacional,
 				sizeof(uint32_t));
@@ -322,11 +320,10 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		utils_get_from_list_to(&new_request->tamanio_nombre, list, 0);
 		new_request->nombre_pokemon = malloc(utils_get_buffer_size(list, 1));
 		utils_get_from_list_to(new_request->nombre_pokemon, list, 1);
-		utils_get_from_list_to(&new_request->id, list, 2);
-		utils_get_from_list_to(&new_request->id_correlacional, list, 3);
-		utils_get_from_list_to(&new_request->cantidad, list, 4);
-		utils_get_from_list_to(&new_request->pos_x, list, 5);
-		utils_get_from_list_to(&new_request->pos_y, list, 6);
+		utils_get_from_list_to(&new_request->id_correlacional, list, 2);
+		utils_get_from_list_to(&new_request->cantidad, list, 3);
+		utils_get_from_list_to(&new_request->pos_x, list, 4);
+		utils_get_from_list_to(&new_request->pos_y, list, 5);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return new_request;
 	}

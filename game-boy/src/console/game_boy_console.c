@@ -32,10 +32,12 @@ void broker_appeared_pokemon_command(char** arguments, int arguments_size) {
 				"BROKER APPEARED_POKEMON [POKEMON] [POSX] [POSY] [ID_MENSAJE]");
 		return;
 	}
+
 	game_boy_logger_info("BROKER APPEARED_POKEMON");
 	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
 	appeared_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	appeared_snd->tamanio_nombre = strlen(arguments[2]);
+	appeared_snd->cantidad = 1;
 	appeared_snd->pos_x = atoi(arguments[3]);
 	appeared_snd->pos_y = atoi(arguments[4]);
 	appeared_snd->id_correlacional = atoi(arguments[5]);
@@ -59,7 +61,7 @@ void broker_catch_pokemon_command(char** arguments, int arguments_size) {
 	catch_snd->pos_y = atoi(arguments[4]);
 
 	utils_serialize_and_send(game_boy_broker_fd, CATCH_POKEMON, catch_snd);
-	game_boy_logger_info("Envio de CATCH_POKEMON Pokemon");
+	game_boy_logger_info("Envio de CATCH_POKEMON");
 }
 
 void broker_caught_pokemon_command(char** arguments, int arguments_size) {
@@ -107,6 +109,7 @@ void team_appeared_pokemon_command(char** arguments, int arguments_size) {
 	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
 	appeared_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	appeared_snd->tamanio_nombre = strlen(arguments[2]);
+	appeared_snd->cantidad = 1;
 	appeared_snd->pos_x = atoi(arguments[3]);
 	appeared_snd->pos_y = atoi(arguments[4]);
 
@@ -221,7 +224,6 @@ void subscriber_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("NEW received");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					game_boy_broker_fd, protocol);
-			game_boy_logger_info("ID recibido: %d", new_receive->id);
 			game_boy_logger_info("ID Correlacional: %d",
 					new_receive->id_correlacional);
 			game_boy_logger_info("Cantidad: %d", new_receive->cantidad);
