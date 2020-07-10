@@ -131,6 +131,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->blocked_info = NULL;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
+	entrenador->diferencia = calcular_diferencia(entrenador);
 	pthread_mutex_init(&entrenador->sem_move_trainers, NULL);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);
@@ -138,6 +139,11 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 
 	return entrenador;
 }
+
+
+int calcular_diferencia(t_entrenador_pokemon* entrenador){
+	return 0;
+} //TODO
 
 t_pokemon* team_planner_pokemon_create(char* nombre) {
 	t_pokemon* pokemon = malloc(sizeof(t_pokemon));
@@ -458,7 +464,7 @@ t_list* filter_block_list_by_0() {
 
 t_list* filter_by_deadlock() {
 	bool _is_locked(t_entrenador_pokemon* trainner) {
-		return trainner->blocked_info->status == 0 && trainner->deadlock == true;
+		return trainner->deadlock == true;
 	}
 	t_list* blocked_in_deadlock = list_filter(block_queue, (void*) _is_locked);
 	return blocked_in_deadlock;
@@ -541,7 +547,8 @@ bool all_queues_are_empty_except_block() {
 	int bloqueados = list_size(block_queue);
 	int total = list_size(team_planner_get_trainners());
 	int deadlock = total - bloqueados;
-	return list_size(filter_by_deadlock()) == deadlock;
+	int contador = list_size(filter_by_deadlock());
+	return contador == deadlock;
 }
 
 void solve_deadlock() {
@@ -774,7 +781,7 @@ void team_planner_init() {
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 	list_clean(lista_auxiliar);
 	lista_auxiliar = list_duplicate(entrenador->targets);
-	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
+	if (list_size(entrenador->pokemons) == list_size(entrenador->targets) || (list_size(entrenador->pokemons)- list_size(entrenador->targets) == entrenador->diferencia)) {
 
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);

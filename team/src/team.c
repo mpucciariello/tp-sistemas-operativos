@@ -606,7 +606,7 @@ void team_server_init() {
 		pthread_t tid;
 
 		if (accepted_fd == -1) {
-			team_logger_error("Error al conectar con un cliente");
+			team_logger_error("Error al conectar con un cliente.");
 			continue;
 		}
 		t_handle_connection* connection_handler = malloc( sizeof(t_handle_connection));
