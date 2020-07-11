@@ -265,7 +265,6 @@ t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t id) {
 void planner_load_entrenadores() {
 	int i = 0;
 
-	keys_list = list_create();
 	total_targets_pokemons = list_create();
 	got_pokemons = list_create();
 	while (team_config->posiciones_entrenadores[i] != NULL) {
@@ -398,7 +397,7 @@ t_list* filter_block_list_by_0() {
 
 t_list* filter_by_deadlock() {
 	bool _is_locked(t_entrenador_pokemon* trainner) {
-		return trainner->deadlock == true;
+		return trainner->deadlock;
 	}
 	t_list* blocked_in_deadlock = list_filter(block_queue, (void*) _is_locked);
 	return blocked_in_deadlock;
@@ -406,7 +405,7 @@ t_list* filter_by_deadlock() {
 
 t_list* team_planner_create_ready_queue() {	
 	bool _is_available(t_entrenador_pokemon* trainner) {
-		return trainner->blocked_info->status == 0 && trainner->deadlock == false;
+		return trainner->blocked_info->status == 0 && !trainner->deadlock;
 	}
 	t_list* bloquados_en_cero = filter_block_list_by_0(block_queue, (void*) _is_available);
 	
@@ -757,7 +756,6 @@ void planner_destroy_quees() {
 	list_destroy_and_destroy_elements(exit_queue, (void*)planner_destroy_entrenador);	
 	list_destroy_and_destroy_elements(pokemon_to_catch, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(total_targets_pokemons, (void*)planner_destroy_entrenador);
-	list_destroy(keys_list);
 	list_destroy(message_catch_sended);
 	list_destroy(pokemones_pendientes);
 	list_destroy(real_targets_pokemons);

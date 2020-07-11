@@ -76,7 +76,6 @@ t_list* ready_queue;
 t_list* block_queue;
 t_list* exit_queue;
 t_list* pokemon_to_catch;
-t_list* keys_list;
 t_list* total_targets_pokemons;
 t_list* message_catch_sended;
 t_list* pokemones_pendientes;
