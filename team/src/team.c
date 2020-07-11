@@ -464,18 +464,18 @@ void *receive_msg(int fd, int send_to) {
 		}
 
 		switch (protocol) {
-		case CAUGHT_POKEMON: {
-			team_logger_info("Caught received");
-			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd,
-					protocol);
-			team_logger_info("ID correlacional: %d",
-					caught_rcv->id_correlacional);
-			team_logger_info("Resultado (0/1): %d", caught_rcv->result);
-			usleep(50000);
 
-			if (is_server == 0) {
-				// snd(fd_broker, ACK, sizeof(t_protocol), 0);
-			}
+			case CAUGHT_POKEMON: {
+				team_logger_info("Caught received");
+				t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
+				team_logger_info("ID correlacional: %d", caught_rcv->id_correlacional);
+				team_logger_info("Resultado (0/1): %d", caught_rcv->result);
+				usleep(50000);
+
+				if (is_server == 0) {
+					uint32_t ack = htonl(ACK);
+					send(fd, &ack, sizeof(t_protocol), 0);
+				}
 
 			t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(
 					caught_rcv->id_correlacional);
@@ -522,7 +522,8 @@ void *receive_msg(int fd, int send_to) {
 				usleep(500000);
 
 				if (is_server == 0) {
-					// snd(fd_broker, ACK, sizeof(t_protocol), 0);
+					uint32_t ack = htonl(ACK);
+					send(fd, &ack, sizeof(t_protocol), 0);
 				}
 
 				bool _es_el_mismo(uint32_t id) {
@@ -563,9 +564,10 @@ void *receive_msg(int fd, int send_to) {
 					appeared_rcv->pos_y);
 			usleep(50000);
 
-			if (is_server == 0) {
-				// snd(fd_broker, ACK, sizeof(t_protocol), 0);
-			}
+				if (is_server == 0) {
+					uint32_t ack = htonl(ACK);
+					send(fd, &ack, sizeof(t_protocol), 0);
+				}
 
 			if (pokemon_required(appeared_rcv->nombre_pokemon)
 					&& pokemon_not_pendant(appeared_rcv->nombre_pokemon)

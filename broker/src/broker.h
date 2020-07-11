@@ -30,7 +30,7 @@ char *memory;
 
 int pointer;
 
-int id;
+uint32_t id;
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
 
 t_list *list_memory;
