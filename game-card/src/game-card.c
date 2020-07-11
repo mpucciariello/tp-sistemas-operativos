@@ -173,10 +173,7 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-				pthread_t tid;
-				pthread_create(&tid, NULL, (void*) send_ack,
-						(void*) &new_receive->id_correlacional);
-				pthread_detach(tid);
+				// snd ...
 			}
 
 			pthread_t tid1;
@@ -203,10 +200,7 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-				pthread_t tid2;
-				pthread_create(&tid2, NULL, (void*) send_ack,
-						(void*) &get_rcv->id_correlacional);
-				pthread_detach(tid2);
+				// snd()
 			}
 
 			pthread_t tid3;
@@ -235,10 +229,7 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-				pthread_t tid4;
-				pthread_create(&tid4, NULL, (void*) send_ack,
-						(void*) &catch_rcv->id_correlacional);
-				pthread_detach(tid4);
+				// snd
 			}
 
 			pthread_t tid5;
@@ -253,22 +244,6 @@ void *recv_game_card(int fd, int respond_to) {
 			break;
 		}
 	}
-}
-
-void send_ack(void* arg) {
-	int id = *((int*) arg);
-
-	t_ack* ack_snd = malloc(sizeof(t_ack));
-	t_protocol ack_protocol = ACK;
-	ack_snd->id = id;
-	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
-			game_card_config->puerto_broker);
-	if (client_fd > 0) {
-		utils_serialize_and_send(client_fd, ack_protocol, ack_snd);
-		game_card_logger_info("ACK SENT TO BROKER");
-	}
-	game_card_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
-	socket_close_conection(client_fd);
 }
 
 void process_new_and_send_appeared(void* arg) {
