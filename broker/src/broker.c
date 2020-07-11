@@ -164,7 +164,7 @@ void buddy_free(struct buddy *self, int offset) {
 	uint32_t node_size;
 	uint32_t index;
 
-	// get the corresponding index from offset
+	// Get the corresponding index from offset
 	node_size = 1;
 	index = offset + self->size - 1;
 
@@ -205,7 +205,8 @@ int broker_load() {
 		return response;
 	}
 	broker_print_config();
-	//create mutex for pointer
+
+	// Create mutex for pointer
 	if (pthread_mutex_init(&mpointer, NULL) != 0) {
 		printf("\n mutex init failed\n");
 		return 1;
@@ -281,35 +282,7 @@ static void *handle_connection(void *arg) {
 		}
 		switch (protocol) {
 
-		// From Team o GC
-		case ACK: {
-
-			broker_logger_info("ACK RECEIVED");
-			t_ack *ack_receive = utils_receive_and_deserialize(client_fd,
-					protocol);
-			broker_logger_info("ID recibido: %d", ack_receive->id);
-
-			/*			broker_logger_info("IP recibido: %s", ack_receive->ip);
-			 broker_logger_info("PUERTO recibido %d",ack_receive->puerto);
-			 broker_logger_info("PROTOCOLO %d", ack_receive->protocol);
-
-			 for(int i=0;i<list_size(list_message_subscritors);i++){
-			 t_subscribe_message_node* node = list_get(list_message_subscritors,i);
-			 if(node->id == ack_receive->id && ack_receive->protocol == node->cola){
-			 for(int k=0;list_size(node->list);k++){
-			 t_subscribe_ack_node* ack_subscriptor = list_get(node->list,k);
-			 if((ack_receive->puerto == ack_subscriptor->subscribe->puerto) && (strcmp(ack_subscriptor->subscribe->ip,ack_receive->ip)==0)){
-			 ack_subscriptor->ack = true;
-			 }
-			 }
-			 }
-			 }*/
-
-			usleep(100000);
-			break;
-		}
-
-			// From GB
+		// From GB
 		case NEW_POKEMON: {
 			broker_logger_info("NEW RECEIVED FROM GB");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
@@ -334,32 +307,17 @@ static void *handle_connection(void *arg) {
 			new_snd->id_correlacional = new_receive->id_correlacional;
 			create_message_ack(new_snd->id_correlacional, new_queue, NEW_QUEUE);
 
-			//free(message_void->message);
-			//free(message_void);
 			// To GC
-
 			new_protocol = NEW_POKEMON;
 			broker_logger_info("NEW SENT TO GC");
 			for (int i = 0; i < list_size(new_queue); i++) {
 				t_subscribe_nodo* node = list_get(new_queue, i);
-				if (node->endtime != -1) {
-					if (time(NULL) >= node->endtime) {
-						t_empty* noop = malloc(sizeof(t_empty));
-						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol,
-								noop);
-						list_remove(new_queue, i);
-					} else {
-						utils_serialize_and_send(node->f_desc, new_protocol,
-								new_snd);
-					}
-				} else {
-					utils_serialize_and_send(node->f_desc, new_protocol,
-							new_snd);
-				}
+				// TODO: thread que corra una func que reciba un suscriptor y paquete
+				utils_serialize_and_send(node->f_desc, new_protocol, new_snd);
+				// rcv(f_desc, buffer, size);
+				// busco en la lista_node_ack el id del msj & cola y el id del suscriptor en la sublista
+				// marcar en lista cambiando el ack a true
 			}
-			//free(new_snd->nombre_pokemon);
-			//free(new_snd);
 			usleep(50000);
 			break;
 		}
@@ -388,8 +346,7 @@ static void *handle_connection(void *arg) {
 					APPEARED_QUEUE, appeared_rcv->id_correlacional);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
 					memory);
-			//free(message_void->message);
-			//			free(message_void);
+
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
 			broker_logger_info("APPEARED SENT TO TEAM");
@@ -398,34 +355,19 @@ static void *handle_connection(void *arg) {
 
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
-				if (node->endtime != -1) {
-					if (time(NULL) >= node->endtime) {
-						t_empty* noop = malloc(sizeof(t_empty));
-						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol,
-								noop);
-						list_remove(appeared_queue, i);
-					} else {
-						utils_serialize_and_send(node->f_desc,
-								appeared_protocol, appeared_snd);
-					}
-				} else {
-					utils_serialize_and_send(node->f_desc, appeared_protocol,
-							appeared_snd);
-				}
+				utils_serialize_and_send(node->f_desc, appeared_protocol,
+						appeared_snd);
+
 			}
-			//free(appeared_snd->nombre_pokemon);
-			//free(appeared_snd);
 			usleep(500000);
 			break;
 		}
+
 			// From team
 		case GET_POKEMON: {
 			broker_logger_info("GET RECEIVED FROM TEAM");
 			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd,
 					protocol);
-			//broker_logger_info("ID correlacional: %d",
-			//		get_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
 
@@ -439,37 +381,18 @@ static void *handle_connection(void *arg) {
 					get_rcv->id_correlacional);
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 
-			////falta mandar el id generado al team//////
+			// TODO: Mandar el id generado al team
 			send(client_fd, &get_rcv->id_correlacional, sizeof(uint32_t), 0);
-			//esto es para los ack de gamecard
+
 			create_message_ack(get_rcv->id_correlacional, get_queue, GET_QUEUE);
-			//free(message_void->message);
-			//free(message_void);
+
 			// To GC
 			get_protocol = GET_POKEMON;
 			broker_logger_info("GET SENT TO GAMECARD");
 			for (int i = 0; i < list_size(get_queue); i++) {
 				t_subscribe_nodo* node = list_get(get_queue, i);
-				if (node->endtime != -1) {
-					if (time(NULL) >= node->endtime) {
-						t_empty* noop = malloc(sizeof(t_empty));
-						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol,
-								noop);
-						list_remove(get_queue, i);
-					} else {
-						utils_serialize_and_send(node->f_desc, get_protocol,
-								get_snd);
-					}
-				} else {
-					utils_serialize_and_send(node->f_desc, get_protocol,
-							get_snd);
-				}
+				utils_serialize_and_send(node->f_desc, get_protocol, get_snd);
 			}
-			//free(get_snd->nombre_pokemon);
-			//free(get_snd);
-			//free(get_rcv->nombre_pokemon);
-			//free(get_rcv);
 
 			usleep(500000);
 			break;
@@ -496,7 +419,8 @@ static void *handle_connection(void *arg) {
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from,
 					memory);
 
-			//falta mandar id al team para q lo guarde//
+			// TODO: Enviar ID a team
+			send(client_fd, &catch_rcv->id_correlacional, sizeof(uint32_t), 0);
 
 			create_message_ack(catch_rcv->id_correlacional, catch_queue,
 					CATCH_QUEUE);
@@ -508,30 +432,13 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("CATCH SENT TO GC");
 			for (int i = 0; i < list_size(catch_queue); i++) {
 				t_subscribe_nodo* node = list_get(catch_queue, i);
-				if (node->endtime != -1) {
-					if (time(NULL) >= node->endtime) {
-						t_empty* noop = malloc(sizeof(t_empty));
-						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol,
-								noop);
-						list_remove(catch_queue, i);
-					} else {
-						utils_serialize_and_send(node->f_desc, catch_protocol,
-								catch_send);
-					}
-				} else {
-					utils_serialize_and_send(node->f_desc, catch_protocol,
-							catch_send);
-				}
+				utils_serialize_and_send(node->f_desc, catch_protocol,
+						catch_send);
 			}
-			//free(catch_rcv->nombre_pokemon);
-			//free(catch_rcv);
-
-			//free(catch_send->nombre_pokemon);
-			//free(catch_send);
 			usleep(500000);
 			break;
 		}
+
 			// From GC
 		case LOCALIZED_POKEMON: {
 			broker_logger_info("LOCALIZED RECEIVED FROM GC");
@@ -562,36 +469,16 @@ static void *handle_connection(void *arg) {
 
 			create_message_ack(loc_rcv->id_correlacional, localized_queue,
 					LOCALIZED_QUEUE);
-			free(message_void->message);
-			free(message_void);
+
 			// To team
 			localized_protocol = LOCALIZED_POKEMON;
 			broker_logger_info("LOCALIZED SENT TO TEAM");
 			loc_snd->posiciones = loc_rcv->posiciones;
 			for (int i = 0; i < list_size(localized_queue); i++) {
 				t_subscribe_nodo* node = list_get(localized_queue, i);
-				if (node->endtime != -1) {
-					if (time(NULL) >= node->endtime) {
-						t_empty* noop = malloc(sizeof(t_empty));
-						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol,
-								noop);
-						list_remove(localized_queue, i);
-					} else {
-						utils_serialize_and_send(node->f_desc,
-								localized_protocol, loc_snd);
-					}
-				} else {
-					utils_serialize_and_send(node->f_desc, localized_protocol,
-							loc_snd);
-				}
+				utils_serialize_and_send(node->f_desc, localized_protocol,
+						loc_snd);
 			}
-			//free(loc_rcv->nombre_pokemon);
-			//list_destroy(loc_rcv->posiciones);
-			//free(loc_rcv);
-			//free(loc_snd->nombre_pokemon);
-			//list_destroy(loc_snd->posiciones);
-			//free(loc_snd);
 			usleep(50000);
 			break;
 		}
@@ -606,8 +493,6 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("IP Recibido: %s", ip);
 			sub_rcv->f_desc = client_fd;
 			search_queue(sub_rcv);
-			//free(sub_rcv->ip);
-			//free(sub_rcv);
 			usleep(50000);
 			break;
 		}
@@ -633,32 +518,14 @@ static void *handle_connection(void *arg) {
 			create_message_ack(caught_snd->id_correlacional, caught_queue,
 					CAUGHT_QUEUE);
 
-			free(message_void->message);
-			free(message_void);
 			// To Team
 			caught_protocol = CAUGHT_POKEMON;
 			broker_logger_info("CAUGHT SENT TO TEAM");
 			for (int i = 0; i < list_size(caught_queue); i++) {
 				t_subscribe_nodo* node = list_get(caught_queue, i);
-				if (node->endtime != -1) {
-					if (time(NULL) >= node->endtime) {
-						t_empty* noop = malloc(sizeof(t_empty));
-						t_protocol noop_protocol = NOOP;
-						utils_serialize_and_send(node->f_desc, noop_protocol,
-								noop);
-						list_remove(caught_queue, i);
-					} else {
-						utils_serialize_and_send(node->f_desc, caught_protocol,
-								caught_snd);
-					}
-				} else {
-					utils_serialize_and_send(node->f_desc, caught_protocol,
-							caught_snd);
-				}
+				utils_serialize_and_send(node->f_desc, caught_protocol,
+						caught_snd);
 			}
-			free(caught_snd);
-			free(caught_rcv);
-
 			usleep(50000);
 			break;
 		}
@@ -697,7 +564,7 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 
 	int sub_time = (int) time(NULL);
 	for (;;) {
-		if((int) time(NULL) > (sub_time + n)) {
+		if ((int) time(NULL) > (sub_time + n)) {
 
 			// TODO: Sync!
 			t_empty* noop = malloc(sizeof(t_empty));
@@ -705,9 +572,11 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 			utils_serialize_and_send(sub->f_desc, noop_protocol, noop);
 
 			list_remove_by_condition(q, (void*) is_gb_subscriber);
-			broker_logger_info("Game boy has been kicked from subscribers list");
+			broker_logger_info(
+					"Game boy has been kicked from subscribers list");
 			return;
 		}
+		usleep((n / 2) * 100000);
 	}
 }
 
@@ -811,10 +680,10 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	case NOOP: {
 		break;
 	}
-	case SUBSCRIBE: {
+	case ACK: {
 		break;
 	}
-	case ACK: {
+	case SUBSCRIBE: {
 		break;
 	}
 	case HANDSHAKE: {
@@ -967,10 +836,10 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 	case NOOP: {
 		break;
 	}
-	case SUBSCRIBE: {
+	case ACK: {
 		break;
 	}
-	case ACK: {
+	case SUBSCRIBE: {
 		break;
 	}
 	case HANDSHAKE: {
@@ -1247,15 +1116,11 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 
 	nodo_mem->pointer = pointer;
 
-	if (!is_buddy()) {
-		if (msg_size < broker_config->tamano_minimo_particion) {
-			nodo_mem->size = broker_config->tamano_minimo_particion;
-		}
-
-		else {
-			nodo_mem->size = msg_size;
-		}
-	}
+	nodo_mem->size =
+			!is_buddy() ?
+					((msg_size < broker_config->tamano_minimo_particion) ?
+							broker_config->tamano_minimo_particion : msg_size) :
+					msg_size;
 
 	nodo_mem->cola = cola;
 	nodo_mem->id = id;
@@ -1378,7 +1243,8 @@ void dump() {
 		return;
 	}
 	if (ftell(f) != 0) {
-		fprintf(f, "------------------------------------------------------------------------------------------\n");
+		fprintf(f,
+				"------------------------------------------------------------------------------------------\n");
 	}
 	time_t _time = time(NULL);
 	struct tm *tm = localtime(&_time);
@@ -1387,50 +1253,74 @@ void dump() {
 	fprintf(f, "Dump %s\n", s);
 	t_list* list_clone = list_duplicate(list_memory);
 	list_sort(list_clone, (void*) compare_memory_position);
-	for (int i=0; i < list_size(list_clone); ++i) {
+
+	for (int i = 0; i < list_size(list_clone); ++i) {
 
 		t_nodo_memory* node = list_get(list_clone, i);
 
 		// If first elem is free
 		if (i == 0 && node->pointer != 0) {
-			fprintf(f, "Particion %d: %d - %d\t\t", i+1, 0, (node->pointer -1));
+			fprintf(f, "Particion %04d: %04d - %04d\t\t", i + 1, 0,
+					(node->pointer - 1));
 			fprintf(f, "[L]\t\t");
-			fprintf(f, "Size: %d B\n", node->pointer);
-			fprintf(f, "Particion %d: %d - %d\t\t", i+2, node->pointer, node->pointer + (node->size -1));
+			fprintf(f, "Size: %04d B\n", node->pointer);
+			fprintf(f, "Particion %04d: %04d - %04d\t\t", i + 2, node->pointer,
+					next_power_of_2(node->pointer + (node->size)) - 1);
 			fprintf(f, "[X]\t\t");
-			fprintf(f, "Size: %d B\t\t", node->size);
-			fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
+			fprintf(f, "Total size: %04d B. Used: %04d B, Free: %04d B\t\t",
+					next_power_of_2(node->size), node->size,
+					next_power_of_2(node->size) - node->size);
+			fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
 			fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
-			fprintf(f, "ID: %d\n", node->id);
-			last_pointer = node->pointer + node->size;
-			last_size = i+2;
+			fprintf(f, "ID: %04d\n", node->id);
+			last_pointer = next_power_of_2(node->pointer + node->size);
+			last_size = i + 2;
 		}
 
 		else {
 			// If there's a hole in the middle
 			if (node->pointer > last_pointer) {
-				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1, last_pointer, node->pointer -1);
+				fprintf(f, "Particion %04d: %04d - %04d\t\t", last_size + 1,
+						last_pointer, node->pointer - 1);
 				fprintf(f, "[L]\t\t");
-				fprintf(f, "Size: %d B\n", node->pointer - last_pointer);
-				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 2, node->pointer, (node->size -1));
+				fprintf(f, "Size: %04d B\n", node->pointer - last_pointer);
+				fprintf(f, "Particion %04d: %04d - %04d\t\t", last_size + 2,
+						node->pointer, next_power_of_2(node->size) - 1);
 				fprintf(f, "[X]\t\t");
-				fprintf(f, "Size: %d B\t\t", node->size);
-				fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
+				fprintf(f, "Total size: %04d B. Used: %04d B, Free: %04d B\t\t",
+						next_power_of_2(node->size), node->size,
+						next_power_of_2(node->size) - node->size);
+				fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
 				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
-				fprintf(f, "ID: %d\n", node->id);
+				fprintf(f, "ID: %04d\n", node->id);
 				last_size += 2;
 			}
 
 			else {
-				fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1, node->pointer, node->pointer + (node->size -1));
+				fprintf(f, "Particion %04d: %04d - %04d\t\t", last_size + 1,
+						node->pointer,
+						next_power_of_2(node->pointer + (node->size)) - 1);
 				fprintf(f, "[X]\t\t");
-				fprintf(f, "Size: %d B\t\t", node->size);
-				fprintf(f, "LRU: %d\t\t", (int) (node->timestamp - base_time));
+				fprintf(f, "Total size: %04d B. Used: %04d B, Free: %04d B\t\t",
+						next_power_of_2(node->size), node->size,
+						next_power_of_2(node->size) - node->size);
+				fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
 				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
-				fprintf(f, "ID: %d\n", node->id);
-				last_size =+ 1;
+				fprintf(f, "ID: %04d\n", node->id);
+				last_size += 1;
 			}
-			last_pointer = node->pointer + node->size;
+			last_pointer = next_power_of_2(node->pointer + node->size);
+		}
+
+		// if last block is empty
+		if ((i == (list_size(list_clone) - 1))
+				&& last_pointer != broker_config->tamano_memoria) {
+			fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1, last_pointer,
+					broker_config->tamano_memoria - 1);
+			fprintf(f, "[L]\t\t");
+			fprintf(f, "Size: %d B\n",
+					broker_config->tamano_memoria - last_pointer);
+			last_size += 1;
 		}
 	}
 	fclose(f);

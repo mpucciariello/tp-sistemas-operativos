@@ -6,7 +6,7 @@ char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
-	while (true){
+	while (planificacion) {
 		sem_wait(&sem_trainers_in_ready_queue);
 		sem_wait(&sem_planificador);
 
@@ -16,10 +16,11 @@ void team_planner_run_planification() {
 		team_logger_info("El entrenador %d pasará a EXEC!", entrenador-> id);
 		context_switch_qty++;
 	}
+	pthread_exit(0);
 }
 
 void team_planner_algoritmo_cercania() {
-	while (true) {
+	while (cercania) {
 
 		sem_wait(&sem_message_on_queue);
 		sem_wait(&sem_entrenadores_disponibles);
@@ -80,6 +81,7 @@ void team_planner_algoritmo_cercania() {
 		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);		
 	}
+	pthread_exit(0);
 }
 
 void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
@@ -131,12 +133,39 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->blocked_info = NULL;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
+	entrenador->diferencia = calcular_diferencia(entrenador);
+	entrenador->esta_activo = true;
 	pthread_mutex_init(&entrenador->sem_move_trainers, NULL);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);
 	pthread_detach(entrenador->hilo_entrenador);
 
 	return entrenador;
+}
+
+
+int calcular_diferencia(t_entrenador_pokemon* entrenador){
+	int diferencia = 0;
+	bool lo_tiene = false;
+
+	for (int i = 0; i < list_size(entrenador->pokemons); i++){
+		t_pokemon* pokemon_default = list_get(entrenador->pokemons, i);
+
+		for(int j = 0; j < list_size(entrenador->targets); j++){
+			t_pokemon* pokemon_objetivo = list_get(entrenador->targets, i);
+			if(!string_equals_ignore_case(pokemon_default->name, pokemon_objetivo->name)){
+				continue;
+			}else{
+				lo_tiene = true;
+				break;
+			}
+		}
+
+		if(!lo_tiene){
+			diferencia++;
+		}
+	}
+	return diferencia;
 }
 
 t_pokemon* team_planner_pokemon_create(char* nombre) {
@@ -232,7 +261,7 @@ void planner_init_global_targets(t_list* objetivos) {
 	sem_post(&sem_pokemons_to_get);
 }
 
-char* planner_print_global_targets() {//TODO revisar
+char* planner_print_global_targets() {
 	char* global_targets_string = string_new();
 	string_append(&global_targets_string, "POKEMON			|CANTIDAD		\n");
 	for (int i = 0; i < list_size(keys_list); i++) {
@@ -458,7 +487,7 @@ t_list* filter_block_list_by_0() {
 
 t_list* filter_by_deadlock() {
 	bool _is_locked(t_entrenador_pokemon* trainner) {
-		return trainner->blocked_info->status == 0 && trainner->deadlock == true;
+		return trainner->deadlock == true;
 	}
 	t_list* blocked_in_deadlock = list_filter(block_queue, (void*) _is_locked);
 	return blocked_in_deadlock;
@@ -538,10 +567,7 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 }
 
 bool all_queues_are_empty_except_block() {
-	int bloqueados = list_size(block_queue);
-	int total = list_size(team_planner_get_trainners());
-	int deadlock = total - bloqueados;
-	return list_size(filter_by_deadlock()) == deadlock;
+	return list_size(filter_by_deadlock()) == (list_size(team_planner_get_trainners()) - list_size(block_queue));
 }
 
 void solve_deadlock() {
@@ -633,7 +659,8 @@ void solve_deadlock() {
 void team_planner_end_trainer_threads() {
 	for (int i = 0; i < list_size(exit_queue); i++) {
 		t_entrenador_pokemon* entrenador = list_get(exit_queue, i);
-		pthread_cancel(entrenador->hilo_entrenador);
+		entrenador->esta_activo = false;
+		//pthread_cancel(entrenador->hilo_entrenador);
 	}
 }
 
@@ -774,7 +801,7 @@ void team_planner_init() {
 bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 	list_clean(lista_auxiliar);
 	lista_auxiliar = list_duplicate(entrenador->targets);
-	if (list_size(entrenador->pokemons) == list_size(entrenador->targets)) {
+	if (list_size(entrenador->pokemons) == list_size(entrenador->targets) || (list_size(entrenador->pokemons)- list_size(entrenador->targets) == entrenador->diferencia)) {
 
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);
