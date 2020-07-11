@@ -660,7 +660,7 @@ void team_planner_end_trainer_threads() {
 	for (int i = 0; i < list_size(exit_queue); i++) {
 		t_entrenador_pokemon* entrenador = list_get(exit_queue, i);
 		entrenador->esta_activo = false;
-		//pthread_cancel(entrenador->hilo_entrenador);
+		pthread_cancel(entrenador->hilo_entrenador);
 	}
 }
 

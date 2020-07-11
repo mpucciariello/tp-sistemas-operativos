@@ -339,6 +339,12 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			entrenador->current_burst_time++;
 			entrenador->total_burst_time++;
 		}
+		
+		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador->id,
+																			entrenador->position->pos_x,
+																			entrenador->position->pos_y,
+																			entrenador->pokemon_a_atrapar->position->pos_x,
+																			entrenador->pokemon_a_atrapar->position->pos_y);
 
 		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)",
 				entrenador->id, entrenador->position->pos_x,
@@ -546,6 +552,7 @@ void *receive_msg(int fd, int send_to) {
 					add_to_pokemon_to_catch(pokemon);
 					list_add(pokemons_localized, pokemon->name);
 				}
+				break;
 			}
 
 			break;
@@ -680,19 +687,13 @@ bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
 }
 
 void team_server_init() {
-
-	team_socket = socket_create_listener(team_config->ip_team,
-			team_config->puerto_team);
+	team_socket = socket_create_listener(team_config->ip_team, team_config->puerto_team);
 	if (team_socket < 0) {
 		team_logger_error("Error al crear server.");
 		return;
 	}
 
 	team_logger_info("Server creado correctamente!! Esperando conexiones...");
-
-	pthread_attr_t attrs;
-	pthread_attr_init(&attrs);
-	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 	while (true) {
 		int accepted_fd = socket_accept_conection(team_socket);
@@ -702,17 +703,13 @@ void team_server_init() {
 			team_logger_error("Error al conectar con un cliente.");
 			continue;
 		}
-		t_handle_connection* connection_handler = malloc(
-				sizeof(t_handle_connection));
+		t_handle_connection* connection_handler = malloc(sizeof(t_handle_connection));
 		connection_handler->fd = accepted_fd;
 		connection_handler->bool_val = 1;
 
-		pthread_create(&tid, NULL, (void*) handle_connection,
-				(void*) connection_handler);
+		pthread_create(&tid, NULL, (void*) handle_connection, (void*) connection_handler);
 		pthread_detach(tid);
-		team_logger_info(
-				"Creando un hilo para atender una conexión en el socket %d",
-				accepted_fd);
+		team_logger_info( "Creando un hilo para atender una conexión en el socket %d", accepted_fd);
 	}
 }
 
