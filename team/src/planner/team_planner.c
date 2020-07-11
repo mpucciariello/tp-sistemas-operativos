@@ -6,7 +6,7 @@ char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
-	while (planificador){
+	while (planificacion) {
 		sem_wait(&sem_trainers_in_ready_queue);
 		sem_wait(&sem_planificador);
 
@@ -16,7 +16,6 @@ void team_planner_run_planification() {
 		team_logger_info("El entrenador %d pasará a EXEC!", entrenador-> id);
 		context_switch_qty++;
 	}
-
 	pthread_exit(0);
 }
 

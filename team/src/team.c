@@ -25,6 +25,8 @@ int team_load() {
 }
 
 void team_init() {
+	planificacion = true;
+	cercania = true;
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 1);
 	sem_init(&sem_message_on_queue, 0, 0);
@@ -189,9 +191,10 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 
 	if(all_finished()) { //TODO: no finaliza, controlar que termine con exito
 		cercania = false;
-		planificador = false;
+		planificacion = false;
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
+
 		team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
 		team_planner_end_trainer_threads();
 	}

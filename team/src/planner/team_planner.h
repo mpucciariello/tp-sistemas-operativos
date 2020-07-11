@@ -87,6 +87,8 @@ t_list* pokemons_localized;
 t_list* real_targets_pokemons;
 
 t_dictionary* team_planner_global_targets;
+bool cercania;
+bool planificacion;
 
 void team_planner_init();
 void team_planner_destroy();
