@@ -328,6 +328,7 @@ t_list* getAPokemon(t_get_pokemon* getPokemon) {
 		res = operateGetPokemonFile(getPokemon, completePath);
 	} else {
 		game_card_logger_error("No existe ese Pokemon en el filesystem.");
+		res = list_create();
 		
 	}
 

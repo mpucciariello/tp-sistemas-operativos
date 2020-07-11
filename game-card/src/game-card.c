@@ -194,8 +194,15 @@ void *recv_game_card(int fd, int respond_to) {
 			game_card_logger_info("ID correlacional: %d", get_rcv->id_correlacional);
 			game_card_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			game_card_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
-			getAPokemon(get_rcv);
+			t_list* response = getAPokemon(get_rcv);
 			usleep(50000);
+
+			t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
+			loc_snd->id_correlacional = get_rcv->id_correlacional;
+			loc_snd->nombre_pokemon = get_rcv->nombre_pokemon;
+			loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
+			loc_snd->cant_elem = list_size(response);
+			loc_snd->posiciones = response;
 
 			// To broker
 			pthread_attr_t attrs;
@@ -211,7 +218,7 @@ void *recv_game_card(int fd, int respond_to) {
 
 			pthread_t tid3;
 			pthread_create(&tid3, NULL, (void*) process_get_and_send_localized,
-					(void*) get_rcv);
+					(void*) loc_snd);
 			pthread_detach(tid3);
 
 			break;
@@ -226,8 +233,12 @@ void *recv_game_card(int fd, int respond_to) {
 			game_card_logger_info("Largo nombre: %d",catch_rcv->tamanio_nombre);
 			game_card_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			game_card_logger_info("Posicion Y: %d", catch_rcv->pos_y);
-			catchAPokemon(catch_rcv);
+			int res = catchAPokemon(catch_rcv);
 			usleep(50000);
+
+			t_caught_pokemon* caught_snd = malloc(sizeof(t_catch_pokemon));
+			caught_snd->id_correlacional = catch_rcv->id_correlacional;
+			caught_snd->result = res;
 
 			// To Broker
 			pthread_attr_t attrs;
@@ -244,7 +255,7 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_t tid5;
 
 			pthread_create(&tid5, NULL, (void*) process_catch_and_send_caught,
-					(void*) catch_rcv);
+					(void*) caught_snd);
 			pthread_detach(tid5);
 			break;
 		}
@@ -261,6 +272,12 @@ void send_ack(void* arg) {
 	t_ack* ack_snd = malloc(sizeof(t_ack));
 	t_protocol ack_protocol = ACK;
 	ack_snd->id = id;
+	ack_snd->protocol = ack_protocol;
+	ack_snd->puerto = string_new();
+	ack_snd->puerto = "3000";
+	ack_snd->ip = string_new();
+	ack_snd->ip = "192.168.0.2";
+	
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
 			game_card_config->puerto_broker);
 	if (client_fd > 0) {
@@ -295,26 +312,9 @@ void process_new_and_send_appeared(void* arg) {
 }
 
 void process_get_and_send_localized(void* arg) {
-	t_get_pokemon* get_rcv = (t_get_pokemon*) arg;
+	t_localized_pokemon* loc_snd = (t_localized_pokemon*) arg;
 
-	// Temporal mock for list (to return @LOCALIZED)
-	t_list* positions = list_create();
-	t_position *pos = malloc(sizeof(t_position));
-	pos->pos_x = 21;
-	pos->pos_y = 8;
-	t_position *pos2 = malloc(sizeof(t_position));
-	pos2->pos_x = 2;
-	pos2->pos_y = 8;
-	list_add(positions, pos);
-	list_add(positions, pos2);
-
-	// Process get and sent localize
-	t_localized_pokemon* loc_snd = malloc(sizeof(t_localized_pokemon));
-	loc_snd->id_correlacional = get_rcv->id_correlacional;
-	loc_snd->nombre_pokemon = get_rcv->nombre_pokemon;
-	loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
-	loc_snd->cant_elem = list_size(positions);
-	loc_snd->posiciones = positions;
+	game_card_logger_info("Localized to BROKER %d", loc_snd->cant_elem);
 	t_protocol localized_protocol = LOCALIZED_POKEMON;
 
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
@@ -328,12 +328,10 @@ void process_get_and_send_localized(void* arg) {
 }
 
 void process_catch_and_send_caught(void* arg) {
-	t_catch_pokemon* catch_rcv = (t_catch_pokemon*) arg;
+	t_caught_pokemon* caught_snd = (t_caught_pokemon*) arg;
 
+	game_card_logger_info("CAUGHT RESPONSE sent to BROKER %d", caught_snd->result);
 	// Process Catch and send Caught to broker
-	t_caught_pokemon* caught_snd = malloc(sizeof(t_caught_pokemon));
-	caught_snd->id_correlacional = catch_rcv->id_correlacional;
-	caught_snd->result = 1;
 	t_protocol caught_protocol = CAUGHT_POKEMON;
 
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
