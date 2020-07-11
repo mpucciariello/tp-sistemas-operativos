@@ -32,6 +32,8 @@ void team_init() {
 	sem_init(&sem_trainers_in_ready_queue, 0, 0);
 	sem_init(&sem_deadlock, 0, 0);
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
+	planificador = true;
+	cercania = true;
 	message_catch_sended = list_create();
 	pokemones_pendientes = list_create();
 	real_targets_pokemons = list_create();
@@ -186,6 +188,8 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 	}
 
 	if(all_finished()) { //TODO: no finaliza, controlar que termine con exito
+		cercania = false;
+		planificador = false;
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
 		team_logger_info("Ya no es posible atrapar más pokemones, el TEAM se encuentra en condiciones de FINALIZAR!");
@@ -280,7 +284,7 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 }
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
-	while (true) {
+	while (entrenador->esta_activo) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int	aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
@@ -316,6 +320,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			entrenador->pokemon_a_atrapar = NULL;
 		}
 	}
+	pthread_exit(0);
 }
 
 void subscribe_to(void *arg) {

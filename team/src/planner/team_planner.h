@@ -42,6 +42,7 @@ typedef struct {
 	t_pokemon* pokemon_a_atrapar; 
 	bool deadlock;
 	int diferencia;
+	bool esta_activo;
 } t_entrenador_pokemon;
 
 typedef enum {
@@ -55,6 +56,9 @@ typedef struct {
 	t_list* pos;
 } t_pokemon_received;
 
+
+bool planificador;
+bool cercania;
 
 sem_t sem_entrenadores_disponibles;
 sem_t sem_message_on_queue;
@@ -127,5 +131,6 @@ bool all_finished();
 void eliminar_pokemon_de_objetivos(t_list*, char*);
 t_list* filter_by_deadlock();
 int calcular_diferencia(t_entrenador_pokemon*);
+t_list* filter_by_deadlock();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

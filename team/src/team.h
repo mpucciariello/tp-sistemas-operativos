@@ -22,6 +22,7 @@ t_list* get_id_corr;
 t_list* keys_list;
 t_list* lista_auxiliar;
 
+
 int team_load();
 void team_init();
 void team_server_init();

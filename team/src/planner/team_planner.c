@@ -6,7 +6,7 @@ char* split_char = "|";
 int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
-	while (true){
+	while (planificador){
 		sem_wait(&sem_trainers_in_ready_queue);
 		sem_wait(&sem_planificador);
 
@@ -16,10 +16,12 @@ void team_planner_run_planification() {
 		team_logger_info("El entrenador %d pasará a EXEC!", entrenador-> id);
 		context_switch_qty++;
 	}
+
+	pthread_exit(0);
 }
 
 void team_planner_algoritmo_cercania() {
-	while (true) {
+	while (cercania) {
 
 		sem_wait(&sem_message_on_queue);
 		sem_wait(&sem_entrenadores_disponibles);
@@ -80,6 +82,7 @@ void team_planner_algoritmo_cercania() {
 		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);		
 	}
+	pthread_exit(0);
 }
 
 void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
@@ -132,6 +135,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
 	entrenador->diferencia = calcular_diferencia(entrenador);
+	entrenador->esta_activo = true;
 	pthread_mutex_init(&entrenador->sem_move_trainers, NULL);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);
@@ -258,7 +262,7 @@ void planner_init_global_targets(t_list* objetivos) {
 	sem_post(&sem_pokemons_to_get);
 }
 
-char* planner_print_global_targets() {//TODO revisar
+char* planner_print_global_targets() {
 	char* global_targets_string = string_new();
 	string_append(&global_targets_string, "POKEMON			|CANTIDAD		\n");
 	for (int i = 0; i < list_size(keys_list); i++) {
@@ -564,11 +568,7 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 }
 
 bool all_queues_are_empty_except_block() {
-	int bloqueados = list_size(block_queue);
-	int total = list_size(team_planner_get_trainners());
-	int deadlock = total - bloqueados;
-	int contador = list_size(filter_by_deadlock());
-	return contador == deadlock;
+	return list_size(filter_by_deadlock()) == (list_size(team_planner_get_trainners()) - list_size(block_queue));
 }
 
 void solve_deadlock() {
@@ -660,7 +660,8 @@ void solve_deadlock() {
 void team_planner_end_trainer_threads() {
 	for (int i = 0; i < list_size(exit_queue); i++) {
 		t_entrenador_pokemon* entrenador = list_get(exit_queue, i);
-		pthread_cancel(entrenador->hilo_entrenador);
+		entrenador->esta_activo = false;
+		//pthread_cancel(entrenador->hilo_entrenador);
 	}
 }
 
