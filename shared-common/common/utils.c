@@ -76,9 +76,7 @@ char* utils_array_to_string(char** array) {
 }
 
 void utils_delay(int seconds) {
-	time_t start = time(NULL);
-	while (time(NULL) < start + seconds)
-		;
+	sleep(seconds);
 }
 
 void utils_buffer_create(t_package* package) {
