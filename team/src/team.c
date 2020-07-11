@@ -425,6 +425,11 @@ void *receive_msg(int fd, int send_to) {
 				t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
 				team_logger_info("ID correlacional: %d", caught_rcv->id_correlacional);
 				team_logger_info("Resultado (0/1): %d", caught_rcv->result);
+				usleep(50000);
+
+				if (is_server == 0) {
+					// snd(fd_broker, ACK, sizeof(t_protocol), 0);
+				}
 
 				t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);				
 				t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
@@ -440,8 +445,6 @@ void *receive_msg(int fd, int send_to) {
 				} else {
 					team_logger_info("MENSAJE CAUGHT NEGATIVO: El entrenador %d no atrapó a %s, al no tener mensajes pendientes volverá a poder ser planificado.", entrenador->id, catch_message->nombre_pokemon);
 				}
-
-				usleep(50000);
 				break;
 			}
 
@@ -458,6 +461,10 @@ void *receive_msg(int fd, int send_to) {
 					team_logger_info("Posición: (%d, %d)", pos->pos_x, pos->pos_y);
 				}
 				usleep(500000);
+
+				if (is_server == 0) {
+					// snd(fd_broker, ACK, sizeof(t_protocol), 0);
+				}
 
 				bool _es_el_mismo(uint32_t id) {
 					return loc_rcv->id_correlacional == id;
@@ -485,9 +492,7 @@ void *receive_msg(int fd, int send_to) {
 				usleep(50000);
 
 				if (is_server == 0) {
-					pthread_t tid;
-					pthread_create(&tid, NULL, (void*) send_ack, (void*) &appeared_rcv->id_correlacional);
-					pthread_detach(tid);
+					// snd(fd_broker, ACK, sizeof(t_protocol), 0);
 				}
 
 				if (pokemon_required(appeared_rcv->nombre_pokemon) && pokemon_not_pendant(appeared_rcv->nombre_pokemon) && pokemon_in_pokemon_to_catch(appeared_rcv->nombre_pokemon)) { //si lo necesito, no tengo uno pendiente y no tengo uno en pokemon_to_catch
@@ -629,21 +634,6 @@ void *handle_connection(void *arg) {
 	int client_fd = connect_handler->fd;
 	receive_msg(client_fd, connect_handler->bool_val);
 	return NULL;
-}
-
-void send_ack(void* arg) {
-	int val = *((int*) arg);
-	t_ack* ack_snd = malloc(sizeof(t_ack));
-	t_protocol ack_protocol = ACK;
-	ack_snd->id = val;
-
-	int client_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
-	if (client_fd > 0) {
-		utils_serialize_and_send(client_fd, ack_protocol, ack_snd);
-		team_logger_info("ACK SENT TO BROKER");
-	}
-	team_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
-	socket_close_conection(client_fd);
 }
 
 void team_exit() {
