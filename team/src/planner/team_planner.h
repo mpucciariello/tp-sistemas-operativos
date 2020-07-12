@@ -107,7 +107,7 @@ void add_to_ready_queue(t_entrenador_pokemon*);
 void delete_from_new_queue(t_entrenador_pokemon*);
 t_entrenador_pokemon* entrenador_que_necesita(t_pokemon*);
 bool block_queue_is_not_empty();
-t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon*, t_list*);
+t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon*);
 void remove_from_pokemons_list(t_entrenador_pokemon*, t_pokemon*);
 bool trainer_completed_with_success(t_entrenador_pokemon*);
 bool all_queues_are_empty_except_block();
@@ -131,6 +131,5 @@ void eliminar_pokemon_de_objetivos(t_list*, char*);
 t_list* filter_by_deadlock();
 int calcular_diferencia(t_entrenador_pokemon*);
 t_list* filter_by_deadlock();
-t_list* remover_de_lista (t_list*, t_pokemon*);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
