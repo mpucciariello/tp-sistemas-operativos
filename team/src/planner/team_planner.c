@@ -492,10 +492,15 @@ void solve_deadlock() {
 	t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
 	t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
 
-	while (list_size(block_queue) > 1) {
+	while (list_size(block_queue) > 0) {
+		bool terminaron_todos = false;
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
 
-		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante); //Rompe aca despues de la 3ra vuelta
+		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante);
+
+		if(entrenador_que_necesita(pokemon_de_entrenador_bloqueante) == NULL){
+			//Si nadie necesita al entrenador bloqueante debe recalcular
+		}
 		entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
 
 		entrenador_bloqueado->pokemon_a_atrapar = malloc(sizeof(t_pokemon));
@@ -548,13 +553,32 @@ void solve_deadlock() {
 		remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
 		remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
 
-		if (trainer_completed_with_success(entrenador_bloqueado)) {
+		/*if (trainer_completed_with_success(entrenador_bloqueado) || entrenador_bloqueado->diferencia == 0) {
 			team_planner_finish_trainner(entrenador_bloqueado);
 		}
 
-		if (trainer_completed_with_success(entrenador_bloqueante)) {
+		if (trainer_completed_with_success(entrenador_bloqueante) || entrenador_bloqueado->diferencia == 0) {
 			team_planner_finish_trainner(entrenador_bloqueante);
+		}*/
+
+		for(int i = 0; i < list_size(block_queue); i++){
+			t_entrenador_pokemon* entrenador = list_get(block_queue, i);
+			if(trainer_completed_with_success(entrenador)){
+				terminaron_todos = true;
+				continue;
+			}else{
+				terminaron_todos = false;
+				break;
+			}
 		}
+
+		if(terminaron_todos){
+			for(int i = 0; i < list_size(block_queue); i++){
+				t_entrenador_pokemon* entrenador = list_get(block_queue, i);
+				team_planner_finish_trainner(entrenador);
+			}
+		}
+
 		a++;
 		deadlocks_resolved++;
 	}
