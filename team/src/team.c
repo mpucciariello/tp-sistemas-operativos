@@ -123,7 +123,6 @@ void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entre
 		list_add(entrenador->list_id_catch, (void*)catch_send->id_correlacional);
 	} else {
 		team_logger_warn("No se ha podido enviar el mensaje CATCH. Se agregará a los pokemons atrapados del entrenador %d, por comportamiento default: %s, posición (%d, %d)", entrenador->id, catch_send->nombre_pokemon, catch_send->pos_x, catch_send->pos_y);
-		//atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
 		atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
 	}
 	usleep(500000);
@@ -162,7 +161,7 @@ bool tengo_en_pokemon_to_catch(char* tipo){
 }
 
 
-void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name){
+void atrapar_pokemon(t_entrenador_pokemon* entrenador){
 	team_planner_change_block_status_by_trainer(0, entrenador);
 	t_pokemon* pokemon = team_planner_pokemon_create(pokemon_name);
 	list_add(entrenador->pokemons, pokemon);
@@ -663,7 +662,7 @@ void *handle_connection(void *arg) {
 
 
 void send_ack(void* arg) {
-	/*int val = *((int*) arg);
+	int val = *((int*) arg);
 	t_ack* ack_snd = malloc(sizeof(t_ack));
 	t_protocol ack_protocol = ACK;
 	ack_snd->id = val;
@@ -674,7 +673,7 @@ void send_ack(void* arg) {
 		team_logger_info("ACK SENT TO BROKER");
 	}
 	team_logger_info("CONNECTION WITH BROKER WILL BE CLOSED");
-	socket_close_conection(client_fd);*/
+	socket_close_conection(client_fd);
 }
 
 
