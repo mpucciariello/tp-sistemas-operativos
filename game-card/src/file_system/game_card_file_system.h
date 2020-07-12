@@ -10,6 +10,7 @@
 #include <commons/config.h>
 #include <commons/bitarray.h>
 #include <commons/collections/list.h>
+#include <commons/collections/dictionary.h>
 
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
@@ -20,7 +21,15 @@
 #include "./game_card_handler.h"
 
 
-pthread_mutex_t MUTEX_METADATA;
+t_dictionary* files_open;
+pthread_mutex_t MUTEX_LISTA_ARCHIVO_ABIERTO;
+
+typedef struct pokemon_open_tad {
+    pthread_mutex_t mArchivo;
+} pokemon_open_tad;
+
+
+pokemon_open_tad* new_pokemon_open_tad();
 
 char* formatToMetadataBlocks(t_list* blocks);
 void updatePokemonMetadata(const char* fullPath, const char* directory, const char* size, const char* blocks, const char* open);
@@ -49,4 +58,7 @@ void updateOpenFileState(const char* fullPath, const char* open);
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();
 void freeBlockLine(blockLine* newLineBlock);
+
+
+
 #endif /* FILE_SYSTEM_GAME_CARD_FILE_SYSTEM_H_ */
