@@ -389,7 +389,7 @@ bool team_planner_is_SJF_algorithm() {
 
 t_list* filter_block_list_by_0() {
 	bool _is_available(t_entrenador_pokemon* trainner) {
-		return trainner->blocked_info->status == 0 && trainner->deadlock == false;
+		return trainner->blocked_info->status == 0 && !trainner->deadlock;
 	}
 	t_list* blocked_but_to_exec = list_filter(block_queue, (void*) _is_available);
 	return blocked_but_to_exec;
@@ -477,7 +477,10 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 }
 
 bool all_queues_are_empty_except_block() {
-	return list_size(filter_by_deadlock()) == (list_size(team_planner_get_trainners()) - list_size(block_queue));
+	t_list* trainners = team_planner_get_trainners();
+	bool are_all_empty_except_block = list_size(filter_by_deadlock()) == (list_size(trainners) - list_size(block_queue));
+	list_destroy(trainners);
+	return are_all_empty_except_block;
 }
 
 void solve_deadlock() {
@@ -743,10 +746,6 @@ void planner_destroy_entrenador(t_entrenador_pokemon* entrenador) {
 	pthread_mutex_destroy(&entrenador->sem_move_trainers);
 	list_destroy(entrenador->list_id_catch);
 	free(entrenador);
-}
-
-void planner_destroy_global_targets(t_dictionary* global_targets) {
-	dictionary_destroy_and_destroy_elements(global_targets, (void*)planner_destroy_pokemons);
 }
 
 void planner_destroy_quees() {
