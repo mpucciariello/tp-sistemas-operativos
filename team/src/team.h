@@ -22,7 +22,6 @@ t_list* get_id_corr;
 t_list* keys_list;
 t_list* lista_auxiliar;
 
-
 int team_load();
 void team_init();
 void team_server_init();
@@ -46,10 +45,10 @@ bool pokemon_in_pokemon_to_catch(char*);
 void quitar_de_real_target(char*);
 bool all_finished();
 bool pokemon_not_localized(char*);
+void atrapar_pokemon(t_entrenador_pokemon*);
 bool todavia_quedan_pokemones_restantes(char*);
 void remover_totalmente_de_pokemon_to_catch(char*);
 bool tengo_en_pokemon_to_catch(char*);
-void atrapar_pokemon(t_entrenador_pokemon*, char*);
 
 
 #endif /* TEAM_H_ */
