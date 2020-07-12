@@ -316,12 +316,11 @@ static void *handle_connection(void *arg) {
 						&& node->cola == NEW_QUEUE;
 			}
 
-			_Bool subscriber_ack_matches_new(t_subscribe_ack_node* node) {
-				return node->subscribe->f_desc == client_fd;
-			}
-
 			void send_msg_to_sub(t_subscribe_nodo* node) {
-				usleep(50000);
+				_Bool subscriber_ack_matches_new(t_subscribe_ack_node* n) {
+					return n->subscribe->f_desc == node->f_desc;
+				}
+
 				utils_serialize_and_send(node->f_desc, new_protocol, new_snd);
 
 				t_protocol rcv_int;
@@ -387,12 +386,11 @@ static void *handle_connection(void *arg) {
 						&& node->cola == NEW_QUEUE;
 			}
 
-			_Bool subscriber_ack_matches_appeared(t_subscribe_ack_node* node) {
-				return node->subscribe->f_desc == client_fd;
-			}
-
 			void send_msg_to_sub(t_subscribe_nodo* node) {
-				usleep(50000);
+				_Bool subscriber_ack_matches_appeared(t_subscribe_ack_node* n) {
+					return n->subscribe->f_desc == node->f_desc;
+				}
+
 				utils_serialize_and_send(node->f_desc, appeared_protocol,
 						appeared_snd);
 
@@ -458,13 +456,11 @@ static void *handle_connection(void *arg) {
 						&& node->cola == GET_QUEUE;
 			}
 
-			_Bool subscriber_ack_matches_get(t_subscribe_ack_node* node) {
-				return node->subscribe->f_desc == client_fd;
-			}
-
 			void send_msg_to_sub(t_subscribe_nodo* node) {
+				_Bool subscriber_ack_matches_get(t_subscribe_ack_node* n) {
+					return n->subscribe->f_desc == node->f_desc;
+				}
 
-				usleep(50000);
 				utils_serialize_and_send(node->f_desc, get_protocol, get_snd);
 
 				t_protocol rcv_int;
@@ -533,13 +529,10 @@ static void *handle_connection(void *arg) {
 						&& node->cola == CATCH_QUEUE;
 			}
 
-			_Bool subscriber_ack_matches_catch(t_subscribe_ack_node* node) {
-				return node->subscribe->f_desc == client_fd;
-			}
-
 			void send_msg_to_sub(t_subscribe_nodo* node) {
-
-				usleep(50000);
+				_Bool subscriber_ack_matches_catch(t_subscribe_ack_node* n) {
+					return n->subscribe->f_desc == node->f_desc;
+				}
 				utils_serialize_and_send(node->f_desc, catch_protocol,
 						catch_send);
 
@@ -690,12 +683,11 @@ static void *handle_connection(void *arg) {
 						&& node->cola == CAUGHT_QUEUE;
 			}
 
-			_Bool subscriber_ack_matches_caught(t_subscribe_ack_node* node) {
-				return node->subscribe->f_desc == client_fd;
-			}
-
 			void send_msg_to_sub(t_subscribe_nodo* node) {
-				usleep(50000);
+				_Bool subscriber_ack_matches_caught(t_subscribe_ack_node* n) {
+					return n->subscribe->f_desc == node->f_desc;
+				}
+
 				utils_serialize_and_send(node->f_desc, caught_protocol,
 						caught_snd);
 
