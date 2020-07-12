@@ -477,10 +477,10 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 }
 
 bool all_queues_are_empty_except_block() {
-	t_list* trainners = team_planner_get_trainners();
-	bool are_all_empty_except_block = list_size(filter_by_deadlock()) == (list_size(trainners) - list_size(block_queue));
-	list_destroy(trainners);
-	return are_all_empty_except_block;
+	int bloqueados_en_deadlock = list_size(filter_by_deadlock()); //si las magnitudes son iguales esta en deadlock
+	int bloqueados = list_size(block_queue);
+
+	return (bloqueados_en_deadlock == bloqueados) && list_is_empty(new_queue) && list_is_empty(ready_queue);
 }
 
 void solve_deadlock() {
