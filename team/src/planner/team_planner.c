@@ -492,7 +492,7 @@ void solve_deadlock() {
 	t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
 	t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
 
-	while (block_queue_is_not_empty()) {
+	while (list_size(block_queue) > 1) {
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
 
 		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante); //Rompe aca despues de la 3ra vuelta
@@ -596,10 +596,6 @@ void eliminar_pokemon_de_objetivos(t_list* list, char* nombre) {
 			break;
 		}
 	}
-}
-
-bool block_queue_is_not_empty() {
-	return !list_is_empty(block_queue);
 }
 
 t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_bloqueado) {
