@@ -5,7 +5,6 @@
 #include <math.h>
 #include <semaphore.h>
 #include <commons/collections/list.h>
-#include <commons/collections/dictionary.h>
 #include <commons/collections/queue.h>
 #include "../logger/team_logger.h"
 #include "../config/team_config.h"
@@ -77,7 +76,6 @@ t_list* ready_queue;
 t_list* block_queue;
 t_list* exit_queue;
 t_list* pokemon_to_catch;
-t_list* keys_list;
 t_list* total_targets_pokemons;
 t_list* message_catch_sended;
 t_list* pokemones_pendientes;
@@ -86,7 +84,6 @@ t_list* lista_auxiliar;
 t_list* pokemons_localized;
 t_list* real_targets_pokemons;
 
-t_dictionary* team_planner_global_targets;
 bool cercania;
 bool planificacion;
 

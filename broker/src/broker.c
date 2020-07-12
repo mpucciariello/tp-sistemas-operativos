@@ -320,27 +320,29 @@ static void *handle_connection(void *arg) {
 				return node->subscribe->f_desc == client_fd;
 			}
 
+			void send_msg_to_sub(t_subscribe_nodo* node) {
+				usleep(50000);
+				utils_serialize_and_send(node->f_desc, new_protocol, new_snd);
+
+				t_protocol rcv_int;
+				int r = recv(node->f_desc, &rcv_int, sizeof(t_protocol),
+				MSG_WAITALL);
+				broker_logger_warn("%d", r);
+				broker_logger_warn("ACK Received");
+
+				t_subscribe_message_node* node_ack = list_find(
+						list_msg_subscribers, (void*) node_matches_new);
+				t_subscribe_ack_node* node_subscriber = list_find(
+						node_ack->list, (void*) subscriber_ack_matches_new);
+				node_subscriber->ack = true;
+			}
+
 			for (int i = 0; i < list_size(new_queue); i++) {
-
 				t_subscribe_nodo* node = list_get(new_queue, i);
-
-				void send_msg_to_sub() {
-					utils_serialize_and_send(node->f_desc, new_protocol,
-							new_snd);
-					uint32_t rcv_int = 0;
-					recv(node->f_desc, &rcv_int,
-							sizeof(t_protocol), 0);
-
-					t_subscribe_message_node* node_ack = list_find(
-							list_msg_subscribers, (void*) node_matches_new);
-					t_subscribe_ack_node* node_subscriber = list_find(
-							node_ack->list, (void*) subscriber_ack_matches_new);
-					node_subscriber->ack = true;
-				}
 
 				pthread_t ack_new_tid;
 				pthread_create(&ack_new_tid, NULL, (void*) send_msg_to_sub,
-				NULL);
+						(void*) node);
 				pthread_detach(ack_new_tid);
 				usleep(100000);
 			}
@@ -374,6 +376,8 @@ static void *handle_connection(void *arg) {
 					memory);
 			create_message_ack(id, appeared_queue, APPEARED_QUEUE);
 
+			appeared_snd->id_correlacional = appeared_rcv->id_correlacional;
+
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
 			broker_logger_info("APPEARED SENT TO TEAM");
@@ -387,32 +391,33 @@ static void *handle_connection(void *arg) {
 				return node->subscribe->f_desc == client_fd;
 			}
 
+			void send_msg_to_sub(t_subscribe_nodo* node) {
+				usleep(50000);
+				utils_serialize_and_send(node->f_desc, appeared_protocol,
+						appeared_snd);
+
+				t_protocol rcv_int;
+				int r = recv(node->f_desc, &rcv_int, sizeof(t_protocol),
+				MSG_WAITALL);
+				broker_logger_warn("%d", r);
+				broker_logger_warn("ACK Received");
+
+				t_subscribe_message_node* node_ack = list_find(
+						list_msg_subscribers, (void*) node_matches_appeared);
+				t_subscribe_ack_node* node_subscriber = list_find(
+						node_ack->list,
+						(void*) subscriber_ack_matches_appeared);
+				node_subscriber->ack = true;
+			}
+
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
 
-				void send_msg_to_sub() {
-					utils_serialize_and_send(node->f_desc, appeared_protocol,
-							appeared_snd);
-
-					uint32_t rcv_int = 0;
-					recv(node->f_desc, &rcv_int,
-							sizeof(t_protocol), 0);
-
-					t_subscribe_message_node* node_ack = list_find(
-							list_msg_subscribers,
-							(void*) node_matches_appeared);
-					t_subscribe_ack_node* node_subscriber = list_find(
-							node_ack->list,
-							(void*) subscriber_ack_matches_appeared);
-					node_subscriber->ack = true;
-				}
-
 				pthread_t ack_appeared_tid;
 				pthread_create(&ack_appeared_tid, NULL, (void*) send_msg_to_sub,
-				NULL);
+						(void*) node);
 				pthread_detach(ack_appeared_tid);
 				usleep(100000);
-
 			}
 			usleep(500000);
 			break;
@@ -426,7 +431,8 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
 			get_rcv->id_correlacional = generar_id();
-			broker_logger_info("ID correlacional: %d", get_rcv->id_correlacional);
+			broker_logger_info("ID correlacional: %d",
+					get_rcv->id_correlacional);
 			usleep(50000);
 
 			t_message_to_void *message_void = convert_to_void(protocol,
@@ -456,28 +462,31 @@ static void *handle_connection(void *arg) {
 				return node->subscribe->f_desc == client_fd;
 			}
 
+			void send_msg_to_sub(t_subscribe_nodo* node) {
+
+				usleep(50000);
+				utils_serialize_and_send(node->f_desc, get_protocol, get_snd);
+
+				t_protocol rcv_int;
+				int r = recv(node->f_desc, &rcv_int, sizeof(t_protocol),
+				MSG_WAITALL);
+				broker_logger_warn("%d", r);
+				broker_logger_warn("ACK Received");
+
+				t_subscribe_message_node* node_ack = list_find(
+						list_msg_subscribers, (void*) node_matches_get);
+				t_subscribe_ack_node* node_subscriber = list_find(
+						node_ack->list, (void*) subscriber_ack_matches_get);
+				node_subscriber->ack = true;
+			}
+
 			for (int i = 0; i < list_size(get_queue); i++) {
 				t_subscribe_nodo* node = list_get(get_queue, i);
 
-				void send_msg_to_sub() {
-					utils_serialize_and_send(node->f_desc, get_protocol,
-							get_snd);
-
-					uint32_t rcv_int = 0;
-					recv(node->f_desc, &rcv_int,
-							sizeof(t_protocol), 0);
-
-					t_subscribe_message_node* node_ack = list_find(
-							list_msg_subscribers, (void*) node_matches_get);
-					t_subscribe_ack_node* node_subscriber = list_find(
-							node_ack->list, (void*) subscriber_ack_matches_get);
-					node_subscriber->ack = true;
-				}
-
 				pthread_t ack_get_tid;
 				pthread_create(&ack_get_tid, NULL, (void*) send_msg_to_sub,
-				NULL);
-				pthread_detach(ack_get_tid);
+						(void*) node);
+				pthread_join(ack_get_tid, NULL);
 				usleep(100000);
 			}
 
@@ -495,7 +504,8 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
 			catch_rcv->id_correlacional = generar_id();
-			broker_logger_info("ID correlacional: %d", catch_rcv->id_correlacional);
+			broker_logger_info("ID correlacional: %d",
+					catch_rcv->id_correlacional);
 			usleep(50000);
 
 			t_message_to_void *message_void = convert_to_void(protocol,
@@ -527,28 +537,31 @@ static void *handle_connection(void *arg) {
 				return node->subscribe->f_desc == client_fd;
 			}
 
+			void send_msg_to_sub(t_subscribe_nodo* node) {
+
+				usleep(50000);
+				utils_serialize_and_send(node->f_desc, catch_protocol,
+						catch_send);
+
+				t_protocol rcv_int;
+				int r = recv(node->f_desc, &rcv_int, sizeof(t_protocol),
+				MSG_WAITALL);
+				broker_logger_warn("%d", r);
+				broker_logger_warn("ACK Received");
+
+				t_subscribe_message_node* node_ack = list_find(
+						list_msg_subscribers, (void*) node_matches_catch);
+				t_subscribe_ack_node* node_subscriber = list_find(
+						node_ack->list, (void*) subscriber_ack_matches_catch);
+				node_subscriber->ack = true;
+			}
+
 			for (int i = 0; i < list_size(catch_queue); i++) {
 				t_subscribe_nodo* node = list_get(catch_queue, i);
 
-				void send_msg_to_sub() {
-					utils_serialize_and_send(node->f_desc, catch_protocol,
-							catch_send);
-
-					uint32_t rcv_int = 0;
-					recv(node->f_desc, &rcv_int,
-							sizeof(t_protocol), 0);
-
-					t_subscribe_message_node* node_ack = list_find(
-							list_msg_subscribers, (void*) node_matches_catch);
-					t_subscribe_ack_node* node_subscriber = list_find(
-							node_ack->list,
-							(void*) subscriber_ack_matches_catch);
-					node_subscriber->ack = true;
-				}
-
 				pthread_t ack_catch_tid;
 				pthread_create(&ack_catch_tid, NULL, (void*) send_msg_to_sub,
-				NULL);
+						(void*) node);
 				pthread_detach(ack_catch_tid);
 				usleep(100000);
 			}
@@ -561,7 +574,8 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("LOCALIZED RECEIVED FROM GC");
 			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
-			broker_logger_info("ID correlacional: %d", loc_rcv->id_correlacional);
+			broker_logger_info("ID correlacional: %d",
+					loc_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
 			broker_logger_info("Cant Elementos en lista: %d",
@@ -585,6 +599,8 @@ static void *handle_connection(void *arg) {
 			create_message_ack(loc_rcv->id_correlacional, localized_queue,
 					LOCALIZED_QUEUE);
 
+			loc_snd->id_correlacional = loc_rcv->id_correlacional;
+
 			// To team
 			localized_protocol = LOCALIZED_POKEMON;
 			broker_logger_info("LOCALIZED SENT TO TEAM");
@@ -595,31 +611,33 @@ static void *handle_connection(void *arg) {
 						&& node->cola == LOCALIZED_QUEUE;
 			}
 
-			_Bool subscriber_ack_matches_loc(t_subscribe_ack_node* node) {
-				return node->subscribe->f_desc == client_fd;
+			void send_msg_to_sub(t_subscribe_nodo* node) {
+				_Bool subscriber_ack_matches_loc(t_subscribe_ack_node* n) {
+					return n->subscribe->f_desc == node->f_desc;
+				}
+
+				usleep(50000);
+				utils_serialize_and_send(node->f_desc, localized_protocol, loc_snd);
+
+				t_protocol rcv_int;
+				int r = recv(node->f_desc, &rcv_int, sizeof(t_protocol),
+				MSG_WAITALL);
+				broker_logger_warn("%d", r);
+				broker_logger_warn("ACK Received");
+
+				t_subscribe_message_node* node_ack = list_find(
+						list_msg_subscribers, (void*) node_matches_loc);
+				t_subscribe_ack_node* node_subscriber = list_find(
+						node_ack->list, (void*) subscriber_ack_matches_loc);
+				node_subscriber->ack = true;
 			}
 
 			for (int i = 0; i < list_size(localized_queue); i++) {
 				t_subscribe_nodo* node = list_get(localized_queue, i);
 
-				void send_msg_to_sub() {
-					utils_serialize_and_send(node->f_desc, localized_protocol,
-							loc_snd);
-
-					uint32_t rcv_int = 0;
-					recv(node->f_desc, &rcv_int,
-							sizeof(t_protocol), 0);
-
-					t_subscribe_message_node* node_ack = list_find(
-							list_msg_subscribers, (void*) node_matches_loc);
-					t_subscribe_ack_node* node_subscriber = list_find(
-							node_ack->list, (void*) subscriber_ack_matches_loc);
-					node_subscriber->ack = true;
-				}
-
 				pthread_t ack_loc_tid;
 				pthread_create(&ack_loc_tid, NULL, (void*) send_msg_to_sub,
-				NULL);
+						(void*) node);
 				pthread_detach(ack_loc_tid);
 				usleep(100000);
 			}
@@ -662,6 +680,7 @@ static void *handle_connection(void *arg) {
 			create_message_ack(caught_snd->id_correlacional, caught_queue,
 					CAUGHT_QUEUE);
 
+			caught_snd->id_correlacional = caught_rcv->id_correlacional;
 			// To Team
 			caught_protocol = CAUGHT_POKEMON;
 			broker_logger_info("CAUGHT SENT TO TEAM");
@@ -675,28 +694,30 @@ static void *handle_connection(void *arg) {
 				return node->subscribe->f_desc == client_fd;
 			}
 
+			void send_msg_to_sub(t_subscribe_nodo* node) {
+				usleep(50000);
+				utils_serialize_and_send(node->f_desc, caught_protocol,
+						caught_snd);
+
+				t_protocol rcv_int;
+				int r = recv(node->f_desc, &rcv_int, sizeof(t_protocol),
+				MSG_WAITALL);
+				broker_logger_warn("%d", r);
+				broker_logger_warn("ACK Received");
+
+				t_subscribe_message_node* node_ack = list_find(
+						list_msg_subscribers, (void*) node_matches_caught);
+				t_subscribe_ack_node* node_subscriber = list_find(
+						node_ack->list, (void*) subscriber_ack_matches_caught);
+				node_subscriber->ack = true;
+			}
+
 			for (int i = 0; i < list_size(caught_queue); i++) {
 				t_subscribe_nodo* node = list_get(caught_queue, i);
 
-				void send_msg_to_sub() {
-					utils_serialize_and_send(node->f_desc, caught_protocol,
-							caught_snd);
-
-					uint32_t rcv_int = 0;
-					recv(node->f_desc, &rcv_int,
-							sizeof(t_protocol), 0);
-
-					t_subscribe_message_node* node_ack = list_find(
-							list_msg_subscribers, (void*) node_matches_caught);
-					t_subscribe_ack_node* node_subscriber = list_find(
-							node_ack->list,
-							(void*) subscriber_ack_matches_caught);
-					node_subscriber->ack = true;
-				}
-
 				pthread_t ack_caught_tid;
 				pthread_create(&ack_caught_tid, NULL, (void*) send_msg_to_sub,
-				NULL);
+						(void*) node);
 				pthread_detach(ack_caught_tid);
 				usleep(100000);
 			}
