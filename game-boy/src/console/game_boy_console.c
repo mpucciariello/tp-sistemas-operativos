@@ -234,6 +234,12 @@ void subscriber_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("Posicion X: %d", new_receive->pos_x);
 			game_boy_logger_info("Posicion Y: %d", new_receive->pos_y);
 
+			t_protocol ack = ACK;
+
+			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
+			game_boy_logger_warn("%d", r);
+			game_boy_logger_warn("ACK sent");
+
 			usleep(100000);
 			break;
 		}
@@ -246,6 +252,11 @@ void subscriber_command(char** arguments, int arguments_size) {
 					get_rcv->id_correlacional);
 			game_boy_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			game_boy_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
+
+			t_protocol ack = ACK;
+			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
+			game_boy_logger_warn("%d", r);
+			game_boy_logger_warn("ACK sent");
 
 			usleep(50000);
 			break;
@@ -263,6 +274,11 @@ void subscriber_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			game_boy_logger_info("Posicion Y: %d", catch_rcv->pos_y);
 
+			t_protocol ack = ACK;
+			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
+			game_boy_logger_warn("%d", r);
+			game_boy_logger_warn("ACK sent");
+
 			usleep(50000);
 			break;
 		}
@@ -274,6 +290,12 @@ void subscriber_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("ID correlacional: %d",
 					caught_rcv->id_correlacional);
 			game_boy_logger_info("Resultado (0/1): %d", caught_rcv->result);
+
+			t_protocol ack = ACK;
+			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
+			game_boy_logger_warn("%d", r);
+			game_boy_logger_warn("ACK sent");
+
 			usleep(50000);
 			break;
 		}
@@ -300,6 +322,12 @@ void subscriber_command(char** arguments, int arguments_size) {
 				game_boy_logger_info("Position is (%d, %d)", pos->pos_x,
 						pos->pos_y);
 			}
+
+			t_protocol ack = ACK;
+			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
+			game_boy_logger_warn("%d", r);
+			game_boy_logger_warn("ACK sent");
+
 			usleep(500000);
 			break;
 		}
@@ -317,6 +345,11 @@ void subscriber_command(char** arguments, int arguments_size) {
 					appeared_rcv->tamanio_nombre);
 			game_boy_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			game_boy_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
+
+			t_protocol ack = ACK;
+			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
+			game_boy_logger_warn("%d", r);
+			game_boy_logger_warn("ACK sent");
 
 			usleep(50000);
 			break;
