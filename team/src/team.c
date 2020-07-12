@@ -54,21 +54,26 @@ void team_init() {
 	send_get_message();
 
 	t_cola cola_appeared = APPEARED_QUEUE;
-	pthread_create(&tid1, NULL, (void*) team_retry_connect, (void*) &cola_appeared);
+	pthread_create(&tid1, NULL, (void*) team_retry_connect,
+			(void*) &cola_appeared);
 	pthread_detach(tid1);
 
 	t_cola cola_localized = LOCALIZED_QUEUE;
-	pthread_create(&tid2, NULL, (void*) team_retry_connect, (void*) &cola_localized);
+	pthread_create(&tid2, NULL, (void*) team_retry_connect,
+			(void*) &cola_localized);
 	pthread_detach(tid2);
 
 	t_cola cola_caught = CAUGHT_QUEUE;
-	pthread_create(&tid3, NULL, (void*) team_retry_connect, (void*) &cola_caught);
+	pthread_create(&tid3, NULL, (void*) team_retry_connect,
+			(void*) &cola_caught);
 	pthread_detach(tid3);
 
-	pthread_create(&algoritmo_cercania_entrenadores, NULL, (void*) team_planner_algoritmo_cercania, NULL);
+	pthread_create(&algoritmo_cercania_entrenadores, NULL,
+			(void*) team_planner_algoritmo_cercania, NULL);
 	pthread_detach(algoritmo_cercania_entrenadores);
 
-	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
+	pthread_create(&planificator, NULL, (void*) team_planner_run_planification,
+	NULL);
 	pthread_detach(planificator);
 
 	team_server_init();
@@ -77,9 +82,11 @@ void team_init() {
 
 void remove_pokemon_from_catch(t_pokemon* pokemon) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
-		t_pokemon_received* pokemon_con_posiciones = list_get(pokemon_to_catch, i);
+		t_pokemon_received* pokemon_con_posiciones = list_get(pokemon_to_catch,
+				i);
 
-		if (string_equals_ignore_case(pokemon_con_posiciones->name, pokemon->name)) {
+		if (string_equals_ignore_case(pokemon_con_posiciones->name,
+				pokemon->name)) {
 			t_list* posiciones_pokemon = list_create();
 			posiciones_pokemon = pokemon_con_posiciones->pos;
 
@@ -91,7 +98,8 @@ void remove_pokemon_from_catch(t_pokemon* pokemon) {
 
 				for (int j = 0; j < list_size(posiciones_pokemon); j++) {
 					t_position* position = list_get(posiciones_pokemon, j);
-					if (position->pos_x == pokemon->position->pos_x && position->pos_y == pokemon->position->pos_x) {
+					if (position->pos_x == pokemon->position->pos_x
+							&& position->pos_y == pokemon->position->pos_x) {
 						pthread_mutex_lock(&cola_pokemons_a_atrapar);
 						list_remove(pokemon_con_posiciones->pos, j);
 						pthread_mutex_unlock(&cola_pokemons_a_atrapar);
@@ -102,19 +110,24 @@ void remove_pokemon_from_catch(t_pokemon* pokemon) {
 	}
 }
 
-void send_message_catch(t_catch_pokemon* catch_send, t_entrenador_pokemon* entrenador) {
+void send_message_catch(t_catch_pokemon* catch_send,
+		t_entrenador_pokemon* entrenador) {
 	t_protocol catch_protocol = CATCH_POKEMON;
 
 	entrenador->state = BLOCK;
 	list_add(block_queue, entrenador);
-	team_logger_info("Se añadió al entrenador %d a la cola de BLOCK luego de intentar un CATCH a la espera de confirmación", entrenador->id);
+	team_logger_info(
+			"Se añadió al entrenador %d a la cola de BLOCK luego de intentar un CATCH a la espera de confirmación",
+			entrenador->id);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 
 	if (i == 0) {
-		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
+		team_planner_change_block_status_by_id_corr(1,
+				catch_send->id_correlacional);
 		list_add(message_catch_sended, catch_send);
-		list_add(entrenador->list_id_catch, (void*) catch_send->id_correlacional);
+		list_add(entrenador->list_id_catch,
+				(void*) catch_send->id_correlacional);
 	} else {
 		atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
 	}
@@ -154,7 +167,10 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 	team_planner_change_block_status_by_trainer(0, entrenador);
 	t_pokemon* pokemon = team_planner_pokemon_create(pokemon_name);
 	list_add(entrenador->pokemons, pokemon);
-	team_logger_info("El entrenador %d atrapó un %s en la posicion (%d, %d)!!", entrenador->id, pokemon_name, entrenador->pokemon_a_atrapar->position->pos_x, entrenador->pokemon_a_atrapar->position->pos_y);
+	team_logger_info("El entrenador %d atrapó un %s en la posicion (%d, %d)!!",
+			entrenador->id, pokemon_name,
+			entrenador->pokemon_a_atrapar->position->pos_x,
+			entrenador->pokemon_a_atrapar->position->pos_y);
 	quitar_de_pokemones_pendientes(pokemon_name);
 	quitar_de_real_target(pokemon_name);
 
@@ -219,16 +235,19 @@ void send_get_message() {
 		get_send->tamanio_nombre = strlen(get_send->nombre_pokemon) + 1;
 
 		get_protocol = GET_POKEMON;
-;
+		;
 		if ((send_message(get_send, get_protocol, get_id_corr)) > 0) {
-			team_logger_info( "Se recibió id correlacional %d en respuesta al GET", get_id_corr);
+			team_logger_info(
+					"Se recibió id correlacional %d en respuesta al GET",
+					get_id_corr);
 		}
 		usleep(500000);
 	}
 }
 
 int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
-	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
+	int broker_fd_send = socket_connect_to_server(team_config->ip_broker,
+			team_config->puerto_broker);
 
 	if (broker_fd_send < 0) {
 		team_logger_warn("No se pudo conectar con BROKER.");
@@ -258,7 +277,9 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 		add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
-		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que terminó su QUANTUM", entrenador->id);
+		team_logger_info(
+				"Se añadió al entrenador %d a la cola de READY ya que terminó su QUANTUM",
+				entrenador->id);
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
 }
@@ -268,7 +289,9 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 		add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
-		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que será desalojado por otro con ráfaga más corta", entrenador->id);
+		team_logger_info(
+				"Se añadió al entrenador %d a la cola de READY ya que será desalojado por otro con ráfaga más corta",
+				entrenador->id);
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
 }
@@ -276,8 +299,10 @@ void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	while (entrenador->esta_activo) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
-		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
-		int aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
+		int aux_x = entrenador->position->pos_x
+				- entrenador->pokemon_a_atrapar->position->pos_x;
+		int aux_y = entrenador->position->pos_y
+				- entrenador->pokemon_a_atrapar->position->pos_y;
 
 		int steps = fabs(aux_x + aux_y);
 
@@ -287,16 +312,17 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			entrenador->current_burst_time++;
 			entrenador->total_burst_time++;
 		}
-		
-		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador->id,
-																			entrenador->position->pos_x,
-																			entrenador->position->pos_y,
-																			entrenador->pokemon_a_atrapar->position->pos_x,
-																			entrenador->pokemon_a_atrapar->position->pos_y);
 
+		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)",
+				entrenador->id, entrenador->position->pos_x,
+				entrenador->position->pos_y,
+				entrenador->pokemon_a_atrapar->position->pos_x,
+				entrenador->pokemon_a_atrapar->position->pos_y);
 
-		entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
-		entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
+		entrenador->position->pos_x =
+				entrenador->pokemon_a_atrapar->position->pos_x;
+		entrenador->position->pos_y =
+				entrenador->pokemon_a_atrapar->position->pos_y;
 
 		if (entrenador->blocked_info == NULL && !entrenador->deadlock) {
 			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
@@ -317,7 +343,8 @@ void subscribe_to(void *arg) {
 
 	t_cola cola = *((int *) arg);
 
-	int new_broker_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
+	int new_broker_fd = socket_connect_to_server(team_config->ip_broker,
+			team_config->puerto_broker);
 
 	if (new_broker_fd < 0) {
 		team_logger_warn("No se pudo conectar con BROKER.");
@@ -384,96 +411,120 @@ void *receive_msg(int fd, int send_to) {
 
 		switch (protocol) {
 
-			case CAUGHT_POKEMON: {
-				t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
-				team_logger_info("Caught received ID correlacional: %d Resultado (0/1): %d", caught_rcv->id_correlacional, caught_rcv->result);
-				usleep(50000);
+		case CAUGHT_POKEMON: {
+			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd,
+					protocol);
+			team_logger_info(
+					"Caught received ID correlacional: %d Resultado (0/1): %d",
+					caught_rcv->id_correlacional, caught_rcv->result);
+			usleep(50000);
 
-				if (is_server == 0) {
-					uint32_t ack = htonl(ACK);
-					send(fd, &ack, sizeof(t_protocol), 0);
-				}
-
-				t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);
-				t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
-
-				team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
-				quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
-
-				if (caught_rcv->result) {
-					list_add(entrenador->pokemons, catch_message->nombre_pokemon);
-					atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
-
-				}
-				break;
+			if (is_server == 0) {
+				t_protocol ack_new = ACK;
+				int r = send(fd, &ack_new, sizeof(t_protocol), 0);
+				team_logger_warn("%d", r);
+				team_logger_warn("ACK sent");
 			}
 
-			case LOCALIZED_POKEMON: {//TODO no busca el pokemon cuando es valido
-				t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd, protocol);
-				team_logger_info("Localized received! ID correlacional: %d Nombre Pokemon: %s Largo nombre: %d Cant elementos en lista: %d", loc_rcv->id_correlacional, loc_rcv->nombre_pokemon, loc_rcv->tamanio_nombre, loc_rcv->cant_elem);
-				if (loc_rcv->cant_elem > 0) {
+			t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(
+					caught_rcv->id_correlacional);
+			t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(
+					caught_rcv->id_correlacional);
 
-					usleep(500000);
+			team_planner_change_block_status_by_id_corr(0,
+					caught_rcv->id_correlacional);
+			quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
 
-					if (is_server == 0) {
-						uint32_t ack = htonl(ACK);
-						send(fd, &ack, sizeof(t_protocol), 0);
-					}
+			if (caught_rcv->result) {
+				list_add(entrenador->pokemons, catch_message->nombre_pokemon);
+				atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
 
-					bool _es_el_mismo(uint32_t id) {
-						return loc_rcv->id_correlacional == id;
-					}
-
-					if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo)
-							&& pokemon_required(loc_rcv->nombre_pokemon)
-							&& pokemon_not_pendant(loc_rcv->nombre_pokemon)
-							&& pokemon_in_pokemon_to_catch(loc_rcv->nombre_pokemon)
-							&& pokemon_not_localized(loc_rcv->nombre_pokemon)) {
-						t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
-						pokemon->name = string_new();
-						string_append(&pokemon->name, loc_rcv->nombre_pokemon);
-
-						pokemon->pos = list_create();
-						pokemon->pos = loc_rcv->posiciones;
-
-						add_to_pokemon_to_catch(pokemon);
-						list_add(pokemons_localized, pokemon->name);
-					}
-					break;
-				}
-
-				break;
 			}
-
-			case APPEARED_POKEMON: {
-				t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd, protocol);
-				team_logger_info("Appeared received! ID correlacional: %d Nombre Pokemon: %s Largo nombre: %d Posición: (%d, %d)", appeared_rcv->id_correlacional, appeared_rcv->nombre_pokemon, appeared_rcv->tamanio_nombre, appeared_rcv->pos_x, appeared_rcv->pos_y);
-				usleep(50000);
-
-				if (is_server == 0) {
-					uint32_t ack = htonl(ACK);
-					send(fd, &ack, sizeof(t_protocol), 0);
-				}
-
-				if (pokemon_required(appeared_rcv->nombre_pokemon)
-						&& pokemon_not_pendant(appeared_rcv->nombre_pokemon)
-						&& pokemon_in_pokemon_to_catch( appeared_rcv->nombre_pokemon)) { //si lo necesito, no tengo uno pendiente y no tengo uno en pokemon_to_catch
-					t_position* posicion = malloc(sizeof(t_position));
-					posicion->pos_x = appeared_rcv->pos_x;
-					posicion->pos_y = appeared_rcv->pos_y;
-					t_pokemon_received* pokemon = malloc(sizeof(t_pokemon_received));
-					pokemon->name = malloc(sizeof(appeared_rcv->tamanio_nombre));
-					pokemon->name = appeared_rcv->nombre_pokemon;
-					pokemon->pos = list_create();
-					list_add(pokemon->pos, posicion);
-					add_to_pokemon_to_catch(pokemon);
-				}
-				break;
-			}
-			default:
-				break;
-			}
+			break;
 		}
+
+		case LOCALIZED_POKEMON: { //TODO no busca el pokemon cuando es valido
+			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd,
+					protocol);
+			team_logger_info(
+					"Localized received! ID correlacional: %d Nombre Pokemon: %s Largo nombre: %d Cant elementos en lista: %d",
+					loc_rcv->id_correlacional, loc_rcv->nombre_pokemon,
+					loc_rcv->tamanio_nombre, loc_rcv->cant_elem);
+			if (loc_rcv->cant_elem > 0) {
+
+				usleep(500000);
+
+				if (is_server == 0) {
+					t_protocol ack_new = ACK;
+					int r = send(fd, &ack_new, sizeof(t_protocol), 0);
+					team_logger_warn("%d", r);
+					team_logger_warn("ACK sent");
+				}
+
+				bool _es_el_mismo(uint32_t id) {
+					return loc_rcv->id_correlacional == id;
+				}
+
+				if (list_any_satisfy(get_id_corr, (void*) _es_el_mismo)
+						&& pokemon_required(loc_rcv->nombre_pokemon)
+						&& pokemon_not_pendant(loc_rcv->nombre_pokemon)
+						&& pokemon_in_pokemon_to_catch(loc_rcv->nombre_pokemon)
+						&& pokemon_not_localized(loc_rcv->nombre_pokemon)) {
+					t_pokemon_received* pokemon = malloc(
+							sizeof(t_pokemon_received));
+					pokemon->name = string_new();
+					string_append(&pokemon->name, loc_rcv->nombre_pokemon);
+
+					pokemon->pos = list_create();
+					pokemon->pos = loc_rcv->posiciones;
+
+					add_to_pokemon_to_catch(pokemon);
+					list_add(pokemons_localized, pokemon->name);
+				}
+				break;
+			}
+
+			break;
+		}
+
+		case APPEARED_POKEMON: {
+			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd,
+					protocol);
+			team_logger_info(
+					"Appeared received! ID correlacional: %d Nombre Pokemon: %s Largo nombre: %d Posición: (%d, %d)",
+					appeared_rcv->id_correlacional,
+					appeared_rcv->nombre_pokemon, appeared_rcv->tamanio_nombre,
+					appeared_rcv->pos_x, appeared_rcv->pos_y);
+			usleep(50000);
+
+			if (is_server == 0) {
+				t_protocol ack_new = ACK;
+				int r = send(fd, &ack_new, sizeof(t_protocol), 0);
+				team_logger_warn("%d", r);
+				team_logger_warn("ACK sent");
+			}
+
+			if (pokemon_required(appeared_rcv->nombre_pokemon)
+					&& pokemon_not_pendant(appeared_rcv->nombre_pokemon)
+					&& pokemon_in_pokemon_to_catch(
+							appeared_rcv->nombre_pokemon)) { //si lo necesito, no tengo uno pendiente y no tengo uno en pokemon_to_catch
+				t_position* posicion = malloc(sizeof(t_position));
+				posicion->pos_x = appeared_rcv->pos_x;
+				posicion->pos_y = appeared_rcv->pos_y;
+				t_pokemon_received* pokemon = malloc(
+						sizeof(t_pokemon_received));
+				pokemon->name = malloc(sizeof(appeared_rcv->tamanio_nombre));
+				pokemon->name = appeared_rcv->nombre_pokemon;
+				pokemon->pos = list_create();
+				list_add(pokemon->pos, posicion);
+				add_to_pokemon_to_catch(pokemon);
+			}
+			break;
+		}
+		default:
+			break;
+		}
+	}
 	return NULL;
 }
 
@@ -520,7 +571,9 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 	list_clean(lista_auxiliar);
 	t_list* lista_auxiliar = list_duplicate(entrenador->targets);
 
-	if (list_size(entrenador->pokemons) == list_size(lista_auxiliar) || (list_size(entrenador->pokemons) - list_size(entrenador->targets) == entrenador->diferencia)) {
+	if (list_size(entrenador->pokemons) == list_size(lista_auxiliar)
+			|| (list_size(entrenador->pokemons) - list_size(entrenador->targets)
+					== entrenador->diferencia)) {
 
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);
@@ -560,7 +613,8 @@ bool pokemon_in_pokemon_to_catch(char* pokemon_name) {
 }
 
 void team_server_init() {
-	team_socket = socket_create_listener(team_config->ip_team, team_config->puerto_team);
+	team_socket = socket_create_listener(team_config->ip_team,
+			team_config->puerto_team);
 	if (team_socket < 0) {
 		return;
 	}
@@ -572,11 +626,13 @@ void team_server_init() {
 		if (accepted_fd == -1) {
 			continue;
 		}
-		t_handle_connection* connection_handler = malloc(sizeof(t_handle_connection));
+		t_handle_connection* connection_handler = malloc(
+				sizeof(t_handle_connection));
 		connection_handler->fd = accepted_fd;
 		connection_handler->bool_val = 1;
 
-		pthread_create(&tid, NULL, (void*) handle_connection, (void*) connection_handler);
+		pthread_create(&tid, NULL, (void*) handle_connection,
+				(void*) connection_handler);
 		pthread_detach(tid);
 	}
 }

@@ -173,8 +173,10 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-				uint32_t ack = htonl(ACK);
-				send(client_fd, &ack, sizeof(t_protocol), 0);
+				t_protocol ack_new = ACK;
+				int r = send(client_fd, &ack_new, sizeof(t_protocol), 0);
+				game_card_logger_warn("%d", r);
+				game_card_logger_warn("ACK sent");
 			}
 
 			pthread_t tid1;
@@ -208,9 +210,11 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-				uint32_t ack = htonl(ACK);
-				send(client_fd, &ack, sizeof(t_protocol), 0);
-			}
+							t_protocol ack_new = ACK;
+							int r = send(client_fd, &ack_new, sizeof(t_protocol), 0);
+							game_card_logger_warn("%d", r);
+							game_card_logger_warn("ACK sent");
+						}
 
 			pthread_t tid3;
 			pthread_create(&tid3, NULL, (void*) process_get_and_send_localized,
@@ -242,9 +246,11 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-				uint32_t ack = htonl(ACK);
-				send(client_fd, &ack, sizeof(t_protocol), 0);
-			}
+							t_protocol ack_new = ACK;
+							int r = send(client_fd, &ack_new, sizeof(t_protocol), 0);
+							game_card_logger_warn("%d", r);
+							game_card_logger_warn("ACK sent");
+						}
 
 			pthread_t tid5;
 
@@ -321,7 +327,7 @@ void game_card_exit() {
 	//gcfsFreeBitmaps();
 	game_card_config_free();
 	game_card_logger_destroy();
-	
+
 	free(struct_paths[METADATA]);
 	free(struct_paths[FILES]);
 	free(struct_paths[BLOCKS]);
