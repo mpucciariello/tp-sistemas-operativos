@@ -172,10 +172,16 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-				t_protocol ack_new = ACK;
-				int r = send(client_fd, &ack_new, sizeof(t_protocol), 0);
-				game_card_logger_warn("%d", r);
-				game_card_logger_warn("ACK sent");
+				t_protocol ack_protocol = ACK;
+				game_card_logger_info("ACK SENT TO BROKER");
+
+				t_ack* ack_send = malloc(sizeof(t_ack));
+				ack_send->id_corr_msg = new_receive->id_correlacional;
+				ack_send->process_fd = game_card_fd;
+				ack_send->queue = NEW_QUEUE;
+				ack_send->sender_name = "GAMECARD";
+
+				utils_serialize_and_send(client_fd, ack_protocol, ack_send);
 			}
 
 			pthread_t tid1;
@@ -201,11 +207,17 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-							t_protocol ack_new = ACK;
-							int r = send(client_fd, &ack_new, sizeof(t_protocol), 0);
-							game_card_logger_warn("%d", r);
-							game_card_logger_warn("ACK sent");
-						}
+				t_protocol ack_protocol = ACK;
+				game_card_logger_info("ACK SENT TO BROKER");
+
+				t_ack* ack_send = malloc(sizeof(t_ack));
+				ack_send->id_corr_msg = get_rcv->id_correlacional;
+				ack_send->process_fd = game_card_fd;
+				ack_send->queue = GET_QUEUE;
+				ack_send->sender_name = "GAMECARD";
+
+				utils_serialize_and_send(client_fd, ack_protocol, ack_send);
+			}
 
 			pthread_t tid3;
 			pthread_create(&tid3, NULL, (void*) process_get_and_send_localized,
@@ -233,11 +245,17 @@ void *recv_game_card(int fd, int respond_to) {
 			pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
 
 			if (is_server == 0) {
-							t_protocol ack_new = ACK;
-							int r = send(client_fd, &ack_new, sizeof(t_protocol), 0);
-							game_card_logger_warn("%d", r);
-							game_card_logger_warn("ACK sent");
-						}
+				t_protocol ack_protocol = ACK;
+				game_card_logger_info("ACK SENT TO BROKER");
+
+				t_ack* ack_send = malloc(sizeof(t_ack));
+				ack_send->id_corr_msg = catch_rcv->id_correlacional;
+				ack_send->process_fd = game_card_fd;
+				ack_send->queue = CATCH_QUEUE;
+				ack_send->sender_name = "GAMECARD";
+
+				utils_serialize_and_send(client_fd, ack_protocol, ack_send);
+			}
 
 			pthread_t tid5;
 

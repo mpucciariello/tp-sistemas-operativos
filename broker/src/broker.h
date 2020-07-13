@@ -79,6 +79,7 @@ t_subscribe_nodo* check_already_subscribed(char *ip,uint32_t puerto,t_list *list
 t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
 void *get_from_memory(t_protocol protocol, int posicion, void *message);
 int save_on_memory(t_message_to_void *message_void);
+char* get_protocol_name(t_cola q);
 void save_node_list_memory(int pointer, int size,t_cola cola,int id);
 void send_all_messages(t_subscribe *subscriber);
 void purge_msg();

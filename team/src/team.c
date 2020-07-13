@@ -407,10 +407,16 @@ void *receive_msg(int fd, int send_to) {
 			usleep(50000);
 
 			if (is_server == 0) {
-				t_protocol ack_new = ACK;
-				int r = send(fd, &ack_new, sizeof(t_protocol), 0);
-				team_logger_warn("%d", r);
-				team_logger_warn("ACK sent");
+				t_protocol ack_protocol = ACK;
+				team_logger_info("ACK SENT TO BROKER");
+
+				t_ack* ack_send = malloc(sizeof(t_ack));
+				ack_send->id_corr_msg = caught_rcv->id_correlacional;
+				ack_send->process_fd = team_socket;
+				ack_send->queue = CAUGHT_QUEUE;
+				ack_send->sender_name = "TEAM";
+
+				utils_serialize_and_send(fd, ack_protocol, ack_send);
 			}
 
 			t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);
@@ -436,10 +442,16 @@ void *receive_msg(int fd, int send_to) {
 				usleep(500000);
 
 				if (is_server == 0) {
-					t_protocol ack_new = ACK;
-					int r = send(fd, &ack_new, sizeof(t_protocol), 0);
-					team_logger_warn("%d", r);
-					team_logger_warn("ACK sent");
+					t_protocol ack_protocol = ACK;
+					team_logger_info("ACK SENT TO BROKER");
+
+					t_ack* ack_send = malloc(sizeof(t_ack));
+					ack_send->id_corr_msg = loc_rcv->id_correlacional;
+					ack_send->process_fd = team_socket;
+					ack_send->queue = LOCALIZED_QUEUE;
+					ack_send->sender_name = "TEAM";
+
+					utils_serialize_and_send(fd, ack_protocol, ack_send);
 				}
 
 				bool _es_el_mismo(uint32_t id) {
@@ -476,10 +488,16 @@ void *receive_msg(int fd, int send_to) {
 			usleep(50000);
 
 			if (is_server == 0) {
-				t_protocol ack_new = ACK;
-				int r = send(fd, &ack_new, sizeof(t_protocol), 0);
-				team_logger_warn("%d", r);
-				team_logger_warn("ACK sent");
+				t_protocol ack_protocol = ACK;
+				team_logger_info("ACK SENT TO BROKER");
+
+				t_ack* ack_send = malloc(sizeof(t_ack));
+				ack_send->id_corr_msg = appeared_rcv->id_correlacional;
+				ack_send->process_fd = team_socket;
+				ack_send->queue = APPEARED_QUEUE;
+				ack_send->sender_name = "TEAM";
+
+				utils_serialize_and_send(fd, ack_protocol, ack_send);
 			}
 
 			if (pokemon_required(appeared_rcv->nombre_pokemon)
