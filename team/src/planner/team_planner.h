@@ -132,6 +132,6 @@ t_list* filter_by_deadlock();
 int calcular_diferencia(t_entrenador_pokemon*);
 t_list* filter_by_deadlock();
 t_list* remover_de_lista (t_list*, t_pokemon*);
-t_pokemon* ver_a_quien_no_necesita_el_bloqueado(t_entrenador_pokemon*, t_entrenador_pokemon*, t_list*);
+t_pokemon* ver_a_quien_no_necesita_el_bloqueado(t_entrenador_pokemon*, t_entrenador_pokemon*);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */

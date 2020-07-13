@@ -506,12 +506,12 @@ void solve_deadlock() {
 		int aux_x = entrenador_bloqueado->position->pos_x - entrenador_bloqueado->pokemon_a_atrapar->position->pos_x;
 		int	aux_y = entrenador_bloqueado->position->pos_y - entrenador_bloqueado->pokemon_a_atrapar->position->pos_y;
 
-		/*int steps = fabs(aux_x + aux_y);
+		int steps = fabs(aux_x + aux_y);
 
 		for (int i = 0; i <= steps; i++) {
-			sleep(team_config->retardo_ciclo_cpu);
+			//sleep(team_config->retardo_ciclo_cpu);
 			new_cpu_cicle(entrenador_bloqueado);
-		}*/
+		}
 
 		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador_bloqueado->id,
 																		entrenador_bloqueado->position->pos_x,
@@ -524,7 +524,7 @@ void solve_deadlock() {
 
 		context_switch_qty++;
 
-		pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita_el_bloqueado(entrenador_bloqueante, entrenador_bloqueado, entrenador_bloqueado->pokemons); //TODO que en lo posible devuelva el que necesita el bloqueante
+		pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita_el_bloqueado(entrenador_bloqueante, entrenador_bloqueado); //TODO que en lo posible devuelva el que necesita el bloqueante
 
 		sleep((team_config->retardo_ciclo_cpu)*5);
 
@@ -559,7 +559,7 @@ void solve_deadlock() {
 	team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 }
 
-t_pokemon* ver_a_quien_no_necesita_el_bloqueado(t_entrenador_pokemon* entrenador_bloqueante, t_entrenador_pokemon* entrenador_bloqueado, t_list* pokemons_bloqueado) {
+t_pokemon* ver_a_quien_no_necesita_el_bloqueado(t_entrenador_pokemon* entrenador_bloqueado, t_entrenador_pokemon* entrenador_bloqueante) {
 	bool le_sirve = true;
 	t_pokemon* pokemon_a_entregar;
 	list_clean(lista_auxiliar);
@@ -567,8 +567,8 @@ t_pokemon* ver_a_quien_no_necesita_el_bloqueado(t_entrenador_pokemon* entrenador
 	int m = 0;
 
 	//Si alguno de los que tiene le sirven al entrenador bloqueante lo voy a encontrar acá
-	while (m < list_size(pokemons_bloqueado)) {
-		pokemon_a_entregar = list_get(pokemons_bloqueado, m);
+	while (m < list_size(entrenador_bloqueado->pokemons)) {
+		pokemon_a_entregar = list_get(entrenador_bloqueado->pokemons, m);
 
 		for (int j = 0; j < list_size(entrenador_bloqueado->targets); j++) {
 			t_pokemon* pokemon_objetivo = list_get(entrenador_bloqueado->targets, j);
@@ -580,14 +580,9 @@ t_pokemon* ver_a_quien_no_necesita_el_bloqueado(t_entrenador_pokemon* entrenador
 			}
 		}
 
-		if (!le_sirve) {
-			break;
-		}
-
 		if (!list_is_empty(lista_auxiliar)) {
-			//aca hay que hacer un filter de todos los entrenadores que necesitan y ver si mi entrenador está ahi
 			t_entrenador_pokemon* entrenador_necesita = entrenador_que_necesita(pokemon_a_entregar);
-			if (entrenador_necesita->id == entrenador_bloqueante->id) {
+			if (entrenador_necesita->id == entrenador_bloqueante->id) { //FILTER
 				return pokemon_a_entregar;
 			}
 		}
@@ -599,8 +594,8 @@ t_pokemon* ver_a_quien_no_necesita_el_bloqueado(t_entrenador_pokemon* entrenador
 	lista_auxiliar = list_duplicate(entrenador_bloqueado->targets);
 
 
-	for (int i = 0; i < list_size(pokemons_bloqueado); i++) {
-		pokemon_a_entregar = list_get(pokemons_bloqueado, i);
+	for (int i = 0; i < list_size(entrenador_bloqueado->pokemons); i++) {
+		pokemon_a_entregar = list_get(entrenador_bloqueado->pokemons, i);
 
 		for (int j = 0; j < list_size(entrenador_bloqueado->targets); j++) {
 			t_pokemon* pokemon_objetivo = list_get(entrenador_bloqueado->targets, j);
