@@ -167,7 +167,7 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 	team_planner_change_block_status_by_trainer(0, entrenador);
 	t_pokemon* pokemon = team_planner_pokemon_create(pokemon_name);
 	list_add(entrenador->pokemons, pokemon);
-	team_logger_info("El entrenador %d atrapó un %s en la posicion (%d, %d)!!",
+	team_logger_info("El entrenador %d atrapó un %s en la posición (%d, %d)!!",
 			entrenador->id, pokemon_name,
 			entrenador->pokemon_a_atrapar->position->pos_x,
 			entrenador->pokemon_a_atrapar->position->pos_y);
