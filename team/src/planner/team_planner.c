@@ -231,7 +231,6 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 	
 	t_entrenador_pokemon* entrenador = find_trainer_by_id_corr(id_corr);
 	entrenador->state = BLOCK;
-	entrenador->pokemon_a_atrapar = NULL;
 
 	entrenador->blocked_info = info_bloqueo;
 
@@ -244,10 +243,7 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo));
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
-	
 	entrenador->blocked_info = info_bloqueo;
-
-
 }
 
 t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t id) { 
@@ -511,7 +507,7 @@ void solve_deadlock() {
 		int steps = fabs(aux_x + aux_y);
 
 		for (int i = 0; i <= steps; i++) {
-			sleep(team_config->retardo_ciclo_cpu);
+			//sleep(team_config->retardo_ciclo_cpu);
 			new_cpu_cicle(entrenador_bloqueado);
 		}
 
@@ -524,6 +520,9 @@ void solve_deadlock() {
 		entrenador_bloqueado->position->pos_x = entrenador_bloqueado->pokemon_a_atrapar->position->pos_x;
 		entrenador_bloqueado->position->pos_y = entrenador_bloqueado->pokemon_a_atrapar->position->pos_y;
 
+		list_add(block_queue, entrenador_bloqueado);
+		team_planner_change_block_status_by_trainer(0, entrenador_bloqueado);
+
 		context_switch_qty++;
 
 		pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
@@ -534,7 +533,6 @@ void solve_deadlock() {
 
 		list_add(entrenador_bloqueante->pokemons, pokemon_de_entrenador_bloqueado);
 		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueante->id, pokemon_de_entrenador_bloqueado->name, entrenador_bloqueado->id);
-
 
 		remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
 		remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
