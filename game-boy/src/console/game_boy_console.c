@@ -96,7 +96,7 @@ void broker_get_pokemon_command(char** arguments, int arguments_size) {
 	get_snd->tamanio_nombre = strlen(arguments[2]);
 
 	utils_serialize_and_send(game_boy_broker_fd, GET_POKEMON, get_snd);
-	game_boy_logger_info("Envio de GET_POKEMON Pokemon");
+	game_boy_logger_info("Envio de GET_POKEMON");
 }
 
 void team_appeared_pokemon_command(char** arguments, int arguments_size) {
@@ -234,11 +234,15 @@ void subscriber_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("Posicion X: %d", new_receive->pos_x);
 			game_boy_logger_info("Posicion Y: %d", new_receive->pos_y);
 
-			t_protocol ack = ACK;
+			t_protocol ack_protocol = ACK;
+			game_boy_logger_info("ACK SENT TO BROKER");
 
-			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
-			game_boy_logger_warn("%d", r);
-			game_boy_logger_warn("ACK sent");
+			t_ack* ack_send = malloc(sizeof(t_ack));
+			ack_send->id_corr_msg = new_receive->id_correlacional;
+			ack_send->queue = NEW_QUEUE;
+			ack_send->sender_name = "GAMEBOY";
+
+			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
 			usleep(100000);
 			break;
@@ -253,10 +257,15 @@ void subscriber_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			game_boy_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
 
-			t_protocol ack = ACK;
-			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
-			game_boy_logger_warn("%d", r);
-			game_boy_logger_warn("ACK sent");
+			t_protocol ack_protocol = ACK;
+			game_boy_logger_info("ACK SENT TO BROKER");
+
+			t_ack* ack_send = malloc(sizeof(t_ack));
+			ack_send->id_corr_msg = get_rcv->id_correlacional;
+			ack_send->queue = GET_QUEUE;
+			ack_send->sender_name = "GAMEBOY";
+
+			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
 			usleep(50000);
 			break;
@@ -274,10 +283,15 @@ void subscriber_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			game_boy_logger_info("Posicion Y: %d", catch_rcv->pos_y);
 
-			t_protocol ack = ACK;
-			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
-			game_boy_logger_warn("%d", r);
-			game_boy_logger_warn("ACK sent");
+			t_protocol ack_protocol = ACK;
+			game_boy_logger_info("ACK SENT TO BROKER");
+
+			t_ack* ack_send = malloc(sizeof(t_ack));
+			ack_send->id_corr_msg = catch_rcv->id_correlacional;
+			ack_send->queue = CATCH_QUEUE;
+			ack_send->sender_name = "GAMEBOY";
+
+			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
 			usleep(50000);
 			break;
@@ -291,10 +305,15 @@ void subscriber_command(char** arguments, int arguments_size) {
 					caught_rcv->id_correlacional);
 			game_boy_logger_info("Resultado (0/1): %d", caught_rcv->result);
 
-			t_protocol ack = ACK;
-			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
-			game_boy_logger_warn("%d", r);
-			game_boy_logger_warn("ACK sent");
+			t_protocol ack_protocol = ACK;
+			game_boy_logger_info("ACK SENT TO BROKER");
+
+			t_ack* ack_send = malloc(sizeof(t_ack));
+			ack_send->id_corr_msg = caught_rcv->id_correlacional;
+			ack_send->queue = CAUGHT_QUEUE;
+			ack_send->sender_name = "GAMEBOY";
+
+			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
 			usleep(50000);
 			break;
@@ -323,10 +342,15 @@ void subscriber_command(char** arguments, int arguments_size) {
 						pos->pos_y);
 			}
 
-			t_protocol ack = ACK;
-			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
-			game_boy_logger_warn("%d", r);
-			game_boy_logger_warn("ACK sent");
+			t_protocol ack_protocol = ACK;
+			game_boy_logger_info("ACK SENT TO BROKER");
+
+			t_ack* ack_send = malloc(sizeof(t_ack));
+			ack_send->id_corr_msg = loc_rcv->id_correlacional;
+			ack_send->queue = LOCALIZED_QUEUE;
+			ack_send->sender_name = "GAMEBOY";
+
+			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
 			usleep(500000);
 			break;
@@ -346,10 +370,15 @@ void subscriber_command(char** arguments, int arguments_size) {
 			game_boy_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			game_boy_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
 
-			t_protocol ack = ACK;
-			int r = send(game_boy_broker_fd, &ack, sizeof(t_protocol), 0);
-			game_boy_logger_warn("%d", r);
-			game_boy_logger_warn("ACK sent");
+			t_protocol ack_protocol = ACK;
+			game_boy_logger_info("ACK SENT TO BROKER");
+
+			t_ack* ack_send = malloc(sizeof(t_ack));
+			ack_send->id_corr_msg = appeared_rcv->id_correlacional;
+			ack_send->queue = APPEARED_QUEUE;
+			ack_send->sender_name = "GAMEBOY";
+
+			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
 			usleep(50000);
 			break;

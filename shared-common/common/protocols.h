@@ -63,6 +63,12 @@ typedef struct {
 } t_package;
 
 typedef struct {
+	uint32_t id_corr_msg;
+	t_cola queue;
+	char* sender_name;
+} t_ack;
+
+typedef struct {
 	char *nombre_pokemon;
 	uint32_t tamanio_nombre;
 	uint32_t cantidad;
