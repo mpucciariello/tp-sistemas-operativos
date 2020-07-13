@@ -412,7 +412,6 @@ void *receive_msg(int fd, int send_to) {
 
 				t_ack* ack_send = malloc(sizeof(t_ack));
 				ack_send->id_corr_msg = caught_rcv->id_correlacional;
-				ack_send->process_fd = team_socket;
 				ack_send->queue = CAUGHT_QUEUE;
 				ack_send->sender_name = "TEAM";
 
@@ -447,7 +446,6 @@ void *receive_msg(int fd, int send_to) {
 
 					t_ack* ack_send = malloc(sizeof(t_ack));
 					ack_send->id_corr_msg = loc_rcv->id_correlacional;
-					ack_send->process_fd = team_socket;
 					ack_send->queue = LOCALIZED_QUEUE;
 					ack_send->sender_name = "TEAM";
 
@@ -493,7 +491,6 @@ void *receive_msg(int fd, int send_to) {
 
 				t_ack* ack_send = malloc(sizeof(t_ack));
 				ack_send->id_corr_msg = appeared_rcv->id_correlacional;
-				ack_send->process_fd = team_socket;
 				ack_send->queue = APPEARED_QUEUE;
 				ack_send->sender_name = "TEAM";
 

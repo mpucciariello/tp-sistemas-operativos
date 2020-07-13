@@ -131,8 +131,6 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 		utils_package_add(package,
 				&((t_ack*) package_send)->id_corr_msg,
 				sizeof(uint32_t));
-		utils_package_add(package, &((t_ack*) package_send)->process_fd,
-				sizeof(uint32_t));
 		utils_package_add(package, &((t_ack*) package_send)->queue,
 						sizeof(t_cola));
 		utils_package_add(package, ((t_ack*) package_send)->sender_name,
@@ -364,10 +362,9 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		t_ack* ack_req = malloc(sizeof(t_ack));
 		t_list* list = utils_receive_package(socket);
 		utils_get_from_list_to(&ack_req->id_corr_msg, list, 0);
-		utils_get_from_list_to(&ack_req->process_fd, list, 1);
-		utils_get_from_list_to(&ack_req->queue, list, 2);
-		ack_req->sender_name = malloc(utils_get_buffer_size(list, 3));
-		utils_get_from_list_to(ack_req->sender_name, list, 3);
+		utils_get_from_list_to(&ack_req->queue, list, 1);
+		ack_req->sender_name = malloc(utils_get_buffer_size(list, 2));
+		utils_get_from_list_to(ack_req->sender_name, list, 2);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return ack_req;
 		break;

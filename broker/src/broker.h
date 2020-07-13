@@ -24,7 +24,7 @@ void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
 void add_to(t_list *list, t_subscribe* sub);
 
-pthread_mutex_t mpointer,mid;
+pthread_mutex_t mpointer,mid, msubs;
 
 char *memory;
 
@@ -75,6 +75,7 @@ struct buddy* buddy = NULL;
 struct buddy *buddy_new(int num_of_fragments);
 int buddy_alloc(struct buddy *self, uint32_t size);
 void buddy_free(struct buddy *self, int offset);
+char* get_queue_name(t_cola q);
 t_subscribe_nodo* check_already_subscribed(char *ip,uint32_t puerto,t_list *list);
 t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
 void *get_from_memory(t_protocol protocol, int posicion, void *message);

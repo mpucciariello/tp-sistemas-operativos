@@ -215,7 +215,10 @@ int broker_load() {
 		printf("\n mutex init failed\n");
 		return 1;
 	}
-
+	if (pthread_mutex_init(&msubs, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
 	return 0;
 }
 
@@ -293,15 +296,18 @@ static void *handle_connection(void *arg) {
 			}
 
 			_Bool subscriber_listed_for_ack(t_subscribe_ack_node* n) {
-				return n->subscribe->f_desc == ack_rcv->process_fd;
+				return n->subscribe->f_desc == client_fd;
 			}
 
+			pthread_mutex_lock(&msubs);
 			t_subscribe_message_node* node_ack = list_find(
 					list_msg_subscribers, (void*) node_matches_received_queue);
+			broker_logger_warn("ID %d, cola: %s", node_ack->id, get_queue_name(node_ack->cola));
 			t_subscribe_ack_node* node_subscriber = list_find(
 					node_ack->list,
 					(void*) subscriber_listed_for_ack);
 			node_subscriber->ack = true;
+			pthread_mutex_unlock(&msubs);
 
 			usleep(50000);
 			break;

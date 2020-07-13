@@ -177,7 +177,6 @@ void *recv_game_card(int fd, int respond_to) {
 
 				t_ack* ack_send = malloc(sizeof(t_ack));
 				ack_send->id_corr_msg = new_receive->id_correlacional;
-				ack_send->process_fd = game_card_fd;
 				ack_send->queue = NEW_QUEUE;
 				ack_send->sender_name = "GAMECARD";
 
@@ -212,7 +211,6 @@ void *recv_game_card(int fd, int respond_to) {
 
 				t_ack* ack_send = malloc(sizeof(t_ack));
 				ack_send->id_corr_msg = get_rcv->id_correlacional;
-				ack_send->process_fd = game_card_fd;
 				ack_send->queue = GET_QUEUE;
 				ack_send->sender_name = "GAMECARD";
 
@@ -250,7 +248,6 @@ void *recv_game_card(int fd, int respond_to) {
 
 				t_ack* ack_send = malloc(sizeof(t_ack));
 				ack_send->id_corr_msg = catch_rcv->id_correlacional;
-				ack_send->process_fd = game_card_fd;
 				ack_send->queue = CATCH_QUEUE;
 				ack_send->sender_name = "GAMECARD";
 

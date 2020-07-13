@@ -65,7 +65,6 @@ typedef struct {
 typedef struct {
 	uint32_t id_corr_msg;
 	t_cola queue;
-	uint32_t process_fd;
 	char* sender_name;
 } t_ack;
 
