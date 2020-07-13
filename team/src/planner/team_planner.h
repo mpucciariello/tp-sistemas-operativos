@@ -63,7 +63,6 @@ sem_t sem_entrenadores_disponibles;
 sem_t sem_message_on_queue;
 sem_t sem_trainers_in_ready_queue;
 sem_t sem_pokemons_to_get;
-sem_t sem_deadlock;
 sem_t sem_planificador; 
 
 pthread_t planificator;
@@ -83,6 +82,7 @@ t_list* got_pokemons;
 t_list* lista_auxiliar;
 t_list* pokemons_localized;
 t_list* real_targets_pokemons;
+t_list* get_id_corr;
 
 bool cercania;
 bool planificacion;

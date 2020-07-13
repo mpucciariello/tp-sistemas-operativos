@@ -21,7 +21,6 @@ void team_planner_run_planification() {
 
 void team_planner_algoritmo_cercania() {
 	while (cercania) {
-
 		sem_wait(&sem_message_on_queue);
 		sem_wait(&sem_entrenadores_disponibles);
 
@@ -665,7 +664,6 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pok
 			}
 		}
 		list_clean(lista_auxiliar);
-		t_list* nuevos_pokemons= remover_de_lista(pokemons_que_tiene, pokemon_a_entregar);
 		m++;
 
 	}
@@ -764,13 +762,16 @@ void planner_destroy_quees() {
 	list_destroy_and_destroy_elements(new_queue, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(ready_queue, (void*)planner_destroy_entrenador);
 	list_destroy_and_destroy_elements(block_queue, (void*)planner_destroy_entrenador);
-	list_destroy_and_destroy_elements(exit_queue, (void*)planner_destroy_entrenador);	
-	list_destroy_and_destroy_elements(pokemon_to_catch, (void*)planner_destroy_entrenador);
-	list_destroy_and_destroy_elements(total_targets_pokemons, (void*)planner_destroy_entrenador);
+	list_destroy_and_destroy_elements(exit_queue, (void*)planner_destroy_entrenador);
 	list_destroy(message_catch_sended);
 	list_destroy(pokemones_pendientes);
 	list_destroy(real_targets_pokemons);
 	list_destroy(lista_auxiliar);
+	list_destroy(get_id_corr);
+	list_destroy(pokemons_localized);
+	list_destroy(got_pokemons);
+	list_destroy(pokemon_to_catch);
+	list_destroy(total_targets_pokemons);
 }
 
 void team_planner_destroy() {

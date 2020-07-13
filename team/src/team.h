@@ -18,8 +18,6 @@
 
 int team_socket;
 bool is_connected;
-t_list* get_id_corr;
-t_list* keys_list;
 t_list* lista_auxiliar;
 
 
