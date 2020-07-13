@@ -230,9 +230,9 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 
 	entrenador->blocked_info = info_bloqueo;
 
-	if (status == 0 && !entrenador->deadlock) {
-		sem_post(&sem_entrenadores_disponibles); 
-	}
+	/*if (status == 0 && !entrenador->deadlock) {
+		sem_post(&sem_entrenadores_disponibles);
+	}*/
 }
 
 void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemon* entrenador) {
@@ -242,9 +242,7 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	
 	entrenador->blocked_info = info_bloqueo;
 
-	if (status == 0 && !entrenador->deadlock && entrenador->state == BLOCK) {
-		sem_post(&sem_entrenadores_disponibles);
-	}
+
 }
 
 t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t id) { 
@@ -480,7 +478,7 @@ void solve_deadlock() {
 	t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
 	t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
 
-	while (!list_is_empty(block_queue)) {
+	while (list_size(block_queue) > 0) {
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
 
 		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante, entrenador_bloqueante->pokemons);
@@ -509,7 +507,7 @@ void solve_deadlock() {
 		int steps = fabs(aux_x + aux_y);
 
 		for (int i = 0; i <= steps; i++) {
-			//sleep(team_config->retardo_ciclo_cpu);
+			sleep(team_config->retardo_ciclo_cpu);
 			new_cpu_cicle(entrenador_bloqueado);
 		}
 
@@ -524,9 +522,8 @@ void solve_deadlock() {
 
 		context_switch_qty++;
 
-		pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita_el_bloqueado(entrenador_bloqueante, entrenador_bloqueado); //TODO que en lo posible devuelva el que necesita el bloqueante
-
-		sleep((team_config->retardo_ciclo_cpu)*5);
+		pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
+		//sleep((team_config->retardo_ciclo_cpu)*5);
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
 		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueado->id, pokemon_de_entrenador_bloqueante->name, entrenador_bloqueante->id);
@@ -555,72 +552,8 @@ void solve_deadlock() {
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
 		team_planner_end_trainer_threads();
+		team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 	}
-	team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
-}
-
-t_pokemon* ver_a_quien_no_necesita_el_bloqueado(t_entrenador_pokemon* entrenador_bloqueado, t_entrenador_pokemon* entrenador_bloqueante) {
-	bool le_sirve = true;
-	t_pokemon* pokemon_a_entregar;
-	list_clean(lista_auxiliar);
-	lista_auxiliar = list_duplicate(entrenador_bloqueado->targets);
-	int m = 0;
-
-	//Si alguno de los que tiene le sirven al entrenador bloqueante lo voy a encontrar acá
-	while (m < list_size(entrenador_bloqueado->pokemons)) {
-		pokemon_a_entregar = list_get(entrenador_bloqueado->pokemons, m);
-
-		for (int j = 0; j < list_size(entrenador_bloqueado->targets); j++) {
-			t_pokemon* pokemon_objetivo = list_get(entrenador_bloqueado->targets, j);
-			if (string_equals_ignore_case(pokemon_objetivo->name, pokemon_a_entregar->name)) {
-				eliminar_pokemon_de_objetivos(lista_auxiliar, pokemon_a_entregar->name);
-				le_sirve = true;
-			} else {
-				le_sirve = false;
-			}
-		}
-
-		if (!list_is_empty(lista_auxiliar)) {
-			t_entrenador_pokemon* entrenador_necesita = entrenador_que_necesita(pokemon_a_entregar);
-			if (entrenador_necesita->id == entrenador_bloqueante->id) { //FILTER
-				return pokemon_a_entregar;
-			}
-		}
-		m++;
-	}
-	//Si ninguno le sirve le doy cualquiera.
-	le_sirve = true;
-	list_clean(lista_auxiliar);
-	lista_auxiliar = list_duplicate(entrenador_bloqueado->targets);
-
-
-	for (int i = 0; i < list_size(entrenador_bloqueado->pokemons); i++) {
-		pokemon_a_entregar = list_get(entrenador_bloqueado->pokemons, i);
-
-		for (int j = 0; j < list_size(entrenador_bloqueado->targets); j++) {
-			t_pokemon* pokemon_objetivo = list_get(entrenador_bloqueado->targets, j);
-			if (string_equals_ignore_case(pokemon_objetivo->name, pokemon_a_entregar->name)) {
-				eliminar_pokemon_de_objetivos(lista_auxiliar, pokemon_a_entregar->name);
-				le_sirve = true;
-			} else {
-				le_sirve = false;
-			}
-		}
-
-		if (!le_sirve) {
-			break;
-		}
-	}
-
-	if (!list_is_empty(lista_auxiliar)) {
-		t_entrenador_pokemon* entrenador = entrenador_que_necesita(pokemon_a_entregar);
-		if (entrenador != NULL) {
-			return pokemon_a_entregar;
-		}
-	}
-
-	list_clean(lista_auxiliar);
-	return NULL;
 }
 
 void team_planner_end_trainer_threads() {
@@ -719,21 +652,20 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pok
 		}
 	}
 
-	if (!list_is_empty(lista_auxiliar)) {
-		t_entrenador_pokemon* entrenador = entrenador_que_necesita(pokemon_a_entregar);
-		if (entrenador != NULL) {
+	if (list_size(lista_auxiliar) > 0) {
+		if(entrenador_que_necesita(pokemon_a_entregar) != NULL){
 			return pokemon_a_entregar;
 		}
 	}
 	list_clean(lista_auxiliar);
-	t_list* nuevos_pokemons = remover_de_lista(pokemons_que_tiene, pokemon_a_entregar);
+	t_list* nuevos_pokemons= remover_de_lista(pokemons_que_tiene, pokemon_a_entregar);
 	return ver_a_quien_no_necesita(entrenador, nuevos_pokemons);
 }
 
-t_list* remover_de_lista (t_list* lista, t_pokemon* pokemon) {
-	for (int i = 0; i < list_size(lista); i++) {
+t_list* remover_de_lista (t_list* lista, t_pokemon* pokemon){
+	for(int i = 0; i < list_size(lista); i++){
 		t_pokemon* pok = list_get(lista, i);
-		if (string_equals_ignore_case(pok->name, pokemon->name)) {
+		if(string_equals_ignore_case(pok->name, pokemon->name)){
 			list_remove(lista, i);
 			break;
 		}
@@ -791,7 +723,11 @@ bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 				}
 			}
 		}
-		return list_is_empty(lista_auxiliar);
+		if(entrenador->diferencia == 0){
+			return list_is_empty(lista_auxiliar);
+		}else{
+			return list_size(lista_auxiliar) == entrenador->diferencia;
+		}
 	}
 	list_clean(lista_auxiliar);
 	return false;

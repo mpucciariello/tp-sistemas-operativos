@@ -192,6 +192,10 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 		entrenador->deadlock = true;
 	}
 
+	if (entrenador->blocked_info->status == 0 && !entrenador->deadlock && entrenador->state == BLOCK && !trainer_is_in_deadlock_caught(entrenador) && !trainer_completed_with_success(entrenador)) {
+			sem_post(&sem_entrenadores_disponibles);
+		}
+
 	if (all_queues_are_empty_except_block()) { // TODO no entra resolver deadlock
 		solve_deadlock();
 	}
