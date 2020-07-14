@@ -33,12 +33,6 @@ void team_init() {
 	sem_init(&sem_planificador, 0, 1);
 	sem_init(&sem_trainers_in_ready_queue, 0, 0);
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
-	message_catch_sended = list_create();
-	pokemones_pendientes = list_create();
-	real_targets_pokemons = list_create();
-	lista_auxiliar = list_create();
-	pokemons_localized = list_create();
-	get_id_corr = list_create();
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
