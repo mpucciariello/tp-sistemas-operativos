@@ -5,6 +5,7 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 
 	team_init();
+	team_exit();
 
 	return EXIT_SUCCESS;
 }
@@ -44,10 +45,12 @@ void team_init() {
 	team_planner_init();
 	send_get_message();
 
+	already_printed = false;
 	t_cola cola_appeared = APPEARED_QUEUE;
 	pthread_create(&tid1, NULL, (void*) team_retry_connect, (void*) &cola_appeared);
 	pthread_detach(tid1);
 
+	already_printed = true;
 	t_cola cola_localized = LOCALIZED_QUEUE;
 	pthread_create(&tid2, NULL, (void*) team_retry_connect, (void*) &cola_localized);
 	pthread_detach(tid2);
@@ -105,8 +108,8 @@ void send_message_catch(t_catch_pokemon* catch_send,t_entrenador_pokemon* entren
 	int i = send_message(catch_send, catch_protocol, NULL);
 	if (i == 0) {
 		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
-			list_add(message_catch_sended, catch_send);
-			list_add(entrenador->list_id_catch, (void*) catch_send->id_correlacional);
+		list_add(message_catch_sended, catch_send);
+		list_add(entrenador->list_id_catch, (void*) catch_send->id_correlacional);
 	} else {
 		atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
 	}
@@ -230,11 +233,9 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 	int broker_fd_send = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 
 	if (broker_fd_send < 0) {
-		team_logger_warn("No se pudo conectar con BROKER.");
 		socket_close_conection(broker_fd_send);
 		return -1;
 	} else {
-		team_logger_info("Conexión con BROKER establecida correctamente!");
 		utils_serialize_and_send(broker_fd_send, protocolo, paquete);
 
 		uint32_t id_corr;
@@ -315,7 +316,9 @@ void subscribe_to(void *arg) {
 	int new_broker_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 
 	if (new_broker_fd < 0) {
-		team_logger_warn("No se pudo conectar con BROKER.");
+		if (already_printed) {
+			team_logger_warn("No se pudo conectar con BROKER porque no se encuentra activo. Se realizará la operación por default");
+		}
 		socket_close_conection(new_broker_fd);
 	} else {
 		team_logger_info("Conexión con BROKER establecida correctamente!");
@@ -335,11 +338,23 @@ void subscribe_to(void *arg) {
 
 void team_retry_connect(void* arg) {
 	void* arg2 = arg;
+	if (already_printed) {
+		team_logger_info("Inicio de proceso de reintento de comunicación con el BROKER");
+	}
+
 	while (true) {
 		is_connected = false;
 		subscribe_to(arg2);
 		utils_delay(team_config->tiempo_reconexion);
 	}
+	if (already_printed) {
+		if (!is_connected) {
+			team_logger_warn("Resultado de proceso de reintento de comunicación con el BROKER no fue exitoso");
+		} else {
+			team_logger_info("Resultado de proceso de reintento de comunicación con el BROKER fue exitoso");
+		}
+	}
+	already_printed = false;
 }
 
 t_catch_pokemon* filter_msg_catch_by_id_caught(uint32_t id_corr_caught) {
@@ -373,7 +388,6 @@ void *receive_msg(int fd, int send_to) {
 	while (true) {
 		int received_bytes = recv(fd, &protocol, sizeof(int), 0);
 		if (received_bytes <= 0) {
-			team_logger_error("Se perdió la conexión con el socket %d.", fd);
 			return NULL;
 		}
 
@@ -405,7 +419,7 @@ void *receive_msg(int fd, int send_to) {
 			if (caught_rcv->result) {
 				list_add(entrenador->pokemons, catch_message->nombre_pokemon);
 				atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
-			}else{
+			} else {
 				team_logger_info("En entrenador %d no pudo atrapar un %s.", entrenador->id, catch_message->nombre_pokemon);
 			}
 			break;

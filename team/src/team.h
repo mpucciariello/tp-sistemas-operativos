@@ -18,6 +18,7 @@
 
 int team_socket;
 bool is_connected;
+bool already_printed;
 t_list* lista_auxiliar;
 
 

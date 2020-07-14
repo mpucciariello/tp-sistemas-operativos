@@ -85,7 +85,6 @@ void team_planner_algoritmo_cercania() {
 		team_planner_remove_pokemon_from_catch(pokemon);
 		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
 		sem_post(&sem_trainers_in_ready_queue);
-		team_logger_info("el algoritmo de cercania selecciona a %s para el entrenador %d", entrenador->pokemon_a_atrapar->name, entrenador->id);
 	}
 	pthread_exit(0);
 }
@@ -353,6 +352,7 @@ int team_planner_get_least_estimate_index() {
 void team_planner_new_cpu_cicle(t_entrenador_pokemon* entrenador) {
 	entrenador->current_burst_time++;
 	entrenador->total_burst_time++;
+	entrenador->estimated_time--;
 
 	void _increase_wait_time_trainner(t_entrenador_pokemon *trainner) {
 		trainner->wait_time++;
@@ -566,6 +566,7 @@ void team_planner_solve_deadlock() {
 	}
 	if (team_planner_all_finished()) {
 		team_logger_info("Finaliza el algoritmo de detección de interbloqueos, el TEAM se encuentra en condiciones de FINALIZAR!");
+		team_planner_print_fullfill_target();
 		free(pokemon_de_entrenador_bloqueado);
 		free(pokemon_de_entrenador_bloqueante);
 		free(entrenador_bloqueado);
@@ -711,7 +712,7 @@ void team_planner_print_fullfill_target() {
 	t_list* trainners = team_planner_get_trainners();
 
 	int add_burst_time(int accum, t_entrenador_pokemon* trainner) {
-      return accum + trainner->current_burst_time;
+      return accum + trainner->total_burst_time;
 	}
 	int total_cpu = (int) list_fold(trainners, 0, (void*) add_burst_time);
 	team_logger_info("Cantidad de ciclos de CPU totales: %d", total_cpu);
