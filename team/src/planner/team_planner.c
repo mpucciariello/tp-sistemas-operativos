@@ -85,6 +85,7 @@ void team_planner_algoritmo_cercania() {
 		team_planner_remove_pokemon_from_catch(pokemon);
 		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
 		sem_post(&sem_trainers_in_ready_queue);
+		team_logger_info("el algoritmo de cercania selecciona a %s para el entrenador %d", entrenador->pokemon_a_atrapar->name, entrenador->id);
 	}
 	pthread_exit(0);
 }
@@ -577,6 +578,7 @@ void team_planner_solve_deadlock() {
 void team_planner_end_trainer_threads() {
 	for (int i = 0; i < list_size(exit_queue); i++) {
 		t_entrenador_pokemon* entrenador = list_get(exit_queue, i);
+		entrenador->pokemon_a_atrapar = NULL;
 		entrenador->esta_activo = false;
 		pthread_cancel(entrenador->hilo_entrenador);
 	}

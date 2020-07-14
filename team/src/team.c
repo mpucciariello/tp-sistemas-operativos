@@ -304,7 +304,6 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			catch_send->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
 			catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 			send_message_catch(catch_send, entrenador);
-			entrenador->pokemon_a_atrapar = NULL;
 		}
 		sem_post(&sem_planificador);
 	}
