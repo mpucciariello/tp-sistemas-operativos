@@ -33,7 +33,7 @@ typedef struct {
 	int wait_time;
 	int current_burst_time;
 	int total_burst_time;
-	int estimated_time;
+	float estimated_time;
 	t_entrenador_info_bloqueo* blocked_info;
 	pthread_t hilo_entrenador;
 	pthread_mutex_t sem_move_trainers;

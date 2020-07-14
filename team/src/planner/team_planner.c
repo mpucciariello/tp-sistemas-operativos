@@ -132,7 +132,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->wait_time = 0;
 	entrenador->current_burst_time = 0;
 	entrenador->total_burst_time = 0;
-	entrenador->estimated_time = 0;
+	entrenador->estimated_time = (float)team_config->estimacion_inicial;
 	entrenador->blocked_info = NULL;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
@@ -330,13 +330,16 @@ void planner_init_quees() {
 
 int team_planner_get_least_estimate_index() {
 	int least_index = 0;
-	float lower_estimate = 100000.0;
+	//t_entrenador_pokemon* aux_entrenador = list_get(ready_queue, 0);
+	//float aux_estimated = team_planner_calculate_exponential_mean(aux_entrenador->current_burst_time, aux_entrenador->estimated_time);
+
+	float aux_estimated = 1000.0f;
 	for (int i = 0; i < list_size(ready_queue); i++) {
 		t_entrenador_pokemon* entrenador = list_get(ready_queue, i);
-		if (entrenador == NULL)
-			continue;
-		if (entrenador->estimated_time < lower_estimate) {
-			lower_estimate = entrenador->estimated_time;
+		float estimated = team_planner_calculate_exponential_mean(entrenador->current_burst_time, entrenador->estimated_time);
+
+		if (estimated < aux_estimated) {
+			aux_estimated = estimated;
 			least_index = i; 
 		}
 	}

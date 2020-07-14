@@ -265,12 +265,15 @@ void check_RR_burst(t_entrenador_pokemon* entrenador) {
 }
 
 void check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
-	if (entrenador->estimated_time > team_planner_get_least_estimate_index()) {
-		add_to_ready_queue(entrenador);
-		sem_post(&sem_trainers_in_ready_queue);
-		sem_post(&sem_planificador);
-		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que será desalojado por otro con ráfaga más corta", entrenador->id);
-		pthread_mutex_lock(&entrenador->sem_move_trainers);
+	t_entrenador_pokemon* lower_estimated_trainner = list_get(ready_queue, team_planner_get_least_estimate_index());
+	if (lower_estimated_trainner != NULL) {
+		if (entrenador->estimated_time > lower_estimated_trainner->estimated_time) {
+			add_to_ready_queue(entrenador);
+			sem_post(&sem_trainers_in_ready_queue);
+			sem_post(&sem_planificador);
+			team_logger_info("Se añadió al entrenador %d a la cola de READY ya que será desalojado por otro con ráfaga más corta", entrenador->id);
+			pthread_mutex_lock(&entrenador->sem_move_trainers);
+		}
 	}
 }
 
