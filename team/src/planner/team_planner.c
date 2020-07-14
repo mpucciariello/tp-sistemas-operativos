@@ -507,7 +507,7 @@ void solve_deadlock() {
 		int steps = fabs(aux_x + aux_y);
 
 		for (int i = 0; i <= steps; i++) {
-			//sleep(team_config->retardo_ciclo_cpu);
+			sleep(team_config->retardo_ciclo_cpu);
 			new_cpu_cicle(entrenador_bloqueado);
 		}
 
@@ -526,7 +526,11 @@ void solve_deadlock() {
 		context_switch_qty++;
 
 		pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
-		sleep((team_config->retardo_ciclo_cpu)*5);
+
+		for (int i = 0; i < 5; i++) {
+			sleep(team_config->retardo_ciclo_cpu);
+			new_cpu_cicle(entrenador_bloqueado);
+		}
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
 		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueado->id, pokemon_de_entrenador_bloqueante->name, entrenador_bloqueante->id);
@@ -651,13 +655,13 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pok
 				}
 			}
 		
-			if(!le_sirve) {
+			if (!le_sirve) {
 				break;
 			}
 		}
 
 		if (list_size(lista_auxiliar) > 0) {
-			if(entrenador_que_necesita(pokemon_a_entregar) != NULL){
+			if (entrenador_que_necesita(pokemon_a_entregar) != NULL) {
 				return pokemon_a_entregar;
 			}
 		}
@@ -668,10 +672,10 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pok
 	return NULL;
 }
 
-t_list* remover_de_lista (t_list* lista, t_pokemon* pokemon){
-	for(int i = 0; i < list_size(lista); i++){
+t_list* remover_de_lista (t_list* lista, t_pokemon* pokemon) {
+	for (int i = 0; i < list_size(lista); i++) {
 		t_pokemon* pok = list_get(lista, i);
-		if(string_equals_ignore_case(pok->name, pokemon->name)){
+		if (string_equals_ignore_case(pok->name, pokemon->name)) {
 			list_remove(lista, i);
 			break;
 		}
@@ -729,9 +733,9 @@ bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 				}
 			}
 		}
-		if(entrenador->diferencia == 0){
+		if (entrenador->diferencia == 0) {
 			return list_is_empty(lista_auxiliar);
-		}else{
+		} else {
 			return list_size(lista_auxiliar) == entrenador->diferencia;
 		}
 	}
