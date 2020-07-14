@@ -30,6 +30,7 @@ typedef struct
 	int retardo_ciclo_cpu;
 	e_algoritmo_planificacion algoritmo_planificacion;
 	int quantum;
+	float alpha;
 	int estimacion_inicial;
 	char* ip_broker;
 	int puerto_broker;

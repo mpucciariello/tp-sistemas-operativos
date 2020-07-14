@@ -39,6 +39,7 @@ void read_config(t_config* config_file) {
 	char* algoritmo = string_duplicate(config_get_string_value(config_file, "ALGORITMO_PLANIFICACION"));
 	team_config->algoritmo_planificacion = team_algoritmo_planificacion_from_string(algoritmo);
 	team_config->quantum = config_get_int_value(config_file, "QUANTUM");
+	team_config->alpha = config_get_double_value(config_file, "ALPHA");
 	team_config->estimacion_inicial = config_get_int_value(config_file, "ESTIMACION_INICIAL");
 	team_config->ip_broker = string_duplicate(config_get_string_value(config_file, "IP_BROKER"));
 	team_config->puerto_broker = config_get_int_value(config_file, "PUERTO_BROKER");
@@ -76,6 +77,7 @@ void team_print_config() {
 	team_logger_info("RETARDO_CICLO_CPU: %d", team_config->retardo_ciclo_cpu);
 	team_logger_info("ALGORITMO_PLANIFICACION: %s", team_algoritmo_planificacion_to_string(team_config->algoritmo_planificacion));
 	team_logger_info("QUANTUM: %d", team_config->quantum);
+	team_logger_info("ALPHA: %f", team_config->alpha);
 	team_logger_info("ESTIMACION_INICIAL: %d", team_config->estimacion_inicial);
 	team_logger_info("IP_BROKER: %s", team_config->ip_broker);
 	team_logger_info("PUERTO_BROKER: %d", team_config->puerto_broker);

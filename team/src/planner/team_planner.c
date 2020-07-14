@@ -264,12 +264,15 @@ void planner_load_entrenadores() {
 
 	total_targets_pokemons = list_create();
 	got_pokemons = list_create();
+	bool next_pokemon_null = false;
 	while (team_config->posiciones_entrenadores[i] != NULL) {
 		t_position* posicion = team_planner_extract_position(team_config->posiciones_entrenadores[i]);
 		t_list* pokemons = list_create();
-		if (!string_equals_ignore_case(utils_array_to_string(team_config->pokemon_entrenadores), "[]") &&
-				team_config->pokemon_entrenadores[i] != NULL &&
-				!string_equals_ignore_case(team_config->pokemon_entrenadores[i], "")) {
+		if (!next_pokemon_null && !string_equals_ignore_case(utils_array_to_string(team_config->pokemon_entrenadores), "[]") &&
+				team_config->pokemon_entrenadores[i] != NULL) {
+			if(team_config->pokemon_entrenadores[i + 1] == NULL) {
+				next_pokemon_null = true;
+			}
 			team_planner_extract_pokemons(pokemons, team_config->pokemon_entrenadores[i]);
 		}
 		t_list* objetivos = list_create();
@@ -361,9 +364,10 @@ void new_cpu_cicle(t_entrenador_pokemon* entrenador) {
 }
 
 float team_planner_calculate_exponential_mean(int burst_time, float tn) {
-	float alpha = 0.5f;
+	float alpha = team_config->alpha;
 	//tn+1 = α*tn + (1 - α)*tn
 	float next_tn = alpha * (float) burst_time + (1.0 - alpha) * tn;
+	team_logger_info("Proxima rafaga: %f, Rafaga estimada: %f, Rafaga de CPU: %d", next_tn, tn , burst_time);
 	return next_tn;
 }
 
