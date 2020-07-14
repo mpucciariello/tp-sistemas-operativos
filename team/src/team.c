@@ -161,19 +161,6 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 		entrenador->deadlock = true;
 	}
 
-	if (entrenador->blocked_info->status == 0 && !entrenador->deadlock && entrenador->state == BLOCK && !trainer_is_in_deadlock_caught(entrenador) && !team_planner_trainer_completed_with_success(entrenador)) {
-		sem_post(&sem_entrenadores_disponibles);
-	}
-
-	if (todavia_quedan_pokemones_restantes(pokemon_name)) {
-		if (tengo_en_pokemon_to_catch(pokemon_name)) {
-			sem_post(&sem_message_on_queue);
-		}
-	} else {
-		if (tengo_en_pokemon_to_catch(pokemon_name)) {
-			remover_totalmente_de_pokemon_to_catch(pokemon_name);
-		}
-	}
 
 	if (team_planner_all_queues_are_empty_except_block()) {
 		team_planner_solve_deadlock();
@@ -186,6 +173,20 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
 		team_planner_end_trainer_threads();
+	}
+
+	if (todavia_quedan_pokemones_restantes(pokemon_name)) {
+		if (tengo_en_pokemon_to_catch(pokemon_name)) {
+			sem_post(&sem_message_on_queue);
+		}
+	} else {
+		if (tengo_en_pokemon_to_catch(pokemon_name)) {
+			remover_totalmente_de_pokemon_to_catch(pokemon_name);
+		}
+	}
+
+	if (entrenador->blocked_info->status == 0 && !entrenador->deadlock && entrenador->state == BLOCK && !trainer_is_in_deadlock_caught(entrenador) && !team_planner_trainer_completed_with_success(entrenador)) {
+		sem_post(&sem_entrenadores_disponibles);
 	}
 }
 
@@ -275,7 +276,7 @@ void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	while (entrenador->esta_activo) {
-		pthread_mutex_lock(&entrenador->sem_move_trainers);
+		pthread_mutex_lock(&entrenador->sem_move_trainers);//el problema de concurrencia es porque el algoritmo de cercania no asigna al pokemon recien llegado
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
@@ -303,9 +304,9 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			catch_send->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
 			catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
 			send_message_catch(catch_send, entrenador);
-			sem_post(&sem_planificador);
 			entrenador->pokemon_a_atrapar = NULL;
 		}
+		sem_post(&sem_planificador);
 	}
 	pthread_exit(0);
 }

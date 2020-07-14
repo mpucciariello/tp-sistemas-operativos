@@ -7,8 +7,8 @@ int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
 	while (planificacion) {
-		sem_wait(&sem_trainers_in_ready_queue);
 		sem_wait(&sem_planificador);
+		sem_wait(&sem_trainers_in_ready_queue);
 
 		t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
@@ -21,8 +21,9 @@ void team_planner_run_planification() {
 
 void team_planner_algoritmo_cercania() {
 	while (cercania) {
-		sem_wait(&sem_message_on_queue);
 		sem_wait(&sem_entrenadores_disponibles);
+		sem_wait(&sem_message_on_queue);
+
 
 		t_pokemon* pokemon;
 		t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
@@ -35,7 +36,9 @@ void team_planner_algoritmo_cercania() {
 		for (int i = 0; i < list_size(entrenadores_disponibles); i++) {
 			t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
 			for (int j = 0; j < list_size(pokemon_to_catch); j++) {
+				pthread_mutex_lock(&cola_pokemons_a_atrapar);
 				t_pokemon_received* pokemon_con_posiciones_aux = list_get(pokemon_to_catch, j);
+				pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 				for (int k = 0; k < list_size(pokemon_con_posiciones_aux->pos); k++) {
 					t_position* posicion_aux = list_get(pokemon_con_posiciones_aux->pos, k);
 
@@ -539,7 +542,7 @@ void team_planner_solve_deadlock() {
 			sleep(team_config->retardo_ciclo_cpu);
 			team_planner_new_cpu_cicle(entrenador_bloqueado);
 		}
-		team_logger_info("Se añadió al entrenador %d a la cola de bloqueados luego de ejecutar un intercambio!");
+		team_logger_info("Se añadió al entrenador %d a la cola de bloqueados luego de ejecutar un intercambio!", entrenador_bloqueado->id);
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
 		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueado->id, pokemon_de_entrenador_bloqueante->name, entrenador_bloqueante->id);
