@@ -68,7 +68,7 @@ void team_planner_algoritmo_cercania() {
 		}
 
 		if (team_planner_is_SJF_algorithm()) {
-			entrenador->estimated_time = team_planner_calculate_exponential_mean(entrenador->current_burst_time, entrenador->estimated_time);
+			entrenador->estimated_time = team_planner_calculate_exponential_mean(entrenador);
 			entrenador->current_burst_time = 0;
 		}
 
@@ -78,23 +78,23 @@ void team_planner_algoritmo_cercania() {
 
 		entrenador->pokemon_a_atrapar = pokemon;
 
-		add_to_ready_queue(entrenador);
+		team_planner_add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
-		remove_pokemon_from_catch(pokemon);
+		team_planner_remove_pokemon_from_catch(pokemon);
 		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
 		team_logger_info("El entrenador %d fue agregado a la cola de READY luego de ser seleccionado por el algoritmo de cercanía", entrenador->id);		
 	}
 	pthread_exit(0);
 }
 
-void add_to_ready_queue(t_entrenador_pokemon* entrenador) {
+void team_planner_add_to_ready_queue(t_entrenador_pokemon* entrenador) {
 	entrenador->state = READY;
 	list_add(ready_queue, entrenador);
-	delete_from_bloqued_queue(entrenador, 0);
-	delete_from_new_queue(entrenador);	
+	team_planner_delete_from_bloqued_queue(entrenador, 0);
+	team_planner_delete_from_new_queue(entrenador);	
 }
 
-void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) {
+void team_planner_delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) {
 	for (int i = 0; i < list_size(block_queue); i++) {
 		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
 		if (entrenador_aux->id == entrenador->id) {
@@ -109,7 +109,7 @@ void delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, int cola) {
 	}
 }
 
-void delete_from_new_queue(t_entrenador_pokemon* entrenador) {
+void team_planner_delete_from_new_queue(t_entrenador_pokemon* entrenador) {
 	for (int i = 0; i < list_size(new_queue); i++) {
 		t_entrenador_pokemon* entrenador_aux = list_get(new_queue, i);
 		if (entrenador_aux->id == entrenador->id) {
@@ -136,7 +136,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->blocked_info = NULL;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
-	entrenador->diferencia = calcular_diferencia(entrenador);
+	entrenador->diferencia = team_planner_calcular_diferencia(entrenador);
 	entrenador->esta_activo = true;
 	pthread_mutex_init(&entrenador->sem_move_trainers, NULL);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
@@ -146,7 +146,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	return entrenador;
 }
 
-int calcular_diferencia(t_entrenador_pokemon* entrenador) {
+int team_planner_calcular_diferencia(t_entrenador_pokemon* entrenador) {
 	int diferencia = 0;
 	bool lo_tiene = false;
 
@@ -219,7 +219,7 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->blocked_info->status = 0;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
-	delete_from_bloqued_queue(entrenador, 1);
+	team_planner_delete_from_bloqued_queue(entrenador, 1);
 	list_add(exit_queue, entrenador);
 	team_logger_info("El entrenador %d terminó exitosamente!", entrenador->id);
 }
@@ -229,15 +229,11 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 	info_bloqueo->blocked_time = 0;
 	info_bloqueo->status = status;
 	
-	t_entrenador_pokemon* entrenador = find_trainer_by_id_corr(id_corr);
+	t_entrenador_pokemon* entrenador = team_planner_find_trainer_by_id_corr(id_corr);
 	if (entrenador != NULL) {
 		entrenador->state = BLOCK;
 		entrenador->blocked_info = info_bloqueo;
 	}
-
-//	if (status == 0 && !entrenador->deadlock) {
-//		sem_post(&sem_entrenadores_disponibles);
-//	}
 }
 
 void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemon* entrenador) {
@@ -247,7 +243,7 @@ void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemo
 	entrenador->blocked_info = info_bloqueo;
 }
 
-t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t id) {
+t_entrenador_pokemon* team_planner_find_trainer_by_id_corr(uint32_t id) {
 	for (int j = 0; j < list_size(block_queue); j++) {
 		t_entrenador_pokemon* entrenador = list_get(block_queue, j);
 		for (int i = 0; i < list_size(entrenador->list_id_catch); i++) {
@@ -261,7 +257,7 @@ t_entrenador_pokemon* find_trainer_by_id_corr(uint32_t id) {
 	return NULL;
 }
 
-void planner_load_entrenadores() {
+void team_planner_load_entrenadores() {
 	int i = 0;
 
 	total_targets_pokemons = list_create();
@@ -293,7 +289,7 @@ void planner_load_entrenadores() {
 
 	team_logger_info("Hay %d entrenadores en la cola de NEW", list_size(new_queue));
 
-	get_real_targets();
+	team_planner_get_real_targets();
 	sem_post(&sem_pokemons_to_get);
 
 	for (int i = 0; i < list_size(new_queue); i++) {
@@ -301,7 +297,7 @@ void planner_load_entrenadores() {
 	}
 }
 
-void get_real_targets() {
+void team_planner_get_real_targets() {
 	t_list* aux = list_create();
 	aux = total_targets_pokemons;
 
@@ -336,7 +332,7 @@ int team_planner_get_least_estimate_index() {
 	float aux_estimated = 1000.0f;
 	for (int i = 0; i < list_size(ready_queue); i++) {
 		t_entrenador_pokemon* entrenador = list_get(ready_queue, i);
-		float estimated = team_planner_calculate_exponential_mean(entrenador->current_burst_time, entrenador->estimated_time);
+		float estimated = team_planner_calculate_exponential_mean(entrenador);
 
 		if (estimated < aux_estimated) {
 			aux_estimated = estimated;
@@ -346,7 +342,9 @@ int team_planner_get_least_estimate_index() {
 	return least_index;
 }
 
-void new_cpu_cicle(t_entrenador_pokemon* entrenador) {
+void team_planner_new_cpu_cicle(t_entrenador_pokemon* entrenador) {
+	entrenador->current_burst_time++;
+	entrenador->total_burst_time++;
 	void _increase_wait_time_trainner(t_entrenador_pokemon *trainner) {
 		trainner->wait_time++;
 	}
@@ -358,19 +356,18 @@ void new_cpu_cicle(t_entrenador_pokemon* entrenador) {
 	list_iterate(block_queue, (void*) _increase_block_time_trainner);
 
 	if (team_config->algoritmo_planificacion == RR && !entrenador->deadlock) {
-		check_RR_burst(entrenador); 
+		team_planner_check_RR_burst(entrenador); 
 	} 
 
 	if (team_config->algoritmo_planificacion == SJF_CD && !entrenador->deadlock) {
-		check_SJF_CD_time(entrenador); 
+		team_planner_check_SJF_CD_time(entrenador); 
 	}
 }
 
-float team_planner_calculate_exponential_mean(int burst_time, float tn) {
+float team_planner_calculate_exponential_mean(t_entrenador_pokemon* entrenador) {
 	float alpha = team_config->alpha;
-	//tn+1 = α*tn + (1 - α)*tn
-	float next_tn = alpha * (float) burst_time + (1.0 - alpha) * tn;
-	team_logger_info("Proxima rafaga: %f, Rafaga estimada: %f, Rafaga de CPU: %d", next_tn, tn , burst_time);
+	float next_tn = alpha * (float) entrenador->current_burst_time + (1.0 - alpha) * entrenador->estimated_time;
+	//team_logger_info("Próxima ráfaga: %f, Ráfaga estimada: %f, Ráfaga de CPU: %d", next_tn, entrenador->estimated_time, entrenador->current_burst_time);
 	return next_tn;
 }
 
@@ -395,7 +392,7 @@ t_list* filter_block_list_by_0() {
 	return list_filter(block_queue, (void*) _is_available);
 }
 
-t_list* filter_by_deadlock() {
+t_list* team_planner_filter_by_deadlock() {
 	bool _is_locked(t_entrenador_pokemon* trainner) {
 		return trainner->deadlock;
 	}
@@ -469,14 +466,14 @@ t_entrenador_pokemon* team_planner_set_algorithm() {
 	return NULL;
 }
 
-bool all_queues_are_empty_except_block() {
-	int bloqueados_en_deadlock = list_size(filter_by_deadlock());
+bool team_planner_all_queues_are_empty_except_block() {
+	int bloqueados_en_deadlock = list_size(team_planner_filter_by_deadlock());
 	int bloqueados = list_size(block_queue);
 
-	return (bloqueados_en_deadlock == bloqueados) && list_is_empty(new_queue) && list_is_empty(ready_queue);
+	return (bloqueados_en_deadlock == bloqueados) && list_is_empty(new_queue) && list_is_empty(ready_queue) && (list_size(exit_queue) != list_size(team_planner_get_trainners()));
 }
 
-void solve_deadlock() {
+void team_planner_solve_deadlock() {
 
 	team_logger_info("Se iniciará la detección y resolución de deadlocks!");
 	int a = 0;
@@ -488,9 +485,9 @@ void solve_deadlock() {
 	while (list_size(block_queue) > 0) {
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
 
-		pokemon_de_entrenador_bloqueante = ver_a_quien_no_necesita(entrenador_bloqueante, entrenador_bloqueante->pokemons);
+		pokemon_de_entrenador_bloqueante = team_planner_ver_a_quien_no_necesita(entrenador_bloqueante, entrenador_bloqueante->pokemons);
 
-		entrenador_bloqueado = entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
+		entrenador_bloqueado = team_planner_entrenador_que_necesita(pokemon_de_entrenador_bloqueante);
 
 		entrenador_bloqueado->pokemon_a_atrapar = malloc(sizeof(t_pokemon));
 		entrenador_bloqueado->pokemon_a_atrapar->name = string_duplicate(pokemon_de_entrenador_bloqueante->name);
@@ -502,7 +499,7 @@ void solve_deadlock() {
 
 		team_logger_info("Se detectó un deadlock. El entrenador %d está bloqueando al entrenador %d", entrenador_bloqueante->id, entrenador_bloqueado->id);
 
-		add_to_ready_queue(entrenador_bloqueado);
+		team_planner_add_to_ready_queue(entrenador_bloqueado);
 		list_remove(ready_queue, 0);
 		team_planner_exec_trainer(entrenador_bloqueado);
 
@@ -515,7 +512,7 @@ void solve_deadlock() {
 
 		for (int i = 0; i <= steps; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
-			new_cpu_cicle(entrenador_bloqueado);
+			team_planner_new_cpu_cicle(entrenador_bloqueado);
 		}
 
 		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador_bloqueado->id,
@@ -532,11 +529,11 @@ void solve_deadlock() {
 
 		context_switch_qty++;
 
-		pokemon_de_entrenador_bloqueado = ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
+		pokemon_de_entrenador_bloqueado = team_planner_ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
 
 		for (int i = 0; i < 5; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
-			new_cpu_cicle(entrenador_bloqueado);
+			team_planner_new_cpu_cicle(entrenador_bloqueado);
 		}
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
@@ -545,27 +542,27 @@ void solve_deadlock() {
 		list_add(entrenador_bloqueante->pokemons, pokemon_de_entrenador_bloqueado);
 		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueante->id, pokemon_de_entrenador_bloqueado->name, entrenador_bloqueado->id);
 
-		remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
-		remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
+		team_planner_remove_from_pokemons_list(entrenador_bloqueado, pokemon_de_entrenador_bloqueado);
+		team_planner_remove_from_pokemons_list(entrenador_bloqueante, pokemon_de_entrenador_bloqueante);	
 
-		if (trainer_completed_with_success(entrenador_bloqueado)) {
+		if (team_planner_trainer_completed_with_success(entrenador_bloqueado)) {
 			team_planner_finish_trainner(entrenador_bloqueado);
 		}
 
-		if (trainer_completed_with_success(entrenador_bloqueante)) {
+		if (team_planner_trainer_completed_with_success(entrenador_bloqueante)) {
 			team_planner_finish_trainner(entrenador_bloqueante);
 		}
 
 		deadlocks_resolved++;
 	}
-	if (all_finished()) {
+	if (team_planner_all_finished()) {
+		team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 		free(pokemon_de_entrenador_bloqueado);
 		free(pokemon_de_entrenador_bloqueante);
 		free(entrenador_bloqueado);
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
 		team_planner_end_trainer_threads();
-		team_logger_info("Finaliza el algoritmo de detección de interbloqueos!");
 	}
 }
 
@@ -577,7 +574,7 @@ void team_planner_end_trainer_threads() {
 	}
 }
 
-void remove_from_pokemons_list(t_entrenador_pokemon* entrenador, t_pokemon* pokemon) {
+void team_planner_remove_from_pokemons_list(t_entrenador_pokemon* entrenador, t_pokemon* pokemon) {
 	for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 		t_pokemon* pokemon_aux = list_get(entrenador->pokemons, i);
 
@@ -588,7 +585,7 @@ void remove_from_pokemons_list(t_entrenador_pokemon* entrenador, t_pokemon* poke
 	}
 }
 
-void eliminar_pokemon_de_objetivos(t_list* list, char* nombre) {
+void team_planner_eliminar_pokemon_de_objetivos(t_list* list, char* nombre) {
 	for (int i = 0; i < list_size(list); i++) {
 		t_pokemon* pok = list_get(list, i);
 		if (string_equals_ignore_case(pok->name, nombre)) {
@@ -598,7 +595,7 @@ void eliminar_pokemon_de_objetivos(t_list* list, char* nombre) {
 	}
 }
 
-t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_bloqueado) {
+t_entrenador_pokemon* team_planner_entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_bloqueado) {
 	int contador = 0;
 	bool _necesitan_pokemon_bloquante(t_entrenador_pokemon* trainner) {
 		contador = 0;
@@ -640,7 +637,7 @@ t_entrenador_pokemon* entrenador_que_necesita(t_pokemon* pokemon_de_entrenador_b
 	return list_find(entrenadores_pokemon_bloqueante, (void*) _entrenador_no_tiene_pokemon_bloqueante);
 }
 
-t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pokemons_que_tiene) {
+t_pokemon* team_planner_ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pokemons_que_tiene) {
 	bool le_sirve = true;
 	t_pokemon* pokemon_a_entregar;
 	list_clean(lista_auxiliar);
@@ -654,7 +651,7 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pok
 			for (int j = 0; j < list_size(entrenador->targets); j++) {
 				t_pokemon* pokemon_objetivo = list_get(entrenador->targets, j);
 				if (string_equals_ignore_case(pokemon_objetivo->name, pokemon_a_entregar->name)) {
-					eliminar_pokemon_de_objetivos(lista_auxiliar, pokemon_a_entregar->name);
+					team_planner_eliminar_pokemon_de_objetivos(lista_auxiliar, pokemon_a_entregar->name);
 					le_sirve = true;
 					break;
 				} else {
@@ -668,7 +665,7 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pok
 		}
 
 		if (list_size(lista_auxiliar) > 0) {
-			if (entrenador_que_necesita(pokemon_a_entregar) != NULL) {
+			if (team_planner_entrenador_que_necesita(pokemon_a_entregar) != NULL) {
 				return pokemon_a_entregar;
 			}
 		}
@@ -679,7 +676,7 @@ t_pokemon* ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador, t_list* pok
 	return NULL;
 }
 
-t_list* remover_de_lista (t_list* lista, t_pokemon* pokemon) {
+t_list* team_planner_remover_de_lista (t_list* lista, t_pokemon* pokemon) {
 	for (int i = 0; i < list_size(lista); i++) {
 		t_pokemon* pok = list_get(lista, i);
 		if (string_equals_ignore_case(pok->name, pokemon->name)) {
@@ -722,10 +719,10 @@ void team_planner_print_fullfill_target() {
 
 void team_planner_init() {
 	planner_init_quees();
-	planner_load_entrenadores();	
+	team_planner_load_entrenadores();	
 }
 
-bool trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
+bool team_planner_trainer_completed_with_success(t_entrenador_pokemon* entrenador) {
 	list_clean(lista_auxiliar);
 	lista_auxiliar = list_duplicate(entrenador->targets);
 	if (list_size(entrenador->pokemons) == list_size(entrenador->targets) || (list_size(entrenador->pokemons)- list_size(entrenador->targets) == entrenador->diferencia)) {

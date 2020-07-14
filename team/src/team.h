@@ -42,7 +42,7 @@ void add_to_pokemon_to_catch(t_pokemon_received*);
 void quitar_de_pokemones_pendientes(char*);
 bool pokemon_in_pokemon_to_catch(char*);
 void quitar_de_real_target(char*);
-bool all_finished();
+bool team_planner_all_finished();
 bool pokemon_not_localized(char*);
 bool todavia_quedan_pokemones_restantes(char*);
 void remover_totalmente_de_pokemon_to_catch(char*);
