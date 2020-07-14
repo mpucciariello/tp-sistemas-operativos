@@ -314,7 +314,6 @@ static void *handle_connection(void *arg) {
 
 		if (received_bytes <= 0) {
 			broker_logger_error("Se perdio la conexion");
-			// TODO: Test!
 			handle_disconnection(client_fd);
 			return NULL;
 		}
@@ -1316,12 +1315,33 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 	int from = pointer;
 
 	if (pointer + message_void->size_message > broker_config->tamano_memoria){
-		if(broker_config->algoritmo_particion_libre == FF){
-			from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
+		int flag = 0;
+		while (1){
+
+			if(broker_config->algoritmo_particion_libre == FF){
+				from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
+			}
+			else{
+				from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
+			}
+			if(flag == 1){
+				if(broker_config->algoritmo_reemplazo == FIFO){
+					aplicar_algoritmo_reemplazo_FIFO();
+				}
+				else{
+					aplicar_algoritmo_reemplazo_LRU();
+				}
+			}
+			if(from ==-1){
+				compactacion();
+				flag = 1;
+			}
+			else{
+				break;
+			}
+
 		}
-		else{
-			from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
-		}
+
 
 		save_node_list_memory(from, message_void->size_message, cola,
 											id_correlacional);
@@ -1374,7 +1394,8 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 	nodo_mem->timestamp = time(NULL);
 
 	if (!is_buddy()) {
-		nodo_mem->libre = true;
+		nodo_mem->libre = false;
+		nodo_mem->time_lru = (unsigned) time(NULL);
 	}
 	pthread_mutex_lock(&mmem);
 	list_add(list_memory, nodo_mem);
@@ -1843,4 +1864,34 @@ void compactacion(){
 
 }
 
+void aplicar_algoritmo_reemplazo_FIFO(){
+	for (int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory *nodo_memoria =list_get(list_memory,i);
+		if (nodo_memoria->libre == false){
+			nodo_memoria->libre =true;
+			break;
+		}
+	}
+}
 
+void aplicar_algoritmo_reemplazo_LRU(){
+	int flag = 0;
+	int position;
+	uint32_t less_time;
+	for (int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory *nodo_memoria =list_get(list_memory,i);
+		if (nodo_memoria->libre == false){
+			if(flag == 0){
+				less_time = nodo_memoria->time_lru;
+				position =i;
+				flag =1;
+			}
+			if(nodo_memoria->time_lru < less_time){
+				less_time = nodo_memoria->time_lru;
+				position =i;
+			}
+		}
+	}
+	t_nodo_memory *nodo_memoria =list_get(list_memory,position);
+	nodo_memoria->libre = true;
+}

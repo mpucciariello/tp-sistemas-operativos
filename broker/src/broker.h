@@ -63,6 +63,7 @@ typedef struct {
 	int id;
 	time_t timestamp;
 	bool libre;
+	uint32_t time_lru;
 } t_nodo_memory;
 
 typedef struct {
@@ -93,4 +94,6 @@ _Bool is_buddy();
 void create_message_ack(int id,t_list *cola,t_cola unCola);
 int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void *message_void);
 int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *message_void);
+void aplicar_algoritmo_reemplazo_LRU();
+void aplicar_algoritmo_reemplazo_FIFO();
 #endif  /* BROKER_H_ */
