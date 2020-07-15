@@ -28,7 +28,7 @@ void team_init() {
 	planificacion = true;
 	cercania = true;
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
-	sem_init(&sem_pokemons_to_get, 0, 1);
+	sem_init(&sem_pokemons_to_get, 0, 0);
 	sem_init(&sem_message_on_queue, 0, 0);
 	sem_init(&sem_planificador, 0, 1);
 	sem_init(&sem_trainers_in_ready_queue, 0, 0);
@@ -42,10 +42,11 @@ void team_init() {
 	pthread_t planificator;
 	pthread_t algoritmo_cercania_entrenadores;
 	team_planner_init();
+	send_get_message();
 
-	already_printed = false;
+
 	t_cola cola_appeared = APPEARED_QUEUE;
-	pthread_create(&tid1, NULL, (void*) team_retry_connect, (void*) &cola_appeared);
+	pthread_create(&tid1, NULL, (void*) team_retry_connect_1, (void*) &cola_appeared);
 	pthread_detach(tid1);
 
 	already_printed = true;
@@ -171,6 +172,7 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 
 	if (team_planner_all_finished()) {
 		team_logger_info("Todos los entrenadores completaron su objetivo! El team FINALIZARÁ.");
+		team_planner_print_fullfill_target();
 		team_planner_exit();
 		exit(0);
 	}
@@ -222,7 +224,6 @@ void send_get_message() {
 		if ((send_message(get_send, get_protocol, get_id_corr)) > 0) {
 			team_logger_info("Se recibió id correlacional %d en respuesta al GET", get_id_corr);
 		}
-		team_logger_info("se envió un mensaje get");
 		usleep(500000);
 	}
 }
@@ -335,23 +336,31 @@ void subscribe_to(void *arg) {
 
 void team_retry_connect(void* arg) {
 	void* arg2 = arg;
-	if (already_printed) {
-		team_logger_info("Inicio de proceso de reintento de comunicación con el BROKER");
-	}
 
 	while (true) {
 		is_connected = false;
 		subscribe_to(arg2);
 		utils_delay(team_config->tiempo_reconexion);
 	}
-	if (already_printed) {
-		if (!is_connected) {
-			team_logger_warn("Resultado de proceso de reintento de comunicación con el BROKER no fue exitoso");
-		} else {
-			team_logger_info("Resultado de proceso de reintento de comunicación con el BROKER fue exitoso");
-		}
+}
+
+void team_retry_connect_1(void* arg) {
+	void* arg2 = arg;
+
+	team_logger_info("Inicio de proceso de reintento de comunicación con el BROKER");
+
+	while (true) {
+		is_connected = false;
+		subscribe_to(arg2);
+		utils_delay(team_config->tiempo_reconexion);
 	}
-	already_printed = false;
+
+	if (!is_connected) {
+		team_logger_warn("Resultado de proceso de reintento de comunicación con el BROKER no fue exitoso");
+	} else {
+		team_logger_info("Resultado de proceso de reintento de comunicación con el BROKER fue exitoso");
+	}
+
 }
 
 t_catch_pokemon* filter_msg_catch_by_id_caught(uint32_t id_corr_caught) {
@@ -422,7 +431,7 @@ void *receive_msg(int fd, int send_to) {
 			break;
 		}
 
-		case LOCALIZED_POKEMON: { //TODO no busca el pokemon cuando es valido
+		case LOCALIZED_POKEMON: {
 			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd, protocol);
 			team_logger_info("Localized received! ID correlacional: %d Nombre Pokemon: %s Largo nombre: %d Cant elementos en lista: %d",
 					loc_rcv->id_correlacional, loc_rcv->nombre_pokemon, loc_rcv->tamanio_nombre, loc_rcv->cant_elem);

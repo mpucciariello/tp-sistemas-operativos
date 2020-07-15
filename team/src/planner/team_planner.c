@@ -515,10 +515,10 @@ void team_planner_solve_deadlock() {
 
 		int steps = fabs(aux_x + aux_y);
 
-		for (int i = 0; i <= steps; i++) {
+		/*for (int i = 0; i <= steps; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
 			team_planner_new_cpu_cicle(entrenador_bloqueado);
-		}
+		}*/
 
 		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador_bloqueado->id,
 																		entrenador_bloqueado->position->pos_x,
@@ -536,10 +536,10 @@ void team_planner_solve_deadlock() {
 
 		pokemon_de_entrenador_bloqueado = team_planner_ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
 
-		for (int i = 0; i < 5; i++) {
+		/*for (int i = 0; i < 5; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
 			team_planner_new_cpu_cicle(entrenador_bloqueado);
-		}
+		}*/
 		team_logger_info("Se añadió al entrenador %d a la cola de bloqueados luego de ejecutar un intercambio!", entrenador_bloqueado->id);
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
@@ -573,7 +573,6 @@ void team_planner_solve_deadlock() {
 }
 
 void team_planner_exit() {
-	team_planner_print_fullfill_target();
 	//socket_close_conection(team_socket);
 	team_planner_destroy();
 	team_config_free();
@@ -778,7 +777,9 @@ void team_planner_destroy_entrenador(t_entrenador_pokemon* entrenador) {
 		free(entrenador->targets);
 	}
 	pthread_mutex_destroy(&entrenador->sem_move_trainers);
-	list_destroy(entrenador->list_id_catch);
+	if(entrenador->list_id_catch != NULL){
+		list_destroy(entrenador->list_id_catch);
+	}
 	free(entrenador);
 }
 
