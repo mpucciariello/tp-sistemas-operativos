@@ -176,6 +176,7 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 		pthread_cancel(algoritmo_cercania_entrenadores);
 		pthread_cancel(planificator);
 		team_planner_end_trainer_threads();
+		exit(0);
 	}
 
 	if (todavia_quedan_pokemones_restantes(pokemon_name)) {
@@ -277,7 +278,7 @@ void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	while (entrenador->esta_activo) {
-		pthread_mutex_lock(&entrenador->sem_move_trainers);//el problema de concurrencia es porque el algoritmo de cercania no asigna al pokemon recien llegado
+		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
@@ -308,7 +309,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		}
 		sem_post(&sem_planificador);
 	}
-	pthread_exit(0);
+
 }
 
 void subscribe_to(void *arg) {
