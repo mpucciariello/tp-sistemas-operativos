@@ -44,7 +44,6 @@ void team_init() {
 	team_planner_init();
 	send_get_message();
 
-
 	t_cola cola_appeared = APPEARED_QUEUE;
 	pthread_create(&tid1, NULL, (void*) team_retry_connect_1, (void*) &cola_appeared);
 	pthread_detach(tid1);
@@ -402,7 +401,6 @@ void *receive_msg(int fd, int send_to) {
 		case CAUGHT_POKEMON: {
 			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
 			team_logger_info("Caught received ID correlacional: %d Resultado (0/1): %d", caught_rcv->id_correlacional, caught_rcv->result);
-			usleep(50000);
 
 			if (is_server == 0) {
 				t_protocol ack_protocol = ACK;
@@ -414,6 +412,7 @@ void *receive_msg(int fd, int send_to) {
 				ack_send->sender_name = "TEAM";
 
 				utils_serialize_and_send(fd, ack_protocol, ack_send);
+				usleep(500000);
 			}
 
 			t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);
@@ -437,8 +436,6 @@ void *receive_msg(int fd, int send_to) {
 					loc_rcv->id_correlacional, loc_rcv->nombre_pokemon, loc_rcv->tamanio_nombre, loc_rcv->cant_elem);
 			if (loc_rcv->cant_elem > 0) {
 
-				usleep(500000);
-
 				if (is_server == 0) {
 					t_protocol ack_protocol = ACK;
 					team_logger_info("ACK SENT TO BROKER");
@@ -449,6 +446,7 @@ void *receive_msg(int fd, int send_to) {
 					ack_send->sender_name = "TEAM";
 
 					utils_serialize_and_send(fd, ack_protocol, ack_send);
+					usleep(500000);
 				}
 
 				bool _es_el_mismo(uint32_t id) {
@@ -479,7 +477,6 @@ void *receive_msg(int fd, int send_to) {
 					appeared_rcv->id_correlacional,
 					appeared_rcv->nombre_pokemon, appeared_rcv->tamanio_nombre,
 					appeared_rcv->pos_x, appeared_rcv->pos_y);
-			usleep(50000);
 
 			if (is_server == 0) {
 				t_protocol ack_protocol = ACK;
@@ -491,6 +488,7 @@ void *receive_msg(int fd, int send_to) {
 				ack_send->sender_name = "TEAM";
 
 				utils_serialize_and_send(fd, ack_protocol, ack_send);
+				usleep(500000);
 			}
 
 			if (pokemon_required(appeared_rcv->nombre_pokemon)) {

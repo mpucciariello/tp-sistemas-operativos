@@ -236,9 +236,6 @@ void utils_serialize_and_send(int socket, int protocol, void* package_send) {
 				sizeof(uint32_t));
 		utils_package_add(package, &((t_appeared_pokemon*) package_send)->pos_y,
 				sizeof(uint32_t));
-		utils_package_add(package,
-				&((t_appeared_pokemon*) package_send)->cantidad,
-				sizeof(uint32_t));
 		utils_package_send_to(package, socket);
 		utils_package_destroy(package);
 		break;
@@ -325,7 +322,6 @@ void* utils_receive_and_deserialize(int socket, int package_type) {
 		utils_get_from_list_to(&appeared_request->id_correlacional, list, 2);
 		utils_get_from_list_to(&appeared_request->pos_x, list, 3);
 		utils_get_from_list_to(&appeared_request->pos_y, list, 4);
-		utils_get_from_list_to(&appeared_request->cantidad, list, 5);
 		list_destroy_and_destroy_elements(list, (void*) utils_destroy_list);
 		return appeared_request;
 	}

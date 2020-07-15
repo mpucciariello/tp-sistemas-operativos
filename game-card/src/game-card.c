@@ -280,7 +280,6 @@ void process_new_and_send_appeared(void* arg) {
 	appeared_snd->id_correlacional = new_receive->id_correlacional;
 	appeared_snd->pos_x = new_receive->pos_x;
 	appeared_snd->pos_y = new_receive->pos_y;
-	appeared_snd->cantidad = new_receive->cantidad;
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
 			game_card_config->puerto_broker);
 	if (client_fd > 0) {

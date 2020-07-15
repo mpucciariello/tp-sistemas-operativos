@@ -80,7 +80,6 @@ typedef struct {
 typedef struct {
 	char *nombre_pokemon;
 	uint32_t tamanio_nombre;
-	uint32_t cantidad;
 	uint32_t pos_x;
 	uint32_t pos_y;
 	uint32_t id_correlacional;

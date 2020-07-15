@@ -219,6 +219,10 @@ int broker_load() {
 		printf("\n mutex init failed\n");
 		return 1;
 	}
+	if (pthread_mutex_init(&msave, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
 	return 0;
 }
 
@@ -329,6 +333,7 @@ static void *handle_connection(void *arg) {
 			usleep(100000);
 			t_message_to_void *message_void = convert_to_void(protocol,
 					new_receive);
+			pthread_mutex_lock(&msave);
 			int from = save_on_memory(message_void);
 			broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
 			save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
@@ -336,6 +341,7 @@ static void *handle_connection(void *arg) {
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			new_snd->id_correlacional = new_receive->id_correlacional;
 			create_message_ack(new_snd->id_correlacional, new_queue, NEW_QUEUE);
+			pthread_mutex_unlock(&msave);
 
 			// To GC
 			new_protocol = NEW_POKEMON;
@@ -351,21 +357,22 @@ static void *handle_connection(void *arg) {
 
 			// From GB or GC
 		case APPEARED_POKEMON: {
+			pthread_mutex_lock(&msave);
 			broker_logger_info("APPEARED RECEIVED");
 			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			broker_logger_info("ID correlacional: %d",
 					appeared_rcv->id_correlacional);
-			broker_logger_info("Cantidad: %d", appeared_rcv->cantidad);
 			broker_logger_info("Nombre Pokemon: %s",
 					appeared_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d",
 					appeared_rcv->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
-			usleep(50000);
+
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
+
 			int from = save_on_memory(message_void);
 			broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d",
 					from);
@@ -376,6 +383,7 @@ static void *handle_connection(void *arg) {
 			create_message_ack(id, appeared_queue, APPEARED_QUEUE);
 
 			appeared_snd->id_correlacional = appeared_rcv->id_correlacional;
+			pthread_mutex_unlock(&msave);
 
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
@@ -404,6 +412,7 @@ static void *handle_connection(void *arg) {
 
 			t_message_to_void *message_void = convert_to_void(protocol,
 					get_rcv);
+			pthread_mutex_lock(&msave);
 			int from = save_on_memory(message_void);
 			broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
 			save_node_list_memory(from, message_void->size_message, GET_QUEUE,
@@ -415,7 +424,7 @@ static void *handle_connection(void *arg) {
 			send(client_fd, &get_rcv->id_correlacional, sizeof(uint32_t), 0);
 
 			create_message_ack(get_rcv->id_correlacional, get_queue, GET_QUEUE);
-
+			pthread_mutex_unlock(&msave);
 			// To GC
 			get_protocol = GET_POKEMON;
 			broker_logger_info("GET SENT TO GAMECARD");
@@ -444,6 +453,7 @@ static void *handle_connection(void *arg) {
 
 			t_message_to_void *message_void = convert_to_void(protocol,
 					catch_rcv);
+			pthread_mutex_lock(&msave);
 			int from = save_on_memory(message_void);
 			broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
 			save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
@@ -457,6 +467,7 @@ static void *handle_connection(void *arg) {
 
 			create_message_ack(catch_rcv->id_correlacional, catch_queue,
 					CATCH_QUEUE);
+			pthread_mutex_unlock(&msave);
 
 			// To GC
 			catch_protocol = CATCH_POKEMON;
@@ -490,6 +501,7 @@ static void *handle_connection(void *arg) {
 			}
 			t_message_to_void *message_void = convert_to_void(protocol,
 					loc_rcv);
+			pthread_mutex_lock(&msave);
 			int from = save_on_memory(message_void);
 			broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d",
 					from);
@@ -502,6 +514,7 @@ static void *handle_connection(void *arg) {
 					LOCALIZED_QUEUE);
 
 			loc_snd->id_correlacional = loc_rcv->id_correlacional;
+			pthread_mutex_unlock(&msave);
 
 			// To team
 			localized_protocol = LOCALIZED_POKEMON;
@@ -541,6 +554,7 @@ static void *handle_connection(void *arg) {
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol,
 					caught_rcv);
+			pthread_mutex_lock(&msave);
 			int from = save_on_memory(message_void);
 			broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d",
 					from);
@@ -552,6 +566,8 @@ static void *handle_connection(void *arg) {
 					CAUGHT_QUEUE);
 
 			caught_snd->id_correlacional = caught_rcv->id_correlacional;
+			pthread_mutex_unlock(&msave);
+
 			// To Team
 			caught_protocol = CAUGHT_POKEMON;
 			broker_logger_info("CAUGHT SENT TO TEAM");
@@ -710,7 +726,7 @@ void broker_exit() {
 
 t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
-	int offset = 0;
+	uint32_t offset = 0;
 	t_message_to_void* message_to_void = malloc(sizeof(t_message_to_void));
 	message_to_void->size_message = 0;
 	switch (protocol) {
@@ -771,11 +787,9 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		memcpy(message_to_void->message + offset, &appeared_rcv->pos_y,
 				sizeof(uint32_t));
 		offset += sizeof(uint32_t);
-		memcpy(message_to_void->message + offset, &appeared_rcv->cantidad,
-				sizeof(uint32_t));
 
 		message_to_void->size_message = appeared_rcv->tamanio_nombre
-				+ sizeof(uint32_t) * 4;
+				+ sizeof(uint32_t) * 3;
 		break;
 	}
 		// From team
@@ -934,7 +948,6 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		offset += sizeof(uint32_t);
 		memcpy(&appeared_rcv->pos_y, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
-		memcpy(&appeared_rcv->cantidad, message + offset, sizeof(uint32_t));
 
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
@@ -942,7 +955,6 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("Name length: %d", appeared_rcv->tamanio_nombre);
 		broker_logger_info("X Axis position: %d", appeared_rcv->pos_x);
 		broker_logger_info("Y Axis position: %d", appeared_rcv->pos_y);
-		broker_logger_info("Quantity: %d", appeared_rcv->cantidad);
 
 		return appeared_rcv;
 	}

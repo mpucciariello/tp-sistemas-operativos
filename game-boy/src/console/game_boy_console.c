@@ -23,6 +23,7 @@ void broker_new_pokemon_command(char** arguments, int arguments_size) {
 
 	utils_serialize_and_send(game_boy_broker_fd, NEW_POKEMON, new_snd);
 	game_boy_logger_info("Envio de NEW Pokemon");
+	usleep(500000);
 }
 
 void broker_appeared_pokemon_command(char** arguments, int arguments_size) {
@@ -37,7 +38,6 @@ void broker_appeared_pokemon_command(char** arguments, int arguments_size) {
 	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
 	appeared_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	appeared_snd->tamanio_nombre = strlen(arguments[2]);
-	appeared_snd->cantidad = 1;
 	appeared_snd->pos_x = atoi(arguments[3]);
 	appeared_snd->pos_y = atoi(arguments[4]);
 	appeared_snd->id_correlacional = atoi(arguments[5]);
@@ -45,6 +45,7 @@ void broker_appeared_pokemon_command(char** arguments, int arguments_size) {
 	utils_serialize_and_send(game_boy_broker_fd, APPEARED_POKEMON,
 			appeared_snd);
 	game_boy_logger_info("Envio de APPEARED Pokemon");
+	usleep(500000);
 }
 
 void broker_catch_pokemon_command(char** arguments, int arguments_size) {
@@ -62,6 +63,7 @@ void broker_catch_pokemon_command(char** arguments, int arguments_size) {
 
 	utils_serialize_and_send(game_boy_broker_fd, CATCH_POKEMON, catch_snd);
 	game_boy_logger_info("Envio de CATCH_POKEMON");
+	usleep(500000);
 }
 
 void broker_caught_pokemon_command(char** arguments, int arguments_size) {
@@ -82,6 +84,7 @@ void broker_caught_pokemon_command(char** arguments, int arguments_size) {
 
 	utils_serialize_and_send(game_boy_broker_fd, CAUGHT_POKEMON, caught_snd);
 	game_boy_logger_info("Envio de CAUGHT_POKEMON Pokemon");
+	usleep(500000);
 }
 
 void broker_get_pokemon_command(char** arguments, int arguments_size) {
@@ -97,6 +100,7 @@ void broker_get_pokemon_command(char** arguments, int arguments_size) {
 
 	utils_serialize_and_send(game_boy_broker_fd, GET_POKEMON, get_snd);
 	game_boy_logger_info("Envio de GET_POKEMON");
+	usleep(500000);
 }
 
 void team_appeared_pokemon_command(char** arguments, int arguments_size) {
@@ -109,12 +113,12 @@ void team_appeared_pokemon_command(char** arguments, int arguments_size) {
 	t_appeared_pokemon* appeared_snd = malloc(sizeof(t_appeared_pokemon));
 	appeared_snd->nombre_pokemon = strcat(string_duplicate(arguments[2]), "\0");
 	appeared_snd->tamanio_nombre = strlen(arguments[2]);
-	appeared_snd->cantidad = 1;
 	appeared_snd->pos_x = atoi(arguments[3]);
 	appeared_snd->pos_y = atoi(arguments[4]);
 
 	utils_serialize_and_send(game_boy_team_fd, APPEARED_POKEMON, appeared_snd);
 	game_boy_logger_info("Envio de APPEARED Pokemon");
+	usleep(500000);
 }
 
 void game_card_new_pokemon_command(char** arguments, int arguments_size) {
@@ -135,6 +139,7 @@ void game_card_new_pokemon_command(char** arguments, int arguments_size) {
 
 	utils_serialize_and_send(game_boy_game_card_fd, NEW_POKEMON, new_snd);
 	game_boy_logger_info("Envio de NEW Pokemon");
+	usleep(500000);
 }
 
 void game_card_catch_pokemon_command(char** arguments, int arguments_size) {
@@ -154,6 +159,7 @@ void game_card_catch_pokemon_command(char** arguments, int arguments_size) {
 
 	utils_serialize_and_send(game_boy_game_card_fd, CATCH_POKEMON, catch_snd);
 	game_boy_logger_info("Envio de CATCH_POKEMON Pokemon");
+	usleep(500000);
 }
 
 void game_card_get_pokemon_command(char** arguments, int arguments_size) {
@@ -169,6 +175,7 @@ void game_card_get_pokemon_command(char** arguments, int arguments_size) {
 
 	utils_serialize_and_send(game_boy_game_card_fd, GET_POKEMON, get_snd);
 	game_boy_logger_info("Envio de GET_POKEMON Pokemon");
+	usleep(500000);
 }
 
 t_cola get_queue_by_name(char* cola) {
@@ -206,6 +213,7 @@ void subscriber_command(char** arguments, int arguments_size) {
 	sub_snd->seconds = atoi(arguments[2]);
 	utils_serialize_and_send(game_boy_broker_fd, subscribe_protocol, sub_snd);
 	game_boy_logger_info("Suscripcion exitosa");
+	usleep(500000);
 
 	int protocol;
 	int received_bytes;
@@ -362,7 +370,6 @@ void subscriber_command(char** arguments, int arguments_size) {
 					protocol);
 			game_boy_logger_info("ID correlacional: %d",
 					appeared_rcv->id_correlacional);
-			game_boy_logger_info("Cantidad: %d", appeared_rcv->cantidad);
 			game_boy_logger_info("Nombre Pokemon: %s",
 					appeared_rcv->nombre_pokemon);
 			game_boy_logger_info("Largo nombre: %d",

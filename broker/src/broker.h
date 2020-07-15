@@ -24,11 +24,11 @@ void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
 void add_to(t_list *list, t_subscribe* sub);
 
-pthread_mutex_t mpointer,mid, msubs;
+pthread_mutex_t mpointer, mid, msubs, msave;
 
 char *memory;
 
-int pointer;
+uint32_t pointer;
 
 uint32_t id;
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
