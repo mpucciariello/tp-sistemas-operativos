@@ -148,12 +148,14 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 int team_planner_calcular_diferencia(t_entrenador_pokemon* entrenador) {
 	int diferencia = 0;
 	bool lo_tiene = false;
+	t_pokemon* pokemon_default = malloc(sizeof(t_pokemon));
+	t_pokemon* pokemon_objetivo = malloc(sizeof(t_pokemon));
 
 	for (int i = 0; i < list_size(entrenador->pokemons); i++) {
-		t_pokemon* pokemon_default = list_get(entrenador->pokemons, i);
+		pokemon_default = list_get(entrenador->pokemons, i);
 
 		for (int j = 0; j < list_size(entrenador->targets); j++) {
-			t_pokemon* pokemon_objetivo = list_get(entrenador->targets, i);
+			pokemon_objetivo = list_get(entrenador->targets, i);
 			if (!string_equals_ignore_case(pokemon_default->name, pokemon_objetivo->name)) {
 				continue;
 			} else {
@@ -568,12 +570,12 @@ void team_planner_solve_deadlock() {
 		free(pokemon_de_entrenador_bloqueante);
 		free(entrenador_bloqueado);
 		team_planner_exit();
+		socket_close_conection(team_socket);
 		exit(0);
 	}
 }
 
 void team_planner_exit() {
-	socket_close_conection(team_socket);
 	team_config_free();
 	team_logger_destroy();
 	team_planner_destroy();
@@ -765,29 +767,51 @@ void team_planner_destroy_pokemons(t_pokemon* pokemon) {
 }
 
 void team_planner_destroy_entrenador(t_entrenador_pokemon* entrenador) {
-	free(entrenador->position);
 
-	if(entrenador->pokemons != NULL){
-		list_destroy_and_destroy_elements(entrenador->pokemons, (void*)team_planner_destroy_pokemons);
-		free(entrenador->pokemons);
+	if(entrenador != NULL){
+		if(entrenador->pokemons != NULL){
+			list_destroy_and_destroy_elements(entrenador->pokemons, (void*)team_planner_destroy_pokemons);
+			free(entrenador->pokemons);
+		}
+
+		if(entrenador->targets != NULL){
+			list_destroy_and_destroy_elements(entrenador->targets, (void*)team_planner_destroy_pokemons);
+			free(entrenador->targets);
+		}
+		pthread_mutex_destroy(&entrenador->sem_move_trainers);
+		if(entrenador->list_id_catch != NULL){
+			list_destroy(entrenador->list_id_catch);
+		}
+
+
+		if(entrenador->position != NULL){
+			free(entrenador->position);
+		}
+		free(entrenador);
 	}
 
-	if(entrenador->targets != NULL){
-		list_destroy_and_destroy_elements(entrenador->targets, (void*)team_planner_destroy_pokemons);
-		free(entrenador->targets);
-	}
-	pthread_mutex_destroy(&entrenador->sem_move_trainers);
-	if(entrenador->list_id_catch != NULL){
-		list_destroy(entrenador->list_id_catch);
-	}
-	free(entrenador);
 }
 
 void planner_destroy_quees() {
-	/*list_destroy_and_destroy_elements(new_queue, (void*)team_planner_destroy_entrenador);
-	list_destroy_and_destroy_elements(ready_queue, (void*)team_planner_destroy_entrenador);
-	list_destroy_and_destroy_elements(block_queue, (void*)team_planner_destroy_entrenador);
-	list_destroy_and_destroy_elements(exit_queue, (void*)team_planner_destroy_entrenador);*/
+	if(!list_is_empty(new_queue)){
+		list_destroy_and_destroy_elements(new_queue, (void*)team_planner_destroy_entrenador);
+	}
+
+	if(!list_is_empty(ready_queue)){
+		list_destroy_and_destroy_elements(ready_queue, (void*)team_planner_destroy_entrenador);
+	}
+
+	if(!list_is_empty(block_queue)){
+		list_destroy_and_destroy_elements(block_queue, (void*)team_planner_destroy_entrenador);
+	}
+
+	if(!list_is_empty(exit_queue)){
+		list_destroy_and_destroy_elements(exit_queue, (void*)team_planner_destroy_entrenador);
+	}
+
+	if(!list_is_empty(total_targets_pokemons)){
+		list_destroy_and_destroy_elements(total_targets_pokemons, (void*) team_planner_destroy_pokemons);
+	}
 	list_destroy(message_catch_sended);
 	list_destroy(pokemones_pendientes);
 	list_destroy(real_targets_pokemons);
@@ -796,7 +820,6 @@ void planner_destroy_quees() {
 	list_destroy(pokemons_localized);
 	list_destroy(got_pokemons);
 	list_destroy(pokemon_to_catch);
-	list_destroy(total_targets_pokemons);
 }
 
 void team_planner_destroy() {

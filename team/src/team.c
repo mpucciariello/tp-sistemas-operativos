@@ -334,9 +334,7 @@ void subscribe_to1(void *arg) {
 	int new_broker_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 
 	if (new_broker_fd < 0) {
-		if (already_printed) {
-			team_logger_warn("No se pudo conectar con BROKER porque no se encuentra activo. Se realizará la operación por default");
-		}
+		team_logger_warn("No se pudo conectar con BROKER porque no se encuentra activo. Se realizará la operación por default");
 		socket_close_conection(new_broker_fd);
 	} else {
 		team_logger_info("Conexión con BROKER establecida correctamente!");
