@@ -48,6 +48,7 @@ void remover_totalmente_de_pokemon_to_catch(char*);
 bool tengo_en_pokemon_to_catch(char*);
 void atrapar_pokemon(t_entrenador_pokemon*, char*);
 void team_retry_connect_1(void*);
+void subscribe_to1(void*);
 
 
 #endif /* TEAM_H_ */

@@ -313,6 +313,27 @@ void subscribe_to(void *arg) {
 	int new_broker_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
 
 	if (new_broker_fd < 0) {
+		socket_close_conection(new_broker_fd);
+	} else {
+		t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
+
+		t_protocol subscribe_protocol = SUBSCRIBE;
+		sub_snd->ip = string_duplicate(team_config->ip_team);
+		sub_snd->puerto = team_config->puerto_team;
+		sub_snd->proceso = TEAM;
+		sub_snd->cola = cola;
+		utils_serialize_and_send(new_broker_fd, subscribe_protocol, sub_snd);
+
+		receive_msg(new_broker_fd, 0);
+		is_connected = true;
+	}
+}
+
+void subscribe_to1(void *arg) {
+	t_cola cola = *((int *) arg);
+	int new_broker_fd = socket_connect_to_server(team_config->ip_broker, team_config->puerto_broker);
+
+	if (new_broker_fd < 0) {
 		if (already_printed) {
 			team_logger_warn("No se pudo conectar con BROKER porque no se encuentra activo. Se realizará la operación por default");
 		}
@@ -343,7 +364,6 @@ void team_retry_connect(void* arg) {
 	}
 }
 
-//TODO: no loguea intento de reconexión.
 void team_retry_connect_1(void* arg) {
 	void* arg2 = arg;
 
@@ -351,7 +371,7 @@ void team_retry_connect_1(void* arg) {
 
 	while (true) {
 		is_connected = false;
-		subscribe_to(arg2);
+		subscribe_to1(arg2);
 		utils_delay(team_config->tiempo_reconexion);
 
 		if (!is_connected) {
