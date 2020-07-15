@@ -132,5 +132,7 @@ t_list* team_planner_filter_by_deadlock();
 int team_planner_calcular_diferencia(t_entrenador_pokemon*);
 t_list* team_planner_filter_by_deadlock();
 t_list* team_planner_remover_de_lista (t_list*, t_pokemon*);
+void team_planner_destroy_pokemons(t_pokemon* pokemon);
+void team_planner_destroy_entrenador(t_entrenador_pokemon* entrenador);
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
