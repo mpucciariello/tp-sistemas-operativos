@@ -8,7 +8,9 @@
 #include <commons/collections/queue.h>
 #include "../logger/team_logger.h"
 #include "../config/team_config.h"
+#include "../../../shared-common/common/sockets.h"
 #include "../../../shared-common/common/utils.h"
+
 
 typedef enum {
 	NEW, READY, BLOCK, EXEC, EXIT
@@ -54,6 +56,7 @@ typedef struct {
 	t_list* pos;
 } t_pokemon_received;
 
+int team_socket;
 
 sem_t sem_entrenadores_disponibles;
 sem_t sem_message_on_queue;

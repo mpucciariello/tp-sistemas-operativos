@@ -16,7 +16,6 @@
 #include "../../shared-common/common/sockets.h"
 #include "../../shared-common/common/utils.h"
 
-int team_socket;
 bool is_connected;
 bool already_printed;
 t_list* lista_auxiliar;
