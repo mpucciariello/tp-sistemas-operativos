@@ -1315,37 +1315,64 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 	int from = pointer;
 
 	if (pointer + message_void->size_message > broker_config->tamano_memoria){
-		int flag = 0;
-		while (1){
-
-			if(broker_config->algoritmo_particion_libre == FF){
-				from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
-			}
-			else{
-				from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
-			}
-			if(flag == 1){
-				if(broker_config->algoritmo_reemplazo == FIFO){
-					aplicar_algoritmo_reemplazo_FIFO();
+		if (pointer + message_void->size_message > broker_config->tamano_memoria){
+			int flag = 1;
+			int done_compactacion =0;
+			int close_while = 0;
+			while (1){
+				broker_logger_info("Buscar Particion libre");
+				if(close_while == 1){
+					break;
 				}
-				else{
-					aplicar_algoritmo_reemplazo_LRU();
+				switch (flag){
+					case 1:{
+						broker_logger_info("Aplicar algoritmo de particion libre");
+						if(broker_config->algoritmo_particion_libre == FF){
+							from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
+						}
+						else{
+							from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
+						}
+						if(from == -1){
+							flag = 2;
+							if(done_compactacion == 1){
+								flag = 3;
+							}
+						}
+						else {
+							save_node_list_memory(from, message_void->size_message, cola,
+																id_correlacional);
+							broker_logger_info("Pointer %d",from);
+							close_while = 1;
+						}
+						break;
+					}
+					case 2:{
+						broker_logger_info("Aplicado compactacion");
+						flag = 1;
+						done_compactacion = 1;
+						compactacion();
+						break;
+					}
+					case 3:{
+						broker_logger_warn("Aplicado algoritmo de reemplazo");
+						flag = 1;
+						done_compactacion = 0;
+						if(broker_config->algoritmo_reemplazo == FIFO){
+							aplicar_algoritmo_reemplazo_FIFO();
+						}
+						else{
+							aplicar_algoritmo_reemplazo_LRU();
+						}
+						break;
+					}
 				}
 			}
-			if(from ==-1){
-				compactacion();
-				flag = 1;
-			}
-			else{
-				break;
-			}
-
 		}
-
-
 		save_node_list_memory(from, message_void->size_message, cola,
 											id_correlacional);
 		pthread_mutex_unlock(&mpointer);
+		broker_logger_info("Pointer %d",from);
 		return from;
 	}
 
@@ -1796,7 +1823,7 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 			list_add(new_list,memory_node);
 		}
 	}
-	list_destroy(list_memory );
+	//list_destroy(list_memory );
 	if(flag == 0){
 		pointer_busy =  -1;
 	}
@@ -1848,7 +1875,7 @@ void compactacion(){
 			memory_node_free->pointer = last_pointer;
 			list_add(new_list,memory_node_free);
 			list_memory =  new_list;
-			 list_destroy(new_list);
+			//list_destroy(new_list);
 			if(i+1 == list_size(list_memory)){
 				new_list = list_create();
 			}
