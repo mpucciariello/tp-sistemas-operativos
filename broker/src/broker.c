@@ -1320,22 +1320,24 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 			int done_compactacion =0;
 			int close_while = 0;
 			while (1){
-				broker_logger_info("Buscar Particion libre");
 				if(close_while == 1){
 					break;
 				}
 				switch (flag){
 					case 1:{
-						broker_logger_info("Aplicar algoritmo de particion libre");
+
 						if(broker_config->algoritmo_particion_libre == FF){
+							broker_logger_info("Aplicar algoritmo FIRST FIT");
 							from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
 						}
 						else{
+							broker_logger_info("Aplicar algoritmo BEST FIT");
 							from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
 						}
 						if(from == -1){
-							flag = 2;
+							flag = 2;//para entrar a compactacion
 							if(done_compactacion == 1){
+								broker_logger_info("Compactacion ya aplicado previamente , ir a paso 3");
 								flag = 3;
 							}
 						}
@@ -1352,6 +1354,7 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 						flag = 1;
 						done_compactacion = 1;
 						compactacion();
+						broker_logger_info("IR A PASO 1");
 						break;
 					}
 					case 3:{
@@ -1364,7 +1367,9 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 						else{
 							aplicar_algoritmo_reemplazo_LRU();
 						}
+						broker_logger_warn("IR a PAso 1");
 						break;
+
 					}
 				}
 			}
@@ -1401,6 +1406,7 @@ int save_on_memory(t_message_to_void *message_void) {
 		}
 	}
 	memcpy(memory + from, message_void->message, message_void->size_message);
+	pthread_mutex_unlock(&msave);
 	pthread_mutex_unlock(&mpointer);
 	return from;
 }
@@ -1532,7 +1538,10 @@ void send_all_messages(t_subscribe *subscriber) {
 
 			pthread_mutex_lock(&mmem);
 			t_nodo_memory *nodo_mem = find_node(nodo_cpy);
-			update_timings(nodo_mem);
+			if (is_buddy()) {
+				update_timings(nodo_mem);
+			}
+			
 			pthread_mutex_unlock(&mmem);
 
 			switch (subscriber->cola) {
@@ -1843,14 +1852,26 @@ void liberar_memoria(int id_correlacional,t_cola cola){
 }
 
 void compactacion(){
+    estado_memoria();
+	broker_logger_info("cantidad elementos previa a compactacion de lista %d",list_size(list_memory));
 	t_list *new_list = list_create();
+	broker_logger_info(" iniciando compactacion");
+	int flag= 0;
 	for(int i=0;i<list_size(list_memory);i++){
 		t_nodo_memory* memory_node_free = list_get(list_memory,i);
-		if(memory_node_free->libre == true){
+		if(i == (list_size(list_memory)-1)){
+			list_add(new_list,memory_node_free);
+			break;
+
+		}
+		if(memory_node_free->libre == false){
+			list_add(new_list,memory_node_free);
+		}
+		if(memory_node_free->libre == true ){
 
 			t_nodo_memory* memory_node_add;
 			t_nodo_memory* memory_node_next = NULL;
-			int last_pointer;
+			int last_pointer = memory_node_free->pointer;
 			if(i+1<list_size(list_memory)){
 				memory_node_next= list_get(list_memory,i+1);
 			}
@@ -1861,33 +1882,42 @@ void compactacion(){
 
 			}
 			else{
+				int offset = memory_node_free->pointer;
 				for(int k=i+1;k<list_size(list_memory);k++){
 					memory_node_add= list_get(list_memory,k);
-					memcpy(memory+memory_node_free->pointer,memory+memory_node_add->pointer,memory_node_add->size);
-					last_pointer = memory_node_add->pointer  - memory_node_free->size +memory_node_add->size ;
-					memory_node_add->pointer = memory_node_free->pointer;
-					if(i==0){
-					  memory_node_add->pointer =0;
-					}
+					memcpy(memory+offset,memory+memory_node_add->pointer,memory_node_add->size);
+					memory_node_add->pointer = offset ;
 					list_add(new_list,memory_node_add);
+
+					offset = offset + memory_node_add->size;
+					last_pointer = offset;
+
+
+
 				}
+				flag = 1;
 			}
 			memory_node_free->pointer = last_pointer;
 			list_add(new_list,memory_node_free);
 			list_memory =  new_list;
 			//list_destroy(new_list);
-			if(i+1 == list_size(list_memory)){
+			if(flag == 1){
+				i=-1;
 				new_list = list_create();
 			}
+			broker_logger_warn("movido nodo de lugar");
+			estado_memoria();
+			broker_logger_warn("estado nodo de lugar");
 
 		}
-		else{
-			list_add(new_list,memory_node_free);
-		}
+
 	}
 	if(new_list!= NULL){
 		list_memory =  new_list;
 	}
+	estado_memoria();
+	broker_logger_info("Terminado compactacion");
+	broker_logger_info("cantidad elementos de lista %d",list_size(list_memory));
 
 }
 
@@ -1921,4 +1951,15 @@ void aplicar_algoritmo_reemplazo_LRU(){
 	}
 	t_nodo_memory *nodo_memoria =list_get(list_memory,position);
 	nodo_memoria->libre = true;
+}
+
+void estado_memoria(){
+	for (int i=0; i<list_size(list_memory);i++){
+		t_nodo_memory *nodo_memoria =list_get(list_memory,i);
+		broker_logger_info(" Posicion %d",nodo_memoria->pointer);
+		broker_logger_info(" Pointer %d",nodo_memoria->pointer);
+		broker_logger_info(" estado %d",nodo_memoria->libre);
+		broker_logger_info(" size %d",nodo_memoria->size);
+		broker_logger_info(" time %d",nodo_memoria->time_lru);
+	}
 }

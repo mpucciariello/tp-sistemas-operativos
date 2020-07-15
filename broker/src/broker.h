@@ -26,6 +26,7 @@ void compactacion();
 
 pthread_mutex_t mpointer, mid, msubs, msave, mget, mappeared, mloc, mcatch, mcaught, mnew, mmem;
 
+
 char *memory;
 
 uint32_t pointer;
@@ -96,4 +97,5 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *message_void);
 void aplicar_algoritmo_reemplazo_LRU();
 void aplicar_algoritmo_reemplazo_FIFO();
+void estado_memoria();
 #endif  /* BROKER_H_ */
