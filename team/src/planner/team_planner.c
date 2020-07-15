@@ -754,6 +754,10 @@ bool team_planner_trainer_completed_with_success(t_entrenador_pokemon* entrenado
 }
 
 void team_planner_destroy_pokemons(t_pokemon* pokemon) {
+	if(pokemon->name != NULL){
+		free(pokemon->position);
+	}
+
 	free(pokemon->name);
 	if(pokemon->position != NULL){
 		free(pokemon->position);

@@ -42,7 +42,6 @@ void team_init() {
 	pthread_t planificator;
 	pthread_t algoritmo_cercania_entrenadores;
 	team_planner_init();
-	send_get_message();
 
 	already_printed = false;
 	t_cola cola_appeared = APPEARED_QUEUE;
@@ -65,7 +64,9 @@ void team_init() {
 	pthread_detach(planificator);
 
 	team_server_init();
+	send_get_message();
 	usleep(500000);
+
 }
 
 void team_planner_remove_pokemon_from_catch(t_pokemon* pokemon) {
@@ -221,6 +222,7 @@ void send_get_message() {
 		if ((send_message(get_send, get_protocol, get_id_corr)) > 0) {
 			team_logger_info("Se recibió id correlacional %d en respuesta al GET", get_id_corr);
 		}
+		team_logger_info("se envió un mensaje get");
 		usleep(500000);
 	}
 }
