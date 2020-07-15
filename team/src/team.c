@@ -343,6 +343,7 @@ void team_retry_connect(void* arg) {
 	}
 }
 
+//TODO: no loguea intento de reconexión.
 void team_retry_connect_1(void* arg) {
 	void* arg2 = arg;
 
@@ -352,14 +353,13 @@ void team_retry_connect_1(void* arg) {
 		is_connected = false;
 		subscribe_to(arg2);
 		utils_delay(team_config->tiempo_reconexion);
-	}
 
-	if (!is_connected) {
-		team_logger_warn("Resultado de proceso de reintento de comunicación con el BROKER no fue exitoso");
-	} else {
-		team_logger_info("Resultado de proceso de reintento de comunicación con el BROKER fue exitoso");
+		if (!is_connected) {
+			team_logger_warn("Resultado de proceso de reintento de comunicación con el BROKER no fue exitoso");
+		} else {
+			team_logger_info("Resultado de proceso de reintento de comunicación con el BROKER fue exitoso");
+		}
 	}
-
 }
 
 t_catch_pokemon* filter_msg_catch_by_id_caught(uint32_t id_corr_caught) {
@@ -422,7 +422,6 @@ void *receive_msg(int fd, int send_to) {
 			quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
 
 			if (caught_rcv->result) {
-				list_add(entrenador->pokemons, catch_message->nombre_pokemon);
 				atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
 			} else {
 				team_logger_info("En entrenador %d no pudo atrapar un %s.", entrenador->id, catch_message->nombre_pokemon);
