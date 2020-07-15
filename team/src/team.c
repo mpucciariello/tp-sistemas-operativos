@@ -5,7 +5,6 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 
 	team_init();
-	team_exit();
 
 	return EXIT_SUCCESS;
 }
@@ -169,13 +168,9 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 		team_planner_solve_deadlock();
 	}
 
-	if (team_planner_all_finished()) { //TODO: no finaliza, controlar que termine con exito
+	if (team_planner_all_finished()) {
 		team_logger_info("Todos los entrenadores completaron su objetivo! El team FINALIZARÁ.");
-		cercania = false;
-		planificacion = false;
-		pthread_cancel(algoritmo_cercania_entrenadores);
-		pthread_cancel(planificator);
-		team_planner_end_trainer_threads();
+		team_planner_exit();
 		exit(0);
 	}
 
@@ -277,7 +272,7 @@ void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 }
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
-	while (entrenador->esta_activo) {
+	while (1) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
@@ -309,7 +304,6 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		}
 		sem_post(&sem_planificador);
 	}
-
 }
 
 void subscribe_to(void *arg) {
@@ -619,10 +613,3 @@ void *handle_connection(void *arg) {
 	return NULL;
 }
 
-void team_exit() {
-	team_planner_print_fullfill_target();
-	socket_close_conection(team_socket);
-	team_planner_destroy();
-	team_config_free();
-	team_logger_destroy();
-}

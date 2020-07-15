@@ -26,7 +26,6 @@ int team_load();
 void team_init();
 void team_server_init();
 void *handle_connection(void *);
-void team_exit();
 void *receive_msg(int, int);
 void send_ack(void*);
 void subscribe_to(void *);

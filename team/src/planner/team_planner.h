@@ -16,7 +16,7 @@ typedef enum {
 
 typedef struct {
 	int blocked_time;
-	int status; // 0 -> Puede correrse, no espera nada. 1 -> espera un mensaje.
+	int status;
 } t_entrenador_info_bloqueo;
 
 typedef struct {
@@ -41,7 +41,6 @@ typedef struct {
 	t_pokemon* pokemon_a_atrapar; 
 	bool deadlock;
 	int diferencia;
-	bool esta_activo;
 } t_entrenador_pokemon;
 
 typedef enum {
@@ -55,9 +54,6 @@ typedef struct {
 	t_list* pos;
 } t_pokemon_received;
 
-
-bool planificador;
-bool cercania;
 
 sem_t sem_entrenadores_disponibles;
 sem_t sem_message_on_queue;
@@ -125,7 +121,6 @@ void team_planner_get_real_targets();
 void team_planner_check_SJF_CD_time(t_entrenador_pokemon*);
 void team_planner_check_RR_burst(t_entrenador_pokemon*);
 t_list* team_planner_get_trainners();
-void team_planner_end_trainer_threads();
 bool team_planner_all_finished();
 void team_planner_eliminar_pokemon_de_objetivos(t_list*, char*);
 t_list* team_planner_filter_by_deadlock();
@@ -134,5 +129,6 @@ t_list* team_planner_filter_by_deadlock();
 t_list* team_planner_remover_de_lista (t_list*, t_pokemon*);
 void team_planner_destroy_pokemons(t_pokemon* pokemon);
 void team_planner_destroy_entrenador(t_entrenador_pokemon* entrenador);
+void team_planner_exit();
 
 #endif /* PLANNER_TEAM_PLANNER_H_ */
