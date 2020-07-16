@@ -1351,7 +1351,7 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 					}
 					switch (flag){
 						case 1:{
-
+							estado_memoria();
 							if(broker_config->algoritmo_particion_libre == FF){
 								broker_logger_info("Aplicar algoritmo FIRST FIT");
 								from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
@@ -1423,27 +1423,37 @@ int save_on_memory(t_message_to_void *message_void) {
 }
 
 void save_node_list_memory(int puntero, int msg_size, t_cola cola, int id) {
+	estado_memoria();
 	t_nodo_memory * nodo_mem = malloc(sizeof(t_nodo_memory));
 
 	if (!is_buddy()) {
 		nodo_mem->pointer = puntero;
-		nodo_mem->size = max (broker_config->tamano_minimo_particion,nodo_mem->size);
+		nodo_mem->size = max (broker_config->tamano_minimo_particion,msg_size);
 		nodo_mem->cola = cola;
 		nodo_mem->id = id;
 		nodo_mem->libre = false;
 		nodo_mem->time_lru = (unsigned) time(NULL);
 
 		_Bool node_matches_received_queue(t_nodo_memory* node) {
-				return node->pointer == puntero;
-			}
+						return node->pointer == puntero;
+
+		}
 
 		t_nodo_memory * node_finded =  list_find(list_memory,(void *)node_matches_received_queue);
 		int size = node_finded->size;
 		int next_pointer = node_finded->pointer + nodo_mem->size ;
-		node_finded = nodo_mem ;
-		nodo_mem->size = size;
+
+		node_finded->size = max (broker_config->tamano_minimo_particion,msg_size);
+	    node_finded->cola = cola;
+		node_finded->id = id;
+		node_finded->libre = false;
+		node_finded->time_lru = (unsigned) time(NULL);
+
+		nodo_mem->size = size - max (broker_config->tamano_minimo_particion,msg_size);
 		nodo_mem->pointer = next_pointer;
 		nodo_mem->libre = true;
+		nodo_mem->time_lru = (unsigned) time(NULL);
+		estado_memoria();
 	}
 
 	else {
@@ -1834,15 +1844,8 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 			flag = 1;
 			memory_node->cola = cola;
 			memory_node->id = id_correlacional;
-			if(message->size_message > broker_config->tamano_minimo_particion){
-				size_free = memory_node->size - message->size_message ;
-				memory_node->size = message->size_message ;
-			}
-			else{
-				size_free = memory_node->size - broker_config->tamano_minimo_particion;
-				memory_node->size = broker_config->tamano_minimo_particion;
-
-			}
+			size_free = memory_node->size - max (message->size_message,broker_config->tamano_minimo_particion);
+			memory_node->size = max (message->size_message,broker_config->tamano_minimo_particion) ;
 			pointer_busy = memory_node->pointer;
 			memory_node->libre = false;
 			list_add(new_list,memory_node);
