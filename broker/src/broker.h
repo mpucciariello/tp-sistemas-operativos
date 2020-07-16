@@ -24,7 +24,7 @@ void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
 void add_to(t_list *list, t_subscribe* sub);
 
-pthread_mutex_t mpointer, mid, msubs, msave;
+pthread_mutex_t mpointer, mid, msubs, msave, mget, mappeared, mloc, mcatch, mcaught, mnew;
 
 char *memory;
 
@@ -46,7 +46,6 @@ typedef struct {
 typedef struct {
 	char* ip;
 	uint32_t puerto;
-	uint32_t id;
 	int32_t endtime;
 	int32_t f_desc;
 } t_subscribe_nodo;

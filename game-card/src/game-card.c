@@ -179,6 +179,8 @@ void *recv_game_card(int fd, int respond_to) {
 				ack_send->id_corr_msg = new_receive->id_correlacional;
 				ack_send->queue = NEW_QUEUE;
 				ack_send->sender_name = "GAMECARD";
+				ack_send->ip = game_card_config->ip_game_card;
+				ack_send->port = game_card_config->puerto_game_card;
 
 				utils_serialize_and_send(client_fd, ack_protocol, ack_send);
 			}
@@ -213,6 +215,8 @@ void *recv_game_card(int fd, int respond_to) {
 				ack_send->id_corr_msg = get_rcv->id_correlacional;
 				ack_send->queue = GET_QUEUE;
 				ack_send->sender_name = "GAMECARD";
+				ack_send->ip = game_card_config->ip_game_card;
+				ack_send->port = game_card_config->puerto_game_card;
 
 				utils_serialize_and_send(client_fd, ack_protocol, ack_send);
 			}
@@ -250,6 +254,8 @@ void *recv_game_card(int fd, int respond_to) {
 				ack_send->id_corr_msg = catch_rcv->id_correlacional;
 				ack_send->queue = CATCH_QUEUE;
 				ack_send->sender_name = "GAMECARD";
+				ack_send->ip = game_card_config->ip_game_card;
+				ack_send->port = game_card_config->puerto_game_card;
 
 				utils_serialize_and_send(client_fd, ack_protocol, ack_send);
 			}

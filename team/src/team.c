@@ -446,6 +446,8 @@ void *receive_msg(int fd, int send_to) {
 				ack_send->id_corr_msg = caught_rcv->id_correlacional;
 				ack_send->queue = CAUGHT_QUEUE;
 				ack_send->sender_name = "TEAM";
+				ack_send->ip = team_config->ip_team;
+				ack_send->port = team_config->puerto_team;
 
 				utils_serialize_and_send(fd, ack_protocol, ack_send);
 				usleep(500000);
@@ -479,6 +481,8 @@ void *receive_msg(int fd, int send_to) {
 					ack_send->id_corr_msg = loc_rcv->id_correlacional;
 					ack_send->queue = LOCALIZED_QUEUE;
 					ack_send->sender_name = "TEAM";
+					ack_send->ip = team_config->ip_team;
+					ack_send->port = team_config->puerto_team;
 
 					utils_serialize_and_send(fd, ack_protocol, ack_send);
 					usleep(500000);
@@ -521,6 +525,8 @@ void *receive_msg(int fd, int send_to) {
 				ack_send->id_corr_msg = appeared_rcv->id_correlacional;
 				ack_send->queue = APPEARED_QUEUE;
 				ack_send->sender_name = "TEAM";
+				ack_send->ip = team_config->ip_team;
+				ack_send->port = team_config->puerto_team;
 
 				utils_serialize_and_send(fd, ack_protocol, ack_send);
 				usleep(500000);

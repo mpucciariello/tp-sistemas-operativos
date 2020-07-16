@@ -223,6 +223,30 @@ int broker_load() {
 		printf("\n mutex init failed\n");
 		return 1;
 	}
+	if (pthread_mutex_init(&mnew, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
+	if (pthread_mutex_init(&mappeared, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
+	if (pthread_mutex_init(&mcaught, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
+	if (pthread_mutex_init(&mcatch, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
+	if (pthread_mutex_init(&mget, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
+	if (pthread_mutex_init(&mloc, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
 	return 0;
 }
 
@@ -294,8 +318,10 @@ static void *handle_connection(void *arg) {
 		case ACK: {
 			pthread_mutex_lock(&msubs);
 			t_ack* ack_rcv = utils_receive_and_deserialize(client_fd, protocol);
-			broker_logger_info("Received ACK for msg with ID %d Protocol %s from process %s",
-					ack_rcv->id_corr_msg, get_protocol_name(ack_rcv->queue), ack_rcv->sender_name);
+			broker_logger_info(
+					"Received ACK for msg with ID %d Protocol %s from process %s",
+					ack_rcv->id_corr_msg, get_protocol_name(ack_rcv->queue),
+					ack_rcv->sender_name);
 
 			_Bool node_matches_received_queue(t_subscribe_message_node* node) {
 				return node->id == ack_rcv->id_corr_msg
@@ -303,25 +329,24 @@ static void *handle_connection(void *arg) {
 			}
 
 			_Bool subscriber_listed_for_ack(t_subscribe_ack_node* n) {
-				return n->subscribe->f_desc == client_fd;
+				return string_equals_ignore_case(n->subscribe->ip, ack_rcv->ip)
+						&& n->subscribe->puerto == ack_rcv->port;
 			}
 
-			t_subscribe_message_node* node_ack = list_find(
-					list_msg_subscribers, (void*) node_matches_received_queue);
+			t_subscribe_message_node* node_ack = list_find(list_msg_subscribers,
+					(void*) node_matches_received_queue);
 
-			broker_logger_warn("ID %d, cola: %s", node_ack->id, get_queue_name(node_ack->cola));
-			if (node_ack->list->elements_count != 0) {
-				t_subscribe_ack_node* node_subscriber = list_find(
-						node_ack->list,
-						(void*) subscriber_listed_for_ack);
-				node_subscriber->ack = true;
-			}
+			broker_logger_warn("ID %d, cola: %s", node_ack->id,
+					get_queue_name(node_ack->cola));
+			t_subscribe_ack_node* node_subscriber = list_find(
+					node_ack->list, (void*) subscriber_listed_for_ack);
+			node_subscriber->ack = true;
 			pthread_mutex_unlock(&msubs);
 
 			usleep(50000);
 			break;
 		}
-		// From GB
+			// From GB
 		case NEW_POKEMON: {
 			broker_logger_info("NEW RECEIVED FROM GB");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
@@ -354,7 +379,10 @@ static void *handle_connection(void *arg) {
 
 			for (int i = 0; i < list_size(new_queue); i++) {
 				t_subscribe_nodo* node = list_get(new_queue, i);
-				utils_serialize_and_send(node->f_desc, new_protocol, new_snd);
+				if (node->f_desc > 0) {
+					utils_serialize_and_send(node->f_desc, new_protocol,
+							new_snd);
+				}
 			}
 			usleep(50000);
 			break;
@@ -385,7 +413,8 @@ static void *handle_connection(void *arg) {
 					APPEARED_QUEUE, appeared_rcv->id_correlacional);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
 					memory);
-			create_message_ack(appeared_rcv->id_correlacional, appeared_queue, APPEARED_QUEUE);
+			create_message_ack(appeared_rcv->id_correlacional, appeared_queue,
+					APPEARED_QUEUE);
 
 			appeared_snd->id_correlacional = appeared_rcv->id_correlacional;
 			pthread_mutex_unlock(&msave);
@@ -396,8 +425,10 @@ static void *handle_connection(void *arg) {
 
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
-				utils_serialize_and_send(node->f_desc, appeared_protocol,
-						appeared_snd);
+				if (node->f_desc > 0) {
+					utils_serialize_and_send(node->f_desc, appeared_protocol,
+							appeared_snd);
+				}
 			}
 			usleep(500000);
 			break;
@@ -435,7 +466,10 @@ static void *handle_connection(void *arg) {
 
 			for (int i = 0; i < list_size(get_queue); i++) {
 				t_subscribe_nodo* node = list_get(get_queue, i);
-				utils_serialize_and_send(node->f_desc, get_protocol, get_snd);
+				if (node->f_desc > 0) {
+					utils_serialize_and_send(node->f_desc, get_protocol,
+							get_snd);
+				}
 			}
 			usleep(500000);
 			break;
@@ -478,8 +512,10 @@ static void *handle_connection(void *arg) {
 
 			for (int i = 0; i < list_size(catch_queue); i++) {
 				t_subscribe_nodo* node = list_get(catch_queue, i);
-				utils_serialize_and_send(node->f_desc, catch_protocol,
-						catch_send);
+				if (node->f_desc > 0) {
+					utils_serialize_and_send(node->f_desc, catch_protocol,
+							catch_send);
+				}
 			}
 			usleep(500000);
 			break;
@@ -526,7 +562,10 @@ static void *handle_connection(void *arg) {
 
 			for (int i = 0; i < list_size(localized_queue); i++) {
 				t_subscribe_nodo* node = list_get(localized_queue, i);
-				utils_serialize_and_send(node->f_desc, localized_protocol, loc_snd);
+				if (node->f_desc > 0) {
+					utils_serialize_and_send(node->f_desc, localized_protocol,
+							loc_snd);
+				}
 			}
 			usleep(50000);
 			break;
@@ -577,8 +616,10 @@ static void *handle_connection(void *arg) {
 
 			for (int i = 0; i < list_size(caught_queue); i++) {
 				t_subscribe_nodo* node = list_get(caught_queue, i);
-				utils_serialize_and_send(node->f_desc, caught_protocol,
-						caught_snd);
+				if (node->f_desc > 0) {
+					utils_serialize_and_send(node->f_desc, caught_protocol,
+							caught_snd);
+				}
 			}
 			usleep(50000);
 			break;
@@ -635,16 +676,26 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 }
 
 void add_to(t_list *list, t_subscribe* subscriber) {
+	void add_sub_to_msg(t_subscribe_nodo* sub_node) {
+		for (int i = 0; i < list_size(list_msg_subscribers); ++i) {
+			t_subscribe_message_node* node = list_get(list_msg_subscribers, i);
 
+			t_subscribe_ack_node* ack_node = malloc(sizeof(t_subscribe_ack_node));
+			ack_node->ack = false;
+			ack_node->subscribe = sub_node;
+
+			if (node->cola == subscriber->cola) {
+				list_add(node->list, ack_node);
+			}
+		}
+	}
 	t_subscribe_nodo* node = check_already_subscribed(subscriber->ip,
 			subscriber->puerto, list);
 	if (node == NULL) {
 		t_subscribe_nodo *nodo = malloc(sizeof(t_subscribe_nodo));
 		nodo->ip = string_duplicate(subscriber->ip);
+
 		nodo->puerto = subscriber->puerto;
-		// Sync uid_subscribe var
-		nodo->id = uid_subscribe;
-		uid_subscribe++;
 
 		void broker_handle_removal() {
 			remove_after_n_secs(nodo, list, subscriber->seconds);
@@ -658,6 +709,7 @@ void add_to(t_list *list, t_subscribe* subscriber) {
 
 		nodo->f_desc = subscriber->f_desc;
 		list_add(list, nodo);
+		add_sub_to_msg(nodo);
 
 		if (nodo->endtime != -1) {
 			pthread_t sub_tid;
@@ -677,43 +729,55 @@ void search_queue(t_subscribe *subscriber) {
 	case NEW_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola NEW ",
 				subscriber->ip, subscriber->puerto);
+		pthread_mutex_lock(&mnew);
 		add_to(new_queue, subscriber);
 		send_all_messages(subscriber);
+		pthread_mutex_unlock(&mnew);
 		break;
 	}
 	case CATCH_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
 				subscriber->ip, subscriber->puerto);
+		pthread_mutex_lock(&mcatch);
 		add_to(catch_queue, subscriber);
 		send_all_messages(subscriber);
+		pthread_mutex_unlock(&mcatch);
 		break;
 	}
 	case CAUGHT_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
 				subscriber->ip, subscriber->puerto);
+		pthread_mutex_lock(&mcaught);
 		add_to(caught_queue, subscriber);
 		send_all_messages(subscriber);
+		pthread_mutex_unlock(&mcaught);
 		break;
 	}
 	case GET_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola GET ",
 				subscriber->ip, subscriber->puerto);
+		pthread_mutex_lock(&mget);
 		add_to(get_queue, subscriber);
 		send_all_messages(subscriber);
+		pthread_mutex_unlock(&mget);
 		break;
 	}
 	case LOCALIZED_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
 				subscriber->ip, subscriber->puerto);
+		pthread_mutex_lock(&mloc);
 		add_to(localized_queue, subscriber);
 		send_all_messages(subscriber);
+		pthread_mutex_unlock(&mloc);
 		break;
 	}
 	case APPEARED_QUEUE: {
 		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
 				subscriber->ip, subscriber->puerto);
+		pthread_mutex_lock(&mappeared);
 		add_to(appeared_queue, subscriber);
 		send_all_messages(subscriber);
+		pthread_mutex_unlock(&mappeared);
 		break;
 	}
 
@@ -1091,7 +1155,7 @@ void handle_disconnection(int fd) {
 		}
 	}
 
-	for (int i=0; i < list_size(list_msg_subscribers); ++i) {
+	for (int i = 0; i < list_size(list_msg_subscribers); ++i) {
 		t_subscribe_message_node* el = list_get(list_msg_subscribers, i);
 		list_map(el->list, (void*) disable_msg_ack);
 	}
@@ -1321,11 +1385,13 @@ void create_message_ack(int id, t_list *cola, t_cola unCola) {
 
 	for (int i = 0; i < list_size(cola); i++) {
 		t_subscribe_nodo* subscriptor = list_get(cola, i);
-		t_subscribe_ack_node* ack_subscriptor = malloc(
-				sizeof(t_subscribe_ack_node));
-		ack_subscriptor->subscribe = subscriptor;
-		ack_subscriptor->ack = false;
-		list_add(message_node->list, ack_subscriptor);
+		if (subscriptor->f_desc > 0) {
+			t_subscribe_ack_node* ack_subscriptor = malloc(
+					sizeof(t_subscribe_ack_node));
+			ack_subscriptor->subscribe = subscriptor;
+			ack_subscriptor->ack = false;
+			list_add(message_node->list, ack_subscriptor);
+		}
 	}
 }
 

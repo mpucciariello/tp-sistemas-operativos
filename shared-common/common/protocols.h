@@ -66,6 +66,8 @@ typedef struct {
 	uint32_t id_corr_msg;
 	t_cola queue;
 	char* sender_name;
+	char* ip;
+	uint32_t port;
 } t_ack;
 
 typedef struct {
