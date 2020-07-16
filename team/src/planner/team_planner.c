@@ -138,6 +138,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->deadlock = false;
 	entrenador->list_id_catch = list_create();
 	entrenador->diferencia = team_planner_calcular_diferencia(entrenador);
+	entrenador->envio_catch = false;
 	pthread_mutex_init(&entrenador->sem_move_trainers, NULL);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);

@@ -43,6 +43,7 @@ typedef struct {
 	t_pokemon* pokemon_a_atrapar; 
 	bool deadlock;
 	int diferencia;
+	bool envio_catch;
 } t_entrenador_pokemon;
 
 typedef enum {

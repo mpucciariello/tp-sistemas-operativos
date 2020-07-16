@@ -25,12 +25,15 @@ int team_load() {
 }
 
 void team_init() {
+
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 0);
 	sem_init(&sem_message_on_queue, 0, 0);
 	sem_init(&sem_planificador, 0, 1);
 	sem_init(&sem_trainers_in_ready_queue, 0, 0);
+
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
+
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);
@@ -39,8 +42,8 @@ void team_init() {
 	pthread_t tid3;
 	pthread_t planificator;
 	pthread_t algoritmo_cercania_entrenadores;
+
 	team_planner_init();
-	send_get_message();
 
 	t_cola cola_appeared = APPEARED_QUEUE;
 	pthread_create(&tid1, NULL, (void*) team_retry_connect_1, (void*) &cola_appeared);
@@ -68,6 +71,7 @@ void team_init() {
 }
 
 void team_planner_remove_pokemon_from_catch(t_pokemon* pokemon) {
+
 	list_clean(lista_auxiliar);
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
 		t_pokemon_received* pokemon_con_posiciones = list_get(pokemon_to_catch,	i);
@@ -101,11 +105,11 @@ void send_message_catch(t_catch_pokemon* catch_send,t_entrenador_pokemon* entren
 	entrenador->state = BLOCK;
 
 	list_add(block_queue, entrenador);
-	team_logger_info("Se añadió al entrenador %d a la cola de BLOCK luego de intentar un CATCH a la espera de confirmación", entrenador->id);
+	team_logger_info("Se añadió al entrenador %d a la cola de BLOCK luego de enviar un mensaje CATCH.", entrenador->id);
+	team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	if (i == 0) {
-		team_planner_change_block_status_by_id_corr(1, catch_send->id_correlacional);
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador->list_id_catch, (void*) catch_send->id_correlacional);
 	} else {
@@ -127,6 +131,7 @@ bool todavia_quedan_pokemones_restantes(char* tipo) {
 void remover_totalmente_de_pokemon_to_catch(char* tipo) {
 	for (int i = 0; i < list_size(pokemon_to_catch); i++) {
 		t_pokemon_received* pokemon = list_get(pokemon_to_catch, i);
+
 		if (string_equals_ignore_case(pokemon->name, tipo)) {
 			pthread_mutex_lock(&cola_pokemons_a_atrapar);
 			list_remove(pokemon_to_catch, i);
@@ -168,9 +173,10 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 	}
 
 	if (team_planner_all_finished()) {
-		team_logger_info("Todos los entrenadores completaron su objetivo! El team FINALIZARÁ.");
+		team_logger_info("Todos los entrenadores completaron su objetivo. El team se encuentra en condiciones de FINALIZAR!");
 		team_planner_print_fullfill_target();
 		team_planner_exit();
+		socket_close_conection(team_socket);
 		exit(0);
 	}
 
@@ -219,7 +225,7 @@ void send_get_message() {
 
 		get_protocol = GET_POKEMON;
 		if ((send_message(get_send, get_protocol, get_id_corr)) > 0) {
-			team_logger_info("Se recibió id correlacional %d en respuesta al GET", get_id_corr);
+			team_logger_info("Se recibió el id correlacional %d en respuesta a un mensaje GET.", get_id_corr);
 		}
 		usleep(500000);
 	}
@@ -253,15 +259,15 @@ void team_planner_check_RR_burst(t_entrenador_pokemon* entrenador) {
 		team_planner_add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
-		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que terminó su QUANTUM", entrenador->id);
+		team_logger_info("Se añadió al entrenador %d a la cola de READY ya que terminó su QUANTUM.", entrenador->id);
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
 }
 
 void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
-	t_entrenador_pokemon* lower_estimated_trainner = list_get(ready_queue, team_planner_get_least_estimate_index());
-	if (lower_estimated_trainner != NULL) {
-		if (entrenador->estimated_time > lower_estimated_trainner->estimated_time) {
+	t_entrenador_pokemon* lower_estimated_trainer = list_get(ready_queue, team_planner_get_least_estimate_index());
+	if (lower_estimated_trainer != NULL) {
+		if (entrenador->estimated_time > lower_estimated_trainer->estimated_time) {
 			team_planner_add_to_ready_queue(entrenador);
 			sem_post(&sem_trainers_in_ready_queue);
 			sem_post(&sem_planificador);
@@ -272,7 +278,7 @@ void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 }
 
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
-	while (1) {
+	while (true) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
@@ -284,24 +290,30 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			team_planner_new_cpu_cicle(entrenador);
 		}
 
-		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)",
-				entrenador->id, entrenador->position->pos_x,
-				entrenador->position->pos_y,
-				entrenador->pokemon_a_atrapar->position->pos_x,
-				entrenador->pokemon_a_atrapar->position->pos_y);
 
-		entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
-		entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
+		if(!entrenador->envio_catch){
+			team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d).",
+					entrenador->id, entrenador->position->pos_x,
+					entrenador->position->pos_y,
+					entrenador->pokemon_a_atrapar->position->pos_x,
+					entrenador->pokemon_a_atrapar->position->pos_y);
 
-		if (entrenador->blocked_info == NULL && !entrenador->deadlock) {
+			entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
+			entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
+
 			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
 			catch_send->id_correlacional = 0;
 			catch_send->nombre_pokemon = entrenador->pokemon_a_atrapar->name;
 			catch_send->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
 			catch_send->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
 			catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
+
 			send_message_catch(catch_send, entrenador);
+			team_planner_new_cpu_cicle(entrenador);
+			entrenador->envio_catch = true;
 		}
+
+		entrenador->envio_catch = false;
 		sem_post(&sem_planificador);
 	}
 }
