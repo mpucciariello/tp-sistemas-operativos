@@ -17,10 +17,6 @@ typedef enum {
 } e_state;
 
 typedef struct {
-	int status;
-} t_entrenador_info_bloqueo;
-
-typedef struct {
 	char* name;
 	t_position* position;
 } t_pokemon;
@@ -34,7 +30,7 @@ typedef struct {
 	int current_burst_time;
 	int total_burst_time;
 	float estimated_time;
-	t_entrenador_info_bloqueo* blocked_info;
+	int status;
 	pthread_t hilo_entrenador;
 	pthread_mutex_t sem_move_trainers;
 	t_list* list_id_catch;

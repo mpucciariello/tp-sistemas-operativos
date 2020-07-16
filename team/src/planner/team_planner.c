@@ -144,7 +144,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->current_burst_time = 0;
 	entrenador->total_burst_time = 0;
 	entrenador->estimated_time = (float)team_config->estimacion_inicial;
-	entrenador->blocked_info = NULL;
+	entrenador->status = 0;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
 	entrenador->list_id_catch = list_create();
@@ -228,8 +228,6 @@ void team_planner_add_new_trainner(t_entrenador_pokemon* entrenador) {
 
 void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->state = EXIT;
-	entrenador->blocked_info = malloc(sizeof(t_entrenador_info_bloqueo));
-	entrenador->blocked_info->status = 0;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
 	entrenador->envio_catch = false;
@@ -239,20 +237,16 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 }
 
 void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
-	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo)); 
-	info_bloqueo->status = status;
 	
 	t_entrenador_pokemon* entrenador = team_planner_find_trainer_by_id_corr(id_corr);
 	if (entrenador != NULL) {
 		entrenador->state = BLOCK;
-		entrenador->blocked_info = info_bloqueo;
+		entrenador->status = status;
 	}
 }
 
 void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemon* entrenador) {
-	t_entrenador_info_bloqueo* info_bloqueo = malloc(sizeof(t_entrenador_info_bloqueo));
-	info_bloqueo->status = status;
-	entrenador->blocked_info = info_bloqueo;
+	entrenador->status = status;
 }
 
 t_entrenador_pokemon* team_planner_find_trainer_by_id_corr(uint32_t id) {
@@ -382,7 +376,6 @@ float team_planner_calculate_exponential_mean(t_entrenador_pokemon* entrenador) 
 t_entrenador_pokemon* team_planner_exec_trainer(t_entrenador_pokemon* entrenador) {
 	entrenador->current_burst_time = 0;
 	entrenador->state = EXEC;
-	entrenador->blocked_info = NULL;
 
 	return entrenador;
 }
@@ -392,7 +385,7 @@ bool team_planner_is_SJF_algorithm() {
 }
 
 bool _is_available(t_entrenador_pokemon* trainner) {
-	return trainner->blocked_info->status == 0 && !trainner->deadlock;
+	return trainner->status == 0 && !trainner->deadlock;
 }
 
 t_list* filter_block_list_by_0() {
@@ -417,7 +410,7 @@ t_list* team_planner_create_ready_queue() {
 }
 
 bool _is_waiting(t_entrenador_pokemon* trainner) {
-	return trainner->blocked_info->status == 1;
+	return trainner->status == 1;
 }
 
 t_list* filter_block_list_by_1() {
