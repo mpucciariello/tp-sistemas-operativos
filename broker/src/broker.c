@@ -1451,6 +1451,7 @@ void save_node_list_memory(int puntero, int msg_size, t_cola cola, int id) {
 		node_finded->libre = false;
 		node_finded->time_lru = (unsigned) time(NULL);
 
+		node_finded->cola = cola;
 		nodo_mem->size = size - max (broker_config->tamano_minimo_particion,msg_size);
 		nodo_mem->pointer = next_pointer;
 		nodo_mem->libre = true;
@@ -1800,6 +1801,9 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 	}
 	int i=0;
 	int flag =0;
+	if (flag_first == 0){
+		return -1;
+	}
 	while(i<list_size(list_memory)){
 		t_nodo_memory* memory_node =list_get(list_memory,i);
 		if (i == position){
