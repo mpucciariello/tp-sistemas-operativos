@@ -56,7 +56,17 @@ void team_planner_algoritmo_cercania() {
 						c = 0;
 					}
 
+					if (closest_sum == min_steps) {
+						pokemon = malloc(sizeof(t_pokemon));
+						pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
+						pokemon->position = malloc(sizeof(t_position));
+						pokemon->position->pos_x = posicion_aux->pos_x;
+						pokemon->position->pos_y = posicion_aux->pos_y;
+						entrenador = entrenador_aux;
+					}
+
 					if (closest_sum < min_steps) {
+						min_steps = closest_sum;
 						pokemon = malloc(sizeof(t_pokemon));
 						pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
 						pokemon->position = malloc(sizeof(t_position));
@@ -74,12 +84,10 @@ void team_planner_algoritmo_cercania() {
 		}
 
 		if (team_config->algoritmo_planificacion == RR) {
-			entrenador->estimated_time = 0;
 			entrenador->current_burst_time = 0;
 		}
 
 		entrenador->pokemon_a_atrapar = pokemon;
-		entrenador->envio_catch = false;
 
 		team_planner_add_to_ready_queue(entrenador);
 		team_planner_remove_pokemon_from_catch(pokemon);
