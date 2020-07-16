@@ -247,6 +247,10 @@ int broker_load() {
 		printf("\n mutex init failed\n");
 		return 1;
 	}
+	if (pthread_mutex_init(&mmem, NULL) != 0) {
+		printf("\n mutex init failed\n");
+		return 1;
+	}
 	return 0;
 }
 
@@ -633,7 +637,6 @@ static void *handle_connection(void *arg) {
 
 void initialize_queue() {
 	id = 0;
-	uid_subscribe = 0;
 	get_queue = list_create();
 	appeared_queue = list_create();
 	new_queue = list_create();
@@ -709,7 +712,9 @@ void add_to(t_list *list, t_subscribe* subscriber) {
 
 		nodo->f_desc = subscriber->f_desc;
 		list_add(list, nodo);
+		pthread_mutex_lock(&msubs);
 		add_sub_to_msg(nodo);
+		pthread_mutex_unlock(&msubs);
 
 		if (nodo->endtime != -1) {
 			pthread_t sub_tid;
@@ -1154,11 +1159,12 @@ void handle_disconnection(int fd) {
 			node->subscribe->f_desc = -1;
 		}
 	}
-
+	pthread_mutex_lock(&msubs);
 	for (int i = 0; i < list_size(list_msg_subscribers); ++i) {
 		t_subscribe_message_node* el = list_get(list_msg_subscribers, i);
 		list_map(el->list, (void*) disable_msg_ack);
 	}
+	pthread_mutex_unlock(&msubs);
 }
 
 char* get_protocol_name(t_cola q) {
@@ -1228,7 +1234,7 @@ char* get_queue_name(t_cola q) {
 }
 
 void purge_msg() {
-
+	pthread_mutex_lock(&mmem);
 	list_sort(list_memory, (void*) compare_timings);
 
 	/**
@@ -1245,8 +1251,16 @@ void purge_msg() {
 			"The message with ID %d from %s, last modified at instant T=%d will be removed",
 			node->id, get_queue_name(node->cola),
 			(int) (node->timestamp - base_time));
-	list_remove(list_memory, 0);
+	_Bool find_msg(t_subscribe_message_node* n) {
+		return string_equals_ignore_case(get_queue_name(n->cola), get_queue_name(node->cola))
+			&& n->id == node->id;
+	}
 
+	list_remove(list_memory, 0);
+	pthread_mutex_unlock(&mmem);
+	pthread_mutex_lock(&msubs);
+	list_remove_by_condition(list_msg_subscribers, (void*) find_msg);
+	pthread_mutex_unlock(&msubs);
 	buddy_free(buddy, node->pointer);
 	broker_logger_info("Message removed successfully");
 	broker_logger_info("Memory consolidated");
@@ -1288,7 +1302,10 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 	nodo_mem->cola = cola;
 	nodo_mem->id = id;
 	nodo_mem->timestamp = time(NULL);
+
+	pthread_mutex_lock(&mmem);
 	list_add(list_memory, nodo_mem);
+	pthread_mutex_unlock(&mmem);
 }
 
 t_nodo_memory* find_node(t_nodo_memory* node) {
@@ -1313,14 +1330,17 @@ void send_all_messages(t_subscribe *subscriber) {
 	_Bool msg_match(t_nodo_memory *node) {
 		return node->cola == subscriber->cola;
 	}
-
+	pthread_mutex_lock(&mmem);
 	t_list* list_cpy = list_filter(list_memory, (void*) msg_match);
+	pthread_mutex_unlock(&mmem);
 	int cant = list_size(list_cpy);
 	for (int i = 0; i < cant; i++) {
 		t_nodo_memory *nodo_cpy = list_get(list_cpy, i);
 
+		pthread_mutex_lock(&mmem);
 		t_nodo_memory *nodo_mem = find_node(nodo_cpy);
 		update_timings(nodo_mem);
+		pthread_mutex_unlock(&mmem);
 
 		switch (subscriber->cola) {
 		case NEW_QUEUE: {
@@ -1381,7 +1401,9 @@ void create_message_ack(int id, t_list *cola, t_cola unCola) {
 	message_node->id = id;
 	message_node->cola = unCola;
 	message_node->list = list_create();
+	pthread_mutex_lock(&msubs);
 	list_add(list_msg_subscribers, message_node);
+	pthread_mutex_unlock(&msubs);
 
 	for (int i = 0; i < list_size(cola); i++) {
 		t_subscribe_nodo* subscriptor = list_get(cola, i);
@@ -1416,7 +1438,9 @@ void dump() {
 	char s[64];
 	strftime(s, sizeof(s), "%c", tm);
 	fprintf(f, "Dump %s\n", s);
+	pthread_mutex_lock(&mmem);
 	t_list* list_clone = list_duplicate(list_memory);
+	pthread_mutex_unlock(&mmem);
 	list_sort(list_clone, (void*) compare_memory_position);
 
 	for (int i = 0; i < list_size(list_clone); ++i) {

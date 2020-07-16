@@ -13,7 +13,6 @@
 #include "../../shared-common/common/utils.h"
 
 int broker_socket;
-int uid_subscribe;
 time_t base_time;
 
 int broker_load();
@@ -24,7 +23,7 @@ void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
 void add_to(t_list *list, t_subscribe* sub);
 
-pthread_mutex_t mpointer, mid, msubs, msave, mget, mappeared, mloc, mcatch, mcaught, mnew;
+pthread_mutex_t mpointer, mid, msubs, msave, mget, mappeared, mloc, mcatch, mcaught, mnew, mmem;
 
 char *memory;
 
