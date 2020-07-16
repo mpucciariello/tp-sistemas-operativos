@@ -64,6 +64,7 @@ sem_t sem_message_on_queue;
 sem_t sem_trainers_in_ready_queue;
 sem_t sem_pokemons_to_get;
 sem_t sem_planificador; 
+sem_t appeared_recibido;
 
 pthread_t planificator;
 pthread_t algoritmo_cercania_entrenadores;
@@ -83,6 +84,8 @@ t_list* lista_auxiliar;
 t_list* pokemons_localized;
 t_list* real_targets_pokemons;
 t_list* get_id_corr;
+
+bool appeared_recibidos;
 
 void team_planner_init();
 void team_planner_destroy();

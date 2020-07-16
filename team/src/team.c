@@ -31,6 +31,7 @@ void team_init() {
 	sem_init(&sem_message_on_queue, 0, 0);
 	sem_init(&sem_planificador, 0, 1);
 	sem_init(&sem_trainers_in_ready_queue, 0, 0);
+	sem_init(&appeared_recibido, 0, 0);
 
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
 
@@ -41,7 +42,10 @@ void team_init() {
 	pthread_t tid2;
 	pthread_t tid3;
 	pthread_t planificator;
+	pthread_t msg_get;
 	pthread_t algoritmo_cercania_entrenadores;
+
+	appeared_recibidos = false;
 
 	team_planner_init();
 
@@ -64,8 +68,10 @@ void team_init() {
 	pthread_create(&planificator, NULL, (void*) team_planner_run_planification, NULL);
 	pthread_detach(planificator);
 
+	pthread_create(&msg_get, NULL, (void*) send_get_message, NULL);
+	pthread_detach(msg_get);
+
 	team_server_init();
-	send_get_message();
 	usleep(500000);
 
 }
@@ -213,7 +219,10 @@ bool pokemon_not_pendant(char* pokemon) {
 }
 
 void send_get_message() {
+
 	sem_wait(&sem_pokemons_to_get);
+	sem_wait(&appeared_recibido);
+	sleep(5);
 	t_protocol get_protocol;
 	t_get_pokemon* get_send = malloc(sizeof(t_get_pokemon));
 
@@ -527,6 +536,11 @@ void *receive_msg(int fd, int send_to) {
 				pokemon->pos = list_create();
 				list_add(pokemon->pos, posicion);
 				add_to_pokemon_to_catch(pokemon);
+			}
+
+			if(!appeared_recibidos){
+				appeared_recibidos = true;
+				sem_post(&appeared_recibido);
 			}
 			break;
 		}

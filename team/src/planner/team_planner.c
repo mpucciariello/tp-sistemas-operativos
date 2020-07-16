@@ -3,7 +3,7 @@
 bool preemptive;
 int fifo_index = 0;
 char* split_char = "|";
-int deadlocks_detected, deadlocks_resolved = 0, context_switch_qty = 0;
+int deadlocks_detected = 0, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
 	while (true) {
