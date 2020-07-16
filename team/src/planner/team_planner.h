@@ -83,9 +83,6 @@ t_list* pokemons_localized;
 t_list* real_targets_pokemons;
 t_list* get_id_corr;
 
-bool cercania;
-bool planificacion;
-
 void team_planner_init();
 void team_planner_destroy();
 void team_planner_run_planification();

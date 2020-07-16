@@ -25,8 +25,6 @@ int team_load() {
 }
 
 void team_init() {
-	planificacion = true;
-	cercania = true;
 	sem_init(&sem_entrenadores_disponibles, 0, 0);
 	sem_init(&sem_pokemons_to_get, 0, 0);
 	sem_init(&sem_message_on_queue, 0, 0);
