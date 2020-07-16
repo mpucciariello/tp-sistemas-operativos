@@ -100,8 +100,11 @@ void team_planner_delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, in
 		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
 		if (entrenador_aux->id == entrenador->id) {
 			list_remove(block_queue, i);
-			if (cola == 0) {
+			if (cola == 0 && !entrenador->deadlock) {
 				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY, ya que fue seleccionado por el algoritmo de cercanía!", entrenador->id);
+			}
+			if(cola == 0 && entrenador->deadlock) {
+				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY ya que fue seleccionado por el algoritmo de detección de deadlocks!", entrenador->id);
 			}
 			if (cola == 1) {
 				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a EXIT!", entrenador->id);
@@ -527,10 +530,10 @@ void team_planner_solve_deadlock() {
 		}
 
 		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador_bloqueado->id,
-																		entrenador_bloqueado->position->pos_x,
-																		entrenador_bloqueado->position->pos_y,
-																		entrenador_bloqueado->pokemon_a_atrapar->position->pos_x,
-																		entrenador_bloqueado->pokemon_a_atrapar->position->pos_y);
+																			 entrenador_bloqueado->position->pos_x,
+																			 entrenador_bloqueado->position->pos_y,
+																		  	 entrenador_bloqueado->pokemon_a_atrapar->position->pos_x,
+																			 entrenador_bloqueado->pokemon_a_atrapar->position->pos_y);
 
 		entrenador_bloqueado->position->pos_x = entrenador_bloqueado->pokemon_a_atrapar->position->pos_x;
 		entrenador_bloqueado->position->pos_y = entrenador_bloqueado->pokemon_a_atrapar->position->pos_y;
@@ -716,8 +719,8 @@ void team_planner_print_fullfill_target() {
       return accum + trainner->total_burst_time;
 	}
 	int total_cpu = (int) list_fold(trainners, 0, (void*) add_burst_time);
-	team_logger_info("Cantidad de ciclos de CPU totales: %d", total_cpu);
-	team_logger_info("Cantidad de cambios de contexto realizados: %d", context_switch_qty);
+	team_logger_info("Cantidad de ciclos de CPU totales: %d.", total_cpu);
+	team_logger_info("Cantidad de cambios de contexto realizados: %d.", context_switch_qty);
 	team_logger_info("Cantidad de ciclos de CPU realizados por entrenador:");
 
 	void _list_burst_trainner(t_entrenador_pokemon *trainner) {
@@ -726,7 +729,7 @@ void team_planner_print_fullfill_target() {
 	list_iterate(trainners, (void*) _list_burst_trainner);
 
 	list_destroy(trainners);
-	team_logger_info("Deadlocks producidos: %d  y resueltos: %d", deadlocks_detected, deadlocks_resolved);
+	team_logger_info("Deadlocks producidos: %d  y resueltos: %d.", deadlocks_detected, deadlocks_resolved);
 }
 
 void team_planner_init() {
