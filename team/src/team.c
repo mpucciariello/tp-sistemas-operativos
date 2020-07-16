@@ -283,20 +283,19 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
-		int steps = fabs(aux_x + aux_y);
+		int steps = fabs(aux_x) + fabs(aux_y);
 
 		for (int i = 0; i <= steps; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
 			team_planner_new_cpu_cicle(entrenador);
 		}
 
-
 		if(!entrenador->envio_catch){
 			team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d).",
-					entrenador->id, entrenador->position->pos_x,
-					entrenador->position->pos_y,
-					entrenador->pokemon_a_atrapar->position->pos_x,
-					entrenador->pokemon_a_atrapar->position->pos_y);
+							entrenador->id, entrenador->position->pos_x,
+							entrenador->position->pos_y,
+							entrenador->pokemon_a_atrapar->position->pos_x,
+							entrenador->pokemon_a_atrapar->position->pos_y);
 
 			entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
 			entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
@@ -428,7 +427,7 @@ void *receive_msg(int fd, int send_to) {
 
 		case CAUGHT_POKEMON: {
 			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(fd, protocol);
-			team_logger_info("Caught received ID correlacional: %d Resultado (0/1): %d", caught_rcv->id_correlacional, caught_rcv->result);
+			team_logger_info("Se recibió un id correlacional en respuesta a un mensaje CAUGHT: %d. Resultado (0/1): %d", caught_rcv->id_correlacional, caught_rcv->result);
 
 			if (is_server == 0) {
 				t_protocol ack_protocol = ACK;
@@ -452,17 +451,17 @@ void *receive_msg(int fd, int send_to) {
 			if (caught_rcv->result) {
 				atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
 			} else {
-				team_logger_info("En entrenador %d no pudo atrapar un %s.", entrenador->id, catch_message->nombre_pokemon);
+				team_logger_info("El entrenador %d NO pudo atrapar un %s en la posición (%d, %d).", entrenador->id, catch_message->nombre_pokemon, catch_message->pos_x, catch_message->pos_y);
 			}
 			break;
 		}
 
 		case LOCALIZED_POKEMON: {
 			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(fd, protocol);
-			team_logger_info("Localized received! ID correlacional: %d Nombre Pokemon: %s Largo nombre: %d Cant elementos en lista: %d",
+			team_logger_info("Se recibió un LOCALIZED! ID correlacional: %d. Nombre Pokemon: %s. Largo Nombre: %d. Cant elementos en lista: %d.",
 					loc_rcv->id_correlacional, loc_rcv->nombre_pokemon, loc_rcv->tamanio_nombre, loc_rcv->cant_elem);
-			if (loc_rcv->cant_elem > 0) {
 
+			if (loc_rcv->cant_elem > 0) {
 				if (is_server == 0) {
 					t_protocol ack_protocol = ACK;
 					team_logger_info("ACK SENT TO BROKER");
@@ -500,7 +499,7 @@ void *receive_msg(int fd, int send_to) {
 
 		case APPEARED_POKEMON: {
 			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(fd, protocol);
-			team_logger_info("Appeared received! ID correlacional: %d Nombre Pokemon: %s Largo nombre: %d Posición: (%d, %d)",
+			team_logger_info("Se recibió un APPEARED! ID correlacional: %d. Nombre Pokemon: %s. Largo Nombre: %d. Posición: (%d, %d).",
 					appeared_rcv->id_correlacional,
 					appeared_rcv->nombre_pokemon, appeared_rcv->tamanio_nombre,
 					appeared_rcv->pos_x, appeared_rcv->pos_y);
@@ -582,7 +581,7 @@ bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
 	list_clean(lista_auxiliar);
 	t_list* lista_auxiliar = list_duplicate(entrenador->targets);
 
-	if (list_size(entrenador->pokemons) == list_size(lista_auxiliar) || (list_size(entrenador->pokemons) - list_size(entrenador->targets) == entrenador->diferencia)) {
+	if (list_size(entrenador->pokemons) == list_size(lista_auxiliar) || ((list_size(entrenador->pokemons) - list_size(entrenador->targets) == entrenador->diferencia))) {
 
 		for (int i = 0; i < list_size(entrenador->pokemons); i++) {
 			t_pokemon* pokemon_obtenido = list_get(entrenador->pokemons, i);
