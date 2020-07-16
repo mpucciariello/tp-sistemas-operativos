@@ -56,14 +56,15 @@ void team_planner_algoritmo_cercania() {
 						c = 0;
 					}
 
-					if (closest_sum == min_steps) {
+					/*if (closest_sum == min_steps) {
+						min_steps = closest_sum;
 						pokemon = malloc(sizeof(t_pokemon));
 						pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
 						pokemon->position = malloc(sizeof(t_position));
 						pokemon->position->pos_x = posicion_aux->pos_x;
 						pokemon->position->pos_y = posicion_aux->pos_y;
 						entrenador = entrenador_aux;
-					}
+					}*/
 
 					if (closest_sum < min_steps) {
 						min_steps = closest_sum;
