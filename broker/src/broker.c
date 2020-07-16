@@ -1773,6 +1773,7 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 	int pointer_busy;
 	t_list *new_list = list_create();
 
+
 	int position;
 	int size = 0;
 	int flag_first = 0;
@@ -1796,42 +1797,49 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 	if(flag_first == 0){
 		return -1;
 	}
-	for(int i=0;i<list_size(list_memory);i++){
-		t_nodo_memory* memory_node = list_get(list_memory,i);
+	int i=0;
+	int flag =0;
+	while(i<list_size(list_memory)){
+		t_nodo_memory* memory_node =list_get(list_memory,i);
 		if (i == position){
+			broker_logger_warn("iniciando reemplazo");
+			estado_memoria(list_memory);
+			flag = 1;
+			int puntero = memory_node->pointer;
 			memory_node->cola = cola;
 			memory_node->id = id_correlacional;
-			if(message->size_message > broker_config->tamano_minimo_particion){
-				size_free = memory_node->size - message->size_message ;
-				memory_node->size = message->size_message ;
-
-
-			}
-			else{
-				size_free = memory_node->size - broker_config->tamano_minimo_particion;
-				memory_node->size = broker_config->tamano_minimo_particion;
-
-			}
-			memory_node->libre = false;
+			size_free = memory_node->size - max (message->size_message,broker_config->tamano_minimo_particion);
+			memory_node->size = max (message->size_message,broker_config->tamano_minimo_particion) ;
 			pointer_busy = memory_node->pointer;
+			memory_node->libre = false;
 			list_add(new_list,memory_node);
-			int pointer = memory_node->pointer + message->size_message;
-			memory_node->cola = cola;
-			memory_node->id = 0;
-			memory_node->libre = true;
-			memory_node->pointer = pointer;
-			memory_node->size = size_free;
-			list_add(new_list,memory_node);
+			t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
+			memory_next->cola = cola;
+			memory_next->id = 0;
+			memory_next->libre = true;
+			memory_next->pointer = puntero +message->size_message;
+			memory_next->size = size_free;
+			list_add(new_list,memory_next);
+			for(int k=i+1; k<list_size(list_memory);k++){
+				t_nodo_memory* memory_fill =list_get(list_memory,k);
+				list_add(new_list,memory_fill);
+			}
+		break;
+
 		}
 		else{
 			list_add(new_list,memory_node);
 		}
+		i++;
 	}
-	list_destroy(list_memory);
+	if(flag == 0){
+			pointer_busy =  -1;
+	}
 	list_memory = new_list ;
+    broker_logger_warn("terminado reemplazo");
+	estado_memoria(list_memory);
 	return pointer_busy;
 }
-
 
 int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void *message){
 	int size_free;
