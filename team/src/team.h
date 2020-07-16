@@ -22,6 +22,7 @@ t_list* lista_auxiliar;
 
 
 int team_load();
+int send_message(void*, t_protocol, t_list*);
 void team_init();
 void team_server_init();
 void *handle_connection(void *);
@@ -30,25 +31,25 @@ void send_ack(void*);
 void subscribe_to(void *);
 void send_message_test();
 void team_retry_connect(void*);
-bool pokemon_required(char*);
-bool pokemon_not_pendant(char*);
 void send_get_message();
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon*);
-int send_message(void*, t_protocol, t_list*);
-bool trainer_is_in_deadlock_caught(t_entrenador_pokemon*);
 void send_message_catch(t_catch_pokemon*, t_entrenador_pokemon*);
 void add_to_pokemon_to_catch(t_pokemon_received*);
 void quitar_de_pokemones_pendientes(char*);
-bool pokemon_in_pokemon_to_catch(char*);
 void quitar_de_real_target(char*);
-bool team_planner_all_finished();
-bool pokemon_not_localized(char*);
-bool todavia_quedan_pokemones_restantes(char*);
-void remover_totalmente_de_pokemon_to_catch(char*);
-bool tengo_en_pokemon_to_catch(char*);
 void atrapar_pokemon(t_entrenador_pokemon*, char*);
 void team_retry_connect_1(void*);
 void subscribe_to1(void*);
+void remover_totalmente_de_pokemon_to_catch(char*);
+bool pokemon_required(char*);
+bool pokemon_not_pendant(char*);
+bool trainer_is_in_deadlock_caught(t_entrenador_pokemon*);
+bool pokemon_in_pokemon_to_catch(char*);
+bool team_planner_all_finished();
+bool pokemon_not_localized(char*);
+bool todavia_quedan_pokemones_restantes(char*);
+bool tengo_en_pokemon_to_catch(char*);
+
 
 
 #endif /* TEAM_H_ */

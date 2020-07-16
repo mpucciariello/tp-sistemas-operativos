@@ -144,7 +144,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->current_burst_time = 0;
 	entrenador->total_burst_time = 0;
 	entrenador->estimated_time = (float)team_config->estimacion_inicial;
-	entrenador->status = 0;
+	entrenador->status = true;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
 	entrenador->list_id_catch = list_create();
@@ -804,6 +804,7 @@ void team_planner_destroy() {
 	sem_destroy(&sem_trainers_in_ready_queue);
 	sem_destroy(&sem_pokemons_to_get);
 	sem_destroy(&sem_planificador);
+	sem_destroy(&appeared_recibido);
 	pthread_mutex_destroy(&cola_pokemons_a_atrapar);
 	planner_destroy_quees();
 }
