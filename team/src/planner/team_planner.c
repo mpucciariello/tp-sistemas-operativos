@@ -236,7 +236,7 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	list_add(exit_queue, entrenador);
 }
 
-void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
+void team_planner_change_block_status_by_id_corr(bool status, uint32_t id_corr) {
 	
 	t_entrenador_pokemon* entrenador = team_planner_find_trainer_by_id_corr(id_corr);
 	if (entrenador != NULL) {
@@ -245,7 +245,7 @@ void team_planner_change_block_status_by_id_corr(int status, uint32_t id_corr) {
 	}
 }
 
-void team_planner_change_block_status_by_trainer(int status, t_entrenador_pokemon* entrenador) {
+void team_planner_change_block_status_by_trainer(bool status, t_entrenador_pokemon* entrenador) {
 	entrenador->status = status;
 }
 
@@ -385,7 +385,7 @@ bool team_planner_is_SJF_algorithm() {
 }
 
 bool _is_available(t_entrenador_pokemon* trainner) {
-	return trainner->status == 0 && !trainner->deadlock;
+	return trainner->status && !trainner->deadlock;
 }
 
 t_list* filter_block_list_by_0() {
@@ -410,7 +410,7 @@ t_list* team_planner_create_ready_queue() {
 }
 
 bool _is_waiting(t_entrenador_pokemon* trainner) {
-	return trainner->status == 1;
+	return !trainner->status;
 }
 
 t_list* filter_block_list_by_1() {

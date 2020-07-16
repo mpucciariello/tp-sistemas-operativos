@@ -157,7 +157,7 @@ bool tengo_en_pokemon_to_catch(char* tipo) {
 }
 
 void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
-	team_planner_change_block_status_by_trainer(0, entrenador);
+	team_planner_change_block_status_by_trainer(true, entrenador);
 	t_pokemon* pokemon = team_planner_pokemon_create(pokemon_name);
 	list_add(entrenador->pokemons, pokemon);
 	team_logger_info("El entrenador %d atrapó un %s en la posición (%d, %d)!!",	entrenador->id, pokemon_name, entrenador->pokemon_a_atrapar->position->pos_x, entrenador->pokemon_a_atrapar->position->pos_y);
@@ -456,7 +456,7 @@ void *receive_msg(int fd, int send_to) {
 			t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);
 			t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
 
-			team_planner_change_block_status_by_id_corr(0, caught_rcv->id_correlacional);
+			team_planner_change_block_status_by_id_corr(false, caught_rcv->id_correlacional);
 			quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
 
 			if (caught_rcv->result) {
