@@ -1326,6 +1326,7 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 	if (!is_buddy()) {
 		if (pointer + message_void->size_message > broker_config->tamano_memoria){
 			from = save_on_memory_partition(message_void,cola,id_correlacional);
+			memcpy(memory + from, message_void->message, message_void->size_message);
 			pthread_mutex_unlock(&mpointer);
 			broker_logger_info("Pointer %d",from);
 			return from;
@@ -1415,6 +1416,7 @@ int save_on_memory(t_message_to_void *message_void) {
 			pointer += message_void->size_message;
 		}
 	}
+
 	memcpy(memory + from, message_void->message, message_void->size_message);
 	pthread_mutex_unlock(&mpointer);
 	return from;
