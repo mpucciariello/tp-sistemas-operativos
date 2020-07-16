@@ -285,11 +285,14 @@ static void *handle_connection(void *arg) {
 
 		if (received_bytes <= 0) {
 			broker_logger_error("Se perdio la conexion");
+			// TODO: Test!
+			handle_disconnection(client_fd);
 			return NULL;
 		}
 		switch (protocol) {
 
 		case ACK: {
+			pthread_mutex_lock(&msubs);
 			t_ack* ack_rcv = utils_receive_and_deserialize(client_fd, protocol);
 			broker_logger_info("Received ACK for msg with ID %d Protocol %s from process %s",
 					ack_rcv->id_corr_msg, get_protocol_name(ack_rcv->queue), ack_rcv->sender_name);
@@ -303,14 +306,16 @@ static void *handle_connection(void *arg) {
 				return n->subscribe->f_desc == client_fd;
 			}
 
-			pthread_mutex_lock(&msubs);
 			t_subscribe_message_node* node_ack = list_find(
 					list_msg_subscribers, (void*) node_matches_received_queue);
+
 			broker_logger_warn("ID %d, cola: %s", node_ack->id, get_queue_name(node_ack->cola));
-			t_subscribe_ack_node* node_subscriber = list_find(
-					node_ack->list,
-					(void*) subscriber_listed_for_ack);
-			node_subscriber->ack = true;
+			if (node_ack->list->elements_count != 0) {
+				t_subscribe_ack_node* node_subscriber = list_find(
+						node_ack->list,
+						(void*) subscriber_listed_for_ack);
+				node_subscriber->ack = true;
+			}
 			pthread_mutex_unlock(&msubs);
 
 			usleep(50000);
@@ -380,7 +385,7 @@ static void *handle_connection(void *arg) {
 					APPEARED_QUEUE, appeared_rcv->id_correlacional);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
 					memory);
-			create_message_ack(id, appeared_queue, APPEARED_QUEUE);
+			create_message_ack(appeared_rcv->id_correlacional, appeared_queue, APPEARED_QUEUE);
 
 			appeared_snd->id_correlacional = appeared_rcv->id_correlacional;
 			pthread_mutex_unlock(&msave);
@@ -420,7 +425,6 @@ static void *handle_connection(void *arg) {
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 			get_snd->id_correlacional = get_rcv->id_correlacional;
 
-			// TODO: Mandar el id generado al team
 			send(client_fd, &get_rcv->id_correlacional, sizeof(uint32_t), 0);
 
 			create_message_ack(get_rcv->id_correlacional, get_queue, GET_QUEUE);
@@ -462,7 +466,6 @@ static void *handle_connection(void *arg) {
 					memory);
 			catch_send->id_correlacional = catch_rcv->id_correlacional;
 
-			// TODO: Enviar ID a team
 			send(client_fd, &catch_rcv->id_correlacional, sizeof(uint32_t), 0);
 
 			create_message_ack(catch_rcv->id_correlacional, catch_queue,
@@ -589,6 +592,7 @@ static void *handle_connection(void *arg) {
 
 void initialize_queue() {
 	id = 0;
+	uid_subscribe = 0;
 	get_queue = list_create();
 	appeared_queue = list_create();
 	new_queue = list_create();
@@ -617,7 +621,6 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 	for (;;) {
 		if ((int) time(NULL) > (sub_time + n)) {
 
-			// TODO: Sync!
 			t_empty* noop = malloc(sizeof(t_empty));
 			t_protocol noop_protocol = NOOP;
 			utils_serialize_and_send(sub->f_desc, noop_protocol, noop);
@@ -1080,6 +1083,20 @@ void update_timings(t_nodo_memory* node) {
 		return;
 }
 
+void handle_disconnection(int fd) {
+
+	void disable_msg_ack(t_subscribe_ack_node* node) {
+		if (node->subscribe->f_desc == fd) {
+			node->subscribe->f_desc = -1;
+		}
+	}
+
+	for (int i=0; i < list_size(list_msg_subscribers); ++i) {
+		t_subscribe_message_node* el = list_get(list_msg_subscribers, i);
+		list_map(el->list, (void*) disable_msg_ack);
+	}
+}
+
 char* get_protocol_name(t_cola q) {
 
 	char* out = string_duplicate("");
@@ -1111,39 +1128,6 @@ char* get_protocol_name(t_cola q) {
 		break;
 	}
 	return out;
-}
-
-t_list* get_queue_by_protocol(t_protocol protocol) {
-
-	t_list* queue = list_create();
-
-	switch (protocol) {
-
-	case NEW_POKEMON:
-		queue = new_queue;
-		break;
-
-	case LOCALIZED_POKEMON:
-		queue = localized_queue;
-		break;
-
-	case CATCH_POKEMON:
-		queue = catch_queue;
-		break;
-
-	case CAUGHT_POKEMON:
-		queue = caught_queue;
-		break;
-
-	case APPEARED_POKEMON:
-		queue = appeared_queue;
-		break;
-
-	case GET_POKEMON:
-		queue = get_queue;
-		break;
-	}
-	return queue;
 }
 
 char* get_queue_name(t_cola q) {

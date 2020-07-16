@@ -13,7 +13,7 @@
 #include "../../shared-common/common/utils.h"
 
 int broker_socket;
-int uid_subscribe = 0;
+int uid_subscribe;
 time_t base_time;
 
 int broker_load();
@@ -48,7 +48,7 @@ typedef struct {
 	uint32_t puerto;
 	uint32_t id;
 	int32_t endtime;
-	uint32_t f_desc;
+	int32_t f_desc;
 } t_subscribe_nodo;
 
 typedef struct {
@@ -85,6 +85,7 @@ void save_node_list_memory(int pointer, int size,t_cola cola,int id);
 void send_all_messages(t_subscribe *subscriber);
 void purge_msg();
 int generar_id();
+void handle_disconnection(int fdesc);
 void dump();
 _Bool is_buddy();
 void create_message_ack(int id,t_list *cola,t_cola unCola);
