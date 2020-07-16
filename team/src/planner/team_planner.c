@@ -136,6 +136,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->blocked_info = NULL;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
+	entrenador->list_id_catch = list_create();
 	entrenador->diferencia = team_planner_calcular_diferencia(entrenador);
 	pthread_mutex_init(&entrenador->sem_move_trainers, NULL);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
@@ -755,44 +756,23 @@ bool team_planner_trainer_completed_with_success(t_entrenador_pokemon* entrenado
 }
 
 void team_planner_destroy_pokemons(t_pokemon* pokemon) {
-	if(pokemon->name != NULL){
-		free(pokemon->position);
-	}
-
 	free(pokemon->name);
-	if(pokemon->position != NULL){
-		free(pokemon->position);
-	}
 	free(pokemon);
 }
 
 void team_planner_destroy_entrenador(t_entrenador_pokemon* entrenador) {
 
-	if(entrenador != NULL){
-		if(entrenador->pokemons != NULL){
-			list_destroy_and_destroy_elements(entrenador->pokemons, (void*)team_planner_destroy_pokemons);
-			free(entrenador->pokemons);
-		}
-
-		if(entrenador->targets != NULL){
-			list_destroy_and_destroy_elements(entrenador->targets, (void*)team_planner_destroy_pokemons);
-			free(entrenador->targets);
-		}
-		pthread_mutex_destroy(&entrenador->sem_move_trainers);
-		if(entrenador->list_id_catch != NULL){
-			list_destroy(entrenador->list_id_catch);
-		}
-
-
-		if(entrenador->position != NULL){
-			free(entrenador->position);
-		}
-		free(entrenador);
-	}
+	list_destroy_and_destroy_elements(entrenador->pokemons, (void*)team_planner_destroy_pokemons);
+	list_destroy_and_destroy_elements(entrenador->targets, (void*)team_planner_destroy_pokemons);
+	pthread_mutex_destroy(&entrenador->sem_move_trainers);
+	list_destroy(entrenador->list_id_catch);
+	free(entrenador->position);
+	free(entrenador);
 
 }
 
 void planner_destroy_quees() {
+	/*
 	if(!list_is_empty(new_queue)){
 		list_destroy_and_destroy_elements(new_queue, (void*)team_planner_destroy_entrenador);
 	}
@@ -811,7 +791,7 @@ void planner_destroy_quees() {
 
 	if(!list_is_empty(total_targets_pokemons)){
 		list_destroy_and_destroy_elements(total_targets_pokemons, (void*) team_planner_destroy_pokemons);
-	}
+	}*/
 	list_destroy(message_catch_sended);
 	list_destroy(pokemones_pendientes);
 	list_destroy(real_targets_pokemons);
