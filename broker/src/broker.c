@@ -1388,11 +1388,10 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 							flag = 1;
 							done_compactacion = 0;
 							if(broker_config->algoritmo_reemplazo == FIFO){
-								aplicar_algoritmo_reemplazo_LRU();
-
+								aplicar_algoritmo_reemplazo_FIFO();
 							}
 							else{
-								aplicar_algoritmo_reemplazo_FIFO();;
+								aplicar_algoritmo_reemplazo_LRU();
 							}
 							broker_logger_warn("IR a PAso 1");
 							break;
