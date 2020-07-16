@@ -197,6 +197,7 @@ void buddy_free(struct buddy *self, int offset) {
 // Broker init
 int broker_load() {
 	int response = broker_config_load();
+
 	if (response < 0)
 		return response;
 
@@ -208,6 +209,15 @@ int broker_load() {
 	broker_print_config();
 
 	// Create mutex for pointer
+	if(!is_buddy()){
+			t_nodo_memory *nodo_memory = malloc(sizeof(t_nodo_memory));
+			nodo_memory->pointer = 0;
+			nodo_memory->libre = true;
+			nodo_memory->size = broker_config->tamano_memoria;
+			list_add(list_memory,nodo_memory);
+			pointer = 0;
+	}
+
 	if (pthread_mutex_init(&mpointer, NULL) != 0) {
 		printf("\n mutex init failed\n");
 		return 1;
@@ -1313,80 +1323,82 @@ void purge_msg() {
 int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correlacional) {
 	pthread_mutex_lock(&mpointer);
 	int from = pointer;
-
-	if (pointer + message_void->size_message > broker_config->tamano_memoria){
+	if (!is_buddy()) {
 		if (pointer + message_void->size_message > broker_config->tamano_memoria){
-			int flag = 1;
-			int done_compactacion =0;
-			int close_while = 0;
-			while (1){
-				if(close_while == 1){
-					break;
-				}
-				switch (flag){
-					case 1:{
-
-						if(broker_config->algoritmo_particion_libre == FF){
-							broker_logger_info("Aplicar algoritmo FIRST FIT");
-							from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
-						}
-						else{
-							broker_logger_info("Aplicar algoritmo BEST FIT");
-							from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
-						}
-						if(from == -1){
-							flag = 2;//para entrar a compactacion
-							if(done_compactacion == 1){
-								broker_logger_info("Compactacion ya aplicado previamente , ir a paso 3");
-								flag = 3;
-							}
-						}
-						else {
-							save_node_list_memory(from, message_void->size_message, cola,
-																id_correlacional);
-							broker_logger_info("Pointer %d",from);
-							close_while = 1;
-						}
-						break;
-					}
-					case 2:{
-						broker_logger_info("Aplicado compactacion");
-						flag = 1;
-						done_compactacion = 1;
-						compactacion();
-						broker_logger_info("IR A PASO 1");
-						break;
-					}
-					case 3:{
-						broker_logger_warn("Aplicado algoritmo de reemplazo");
-						flag = 1;
-						done_compactacion = 0;
-						if(broker_config->algoritmo_reemplazo == FIFO){
-							aplicar_algoritmo_reemplazo_FIFO();
-						}
-						else{
-							aplicar_algoritmo_reemplazo_LRU();
-						}
-						broker_logger_warn("IR a PAso 1");
-						break;
-
-					}
-				}
-			}
+			from = save_on_memory_partition(message_void,cola,id_correlacional);
+			pthread_mutex_unlock(&mpointer);
+			broker_logger_info("Pointer %d",from);
+			return from;
 		}
+		pointer +=  max(message_void->size_message,broker_config->tamano_minimo_particion);
 		save_node_list_memory(from, message_void->size_message, cola,
-											id_correlacional);
-		pthread_mutex_unlock(&mpointer);
-		broker_logger_info("Pointer %d",from);
-		return from;
+												id_correlacional);
+		memcpy(memory + from, message_void->message, message_void->size_message);
 	}
-
-	if (message_void->size_message < broker_config->tamano_minimo_particion) {
-		pointer += broker_config->tamano_minimo_particion;
-	}
-	memcpy(memory + from, message_void->message, message_void->size_message);
 	pthread_mutex_unlock(&mpointer);
 	return from;
+}
+
+
+int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_correlacional){
+	int from ;
+	int flag = 1;
+	int done_compactacion =0;
+	int close_while = 0;
+	while (1){
+					if(close_while == 1){
+						break;
+					}
+					switch (flag){
+						case 1:{
+
+							if(broker_config->algoritmo_particion_libre == FF){
+								broker_logger_info("Aplicar algoritmo FIRST FIT");
+								from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
+							}
+							else{
+								broker_logger_info("Aplicar algoritmo BEST FIT");
+								from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
+							}
+							if(from == -1){
+								flag = 2;//para entrar a compactacion
+								if(done_compactacion == 1){
+									broker_logger_info("Compactacion ya aplicado previamente , ir a paso 3");
+									flag = 3;
+								}
+							}
+							else {
+								broker_logger_info("Pointer %d",from);
+								close_while = 1;
+							}
+							break;
+						}
+						case 2:{
+							broker_logger_info("Aplicado compactacion");
+							flag = 1;
+							done_compactacion = 1;
+							compactacion();
+							broker_logger_info("IR A PASO 1");
+							break;
+						}
+						case 3:{
+							broker_logger_warn("Aplicado algoritmo de reemplazo");
+							flag = 1;
+							done_compactacion = 0;
+							if(broker_config->algoritmo_reemplazo == FIFO){
+								aplicar_algoritmo_reemplazo_FIFO();
+							}
+							else{
+								aplicar_algoritmo_reemplazo_LRU();
+							}
+							broker_logger_warn("IR a PAso 1");
+							break;
+
+						}
+					}
+				}
+
+	save_node_list_memory(from, message_void->size_message, cola,id_correlacional);
 }
 
 int save_on_memory(t_message_to_void *message_void) {
@@ -1406,30 +1418,47 @@ int save_on_memory(t_message_to_void *message_void) {
 		}
 	}
 	memcpy(memory + from, message_void->message, message_void->size_message);
-	pthread_mutex_unlock(&msave);
 	pthread_mutex_unlock(&mpointer);
 	return from;
 }
 
-void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
+void save_node_list_memory(int puntero, int msg_size, t_cola cola, int id) {
 	t_nodo_memory * nodo_mem = malloc(sizeof(t_nodo_memory));
 
-	nodo_mem->pointer = pointer;
+	if (!is_buddy()) {
+		nodo_mem->pointer = puntero;
+		nodo_mem->size = max (broker_config->tamano_minimo_particion,nodo_mem->size);
+		nodo_mem->cola = cola;
+		nodo_mem->id = id;
+		nodo_mem->libre = false;
+		nodo_mem->time_lru = (unsigned) time(NULL);
 
-	nodo_mem->size =
+		_Bool node_matches_received_queue(t_nodo_memory* node) {
+				return node->pointer == puntero;
+			}
+
+		t_nodo_memory * node_finded =  list_find(list_memory,(void *)node_matches_received_queue);
+		int size = node_finded->size;
+		int next_pointer = node_finded->pointer + nodo_mem->size ;
+		node_finded = nodo_mem ;
+		nodo_mem->size = size;
+		nodo_mem->pointer = next_pointer;
+		nodo_mem->libre = true;
+	}
+
+	else {
+		nodo_mem->pointer = pointer;
+		nodo_mem->size =
 			!is_buddy() ?
 					((msg_size < broker_config->tamano_minimo_particion) ?
 							broker_config->tamano_minimo_particion : msg_size) :
 					msg_size;
 
-	nodo_mem->cola = cola;
-	nodo_mem->id = id;
-	nodo_mem->timestamp = time(NULL);
-
-	if (!is_buddy()) {
-		nodo_mem->libre = false;
-		nodo_mem->time_lru = (unsigned) time(NULL);
+		nodo_mem->cola = cola;
+		nodo_mem->id = id;
+		nodo_mem->timestamp = time(NULL);
 	}
+
 	pthread_mutex_lock(&mmem);
 	list_add(list_memory, nodo_mem);
 	pthread_mutex_unlock(&mmem);
@@ -1808,8 +1837,6 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 			if(message->size_message > broker_config->tamano_minimo_particion){
 				size_free = memory_node->size - message->size_message ;
 				memory_node->size = message->size_message ;
-
-
 			}
 			else{
 				size_free = memory_node->size - broker_config->tamano_minimo_particion;
@@ -1888,12 +1915,8 @@ void compactacion(){
 					memcpy(memory+offset,memory+memory_node_add->pointer,memory_node_add->size);
 					memory_node_add->pointer = offset ;
 					list_add(new_list,memory_node_add);
-
 					offset = offset + memory_node_add->size;
 					last_pointer = offset;
-
-
-
 				}
 				flag = 1;
 			}
