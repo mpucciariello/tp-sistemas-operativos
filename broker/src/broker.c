@@ -1327,8 +1327,9 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 		if (pointer + message_void->size_message > broker_config->tamano_memoria){
 			from = save_on_memory_partition(message_void,cola,id_correlacional);
 			memcpy(memory + from, message_void->message, message_void->size_message);
-			pthread_mutex_unlock(&mpointer);
 			broker_logger_info("Pointer %d",from);
+			pthread_mutex_unlock(&mpointer);
+
 			return from;
 		}
 		pointer +=  max(message_void->size_message,broker_config->tamano_minimo_particion);
@@ -1387,10 +1388,11 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 							flag = 1;
 							done_compactacion = 0;
 							if(broker_config->algoritmo_reemplazo == FIFO){
-								aplicar_algoritmo_reemplazo_FIFO();
+								aplicar_algoritmo_reemplazo_LRU();
+
 							}
 							else{
-								aplicar_algoritmo_reemplazo_LRU();
+								aplicar_algoritmo_reemplazo_FIFO();;
 							}
 							broker_logger_warn("IR a PAso 1");
 							break;
@@ -1398,6 +1400,7 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 						}
 					}
 				}
+	return from;
 }
 
 int save_on_memory(t_message_to_void *message_void) {
@@ -1488,7 +1491,6 @@ t_nodo_memory* find_node(t_nodo_memory* node) {
 			break;
 		}
 	}
-
 	return list_get(list_memory, ret_pos);
 }
 
