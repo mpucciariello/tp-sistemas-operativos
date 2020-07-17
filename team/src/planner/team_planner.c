@@ -29,8 +29,7 @@ void team_planner_algoritmo_cercania() {
 		int c = -1;
 		int min_steps = 0;
 
-		list_clean(entrenadores_disponibles);
-		entrenadores_disponibles = team_planner_create_ready_queue();
+		t_list* entrenadores_disponibles = team_planner_create_ready_queue();
 
 		for (int i = 0; i < list_size(entrenadores_disponibles); i++) {
 			t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
@@ -327,7 +326,6 @@ void planner_init_quees() {
 	lista_auxiliar = list_create();
 	pokemons_localized = list_create();
 	get_id_corr = list_create();
-	entrenadores_disponibles = list_create();
 }
 
 int team_planner_get_least_estimate_index() {
@@ -783,16 +781,12 @@ void planner_destroy_quees() {
 		list_destroy_and_destroy_elements(ready_queue, (void*) team_planner_destroy_entrenador);
 	}
 
-	if (!list_is_emptye(block_queue)) {
+	if (!list_is_empty(block_queue)) {
 		list_destroy_and_destroy_elements(block_queue, (void*) team_planner_destroy_entrenador);
 	}
 
 	if (!list_is_empty(exit_queue)) {
 		list_destroy_and_destroy_elements(exit_queue, (void*) team_planner_destroy_entrenador);
-	}
-
-	if (!list_is_empty(entrenadores_disponibles)) {
-		list_destroy_and_destroy_elements(entrenadores_disponibles, (void*) team_planner_destroy_entrenador);
 	}
 
 	if (!list_is_empty(total_targets_pokemons)) {

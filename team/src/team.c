@@ -268,7 +268,7 @@ void team_planner_check_RR_burst(t_entrenador_pokemon* entrenador) {
 		team_planner_add_to_ready_queue(entrenador);
 		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
-		team_logger_info("El entrenador %d pas+o a la cola de READY ya que terminó su QUANTUM.", entrenador->id);
+		team_logger_info("El entrenador %d paso a la cola de READY ya que terminó su QUANTUM.", entrenador->id);
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
 	}
 }
