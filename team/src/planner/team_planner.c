@@ -111,10 +111,10 @@ void team_planner_delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, in
 		if (entrenador_aux->id == entrenador->id) {
 			list_remove(block_queue, i);
 			if (cola == 0 && !entrenador->deadlock) {
-				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY, ya que fue seleccionado por el algoritmo de cercanía!", entrenador->id);
+				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY. Fue seleccionado por el algoritmo de cercanía!", entrenador->id);
 			}
 			if(cola == 0 && entrenador->deadlock) {
-				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY ya que fue seleccionado por el algoritmo de detección de deadlocks!", entrenador->id);
+				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY. Fue seleccionado por el algoritmo de detección de deadlocks!", entrenador->id);
 			}
 			if (cola == 1) {
 				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a EXIT!", entrenador->id);
@@ -128,7 +128,7 @@ void team_planner_delete_from_new_queue(t_entrenador_pokemon* entrenador) {
 		t_entrenador_pokemon* entrenador_aux = list_get(new_queue, i);
 		if (entrenador_aux->id == entrenador->id) {
 			list_remove(new_queue, i);
-			team_logger_info("Se eliminó al entrenador %d de la cola NEW porque pasará a READY luego de ser seleccionado por el algoritmo de cercanía!", entrenador->id);
+			team_logger_info("Se eliminó al entrenador %d de la cola NEW porque pasará a READY. Fue seleccionado por el algoritmo de cercanía!", entrenador->id);
 		}
 	}
 }
@@ -500,13 +500,13 @@ void team_planner_solve_deadlock() {
 
 		deadlocks_detected++;	
 
-		team_logger_info("Se detectó un deadlock. El entrenador %d está bloqueando al entrenador %d.", entrenador_bloqueante->id, entrenador_bloqueado->id);
+		team_logger_info("Se detectó un DEADLOCK. El entrenador %d está bloqueando al entrenador %d.", entrenador_bloqueante->id, entrenador_bloqueado->id);
 
 		team_planner_add_to_ready_queue(entrenador_bloqueado);
 		list_remove(ready_queue, 0);
 		team_planner_exec_trainer(entrenador_bloqueado);
 
-		team_logger_info("El entrenador %d pasará a estado EXEC para realizar el intercambio con el entrenador bloqueante %d!", entrenador_bloqueado-> id, entrenador_bloqueante->id);
+		team_logger_info("El entrenador %d pasará a estado EXEC para realizar el INTERCAMBIO con el entrenador bloqueante %d!", entrenador_bloqueado-> id, entrenador_bloqueante->id);
 
 		int aux_x = entrenador_bloqueado->position->pos_x - entrenador_bloqueado->pokemon_a_atrapar->position->pos_x;
 		int	aux_y = entrenador_bloqueado->position->pos_y - entrenador_bloqueado->pokemon_a_atrapar->position->pos_y;
@@ -539,7 +539,7 @@ void team_planner_solve_deadlock() {
 			team_planner_new_cpu_cicle(entrenador_bloqueado);
 		}
 
-		team_logger_info("Se añadió al entrenador %d a la cola de bloqueados luego de ejecutar un intercambio!", entrenador_bloqueado->id);
+		team_logger_info("Se añadió al entrenador %d a la cola de bloqueados luego de ejecutar un intercambio.", entrenador_bloqueado->id);
 
 		list_add(entrenador_bloqueado->pokemons, pokemon_de_entrenador_bloqueante);
 		team_logger_info("El entrenador %d ahora tiene un %s que intercambió con el entrenador %d!", entrenador_bloqueado->id, pokemon_de_entrenador_bloqueante->name, entrenador_bloqueante->id);
@@ -561,7 +561,7 @@ void team_planner_solve_deadlock() {
 		deadlocks_resolved++;
 	}
 	if (team_planner_all_finished()) {
-		team_logger_info("Finaliza el algoritmo de detección de interbloqueos, el TEAM se encuentra en condiciones de FINALIZAR!");
+		team_logger_info("Finaliza el algoritmo de detección de interbloqueos. El TEAM se encuentra en condiciones de FINALIZAR!");
 		team_planner_print_fullfill_target();
 		free(pokemon_de_entrenador_bloqueado);
 		free(pokemon_de_entrenador_bloqueante);
