@@ -1347,6 +1347,7 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 	int flag = 1;
 	int done_compactacion =0;
 	int close_while = 0;
+	int fallas = 0;
 	while (1){
 					if(close_while == 1){
 						break;
@@ -1364,10 +1365,12 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 							}
 							if(from == -1){
 								flag = 2;//para entrar a compactacion
+								broker_logger_info("No se pudo aplicar FF");
 								if(done_compactacion == 1){
 									broker_logger_info("Compactacion ya aplicado previamente , ir a paso 3");
 									flag = 3;
 								}
+								fallas ++;
 							}
 							else {
 								broker_logger_info("Pointer %d",from);
@@ -1379,8 +1382,10 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 							broker_logger_info("Aplicado compactacion");
 							flag = 1;
 							done_compactacion = 1;
-							compactacion();
-							broker_logger_info("IR A PASO 1");
+							if(fallas == broker_config->frecuencia_compactacion){
+								compactacion();
+								fallas = 0;
+							}														broker_logger_info("IR A PASO 1");
 							break;
 						}
 						case 3:{
@@ -1394,6 +1399,7 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 								aplicar_algoritmo_reemplazo_LRU();
 							}
 							broker_logger_warn("IR a PAso 1");
+							fallas = 0;
 							break;
 
 						}
@@ -1451,7 +1457,7 @@ void save_node_list_memory(int puntero, int msg_size, t_cola cola, int id) {
 		node_finded->libre = false;
 		node_finded->time_lru = (unsigned) time(NULL);
 
-		node_finded->cola = cola;
+		nodo_mem->cola = cola;
 		nodo_mem->size = size - max (broker_config->tamano_minimo_particion,msg_size);
 		nodo_mem->pointer = next_pointer;
 		nodo_mem->libre = true;
@@ -1783,7 +1789,7 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 
 	for(int i=0;i<list_size(list_memory);i++){
 		t_nodo_memory* memory_node = list_get(list_memory,i);
-		if(memory_node->libre == true  && max(message->size_message,broker_config->tamano_minimo_particion) > memory_node->size){
+		if(memory_node->libre == true  && max(message->size_message,broker_config->tamano_minimo_particion) <= memory_node->size){
 
 			if(flag_first == 0){
 				position = i;
@@ -1818,13 +1824,16 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 			pointer_busy = memory_node->pointer;
 			memory_node->libre = false;
 			list_add(new_list,memory_node);
-			t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
-			memory_next->cola = cola;
-			memory_next->id = 0;
-			memory_next->libre = true;
-			memory_next->pointer = puntero +message->size_message;
-			memory_next->size = size_free;
-			list_add(new_list,memory_next);
+			if(size_free != 0){
+				t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
+				memory_next->cola = cola;
+				memory_next->id = 0;
+				memory_next->libre = true;
+				memory_next->pointer = puntero +message->size_message;
+				memory_next->size = size_free;
+				list_add(new_list,memory_next);
+			}
+
 			for(int k=i+1; k<list_size(list_memory);k++){
 				t_nodo_memory* memory_fill =list_get(list_memory,k);
 				list_add(new_list,memory_fill);
@@ -1842,7 +1851,9 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 	}
 	list_memory = new_list ;
     broker_logger_warn("terminado reemplazo");
+    broker_logger_warn("Estado memoria actual");
 	estado_memoria(list_memory);
+	broker_logger_warn("Terminado memoria actual");
 	return pointer_busy;
 }
 
@@ -1855,7 +1866,7 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 	while(i<list_size(list_memory)){
 
 		t_nodo_memory* memory_node =list_get(list_memory,i);
-		if(memory_node->libre == true  &&  max(message->size_message,broker_config->tamano_minimo_particion) < memory_node->size && flag == 0 ){
+		if(memory_node->libre == true  &&  max(message->size_message,broker_config->tamano_minimo_particion) <= memory_node->size && flag == 0 ){
 			broker_logger_warn("iniciando reemplazo");
 			estado_memoria(list_memory);
 			flag = 1;
@@ -1868,13 +1879,15 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 			memory_node->libre = false;
 			list_add(new_list,memory_node);
 
-			t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
-			memory_next->cola = cola;
-			memory_next->id = 0;
-			memory_next->libre = true;
-			memory_next->pointer = puntero +message->size_message;
-			memory_next->size = size_free;
-			list_add(new_list,memory_next);
+			if(size_free != 0){
+				t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
+				memory_next->cola = cola;
+				memory_next->id = 0;
+				memory_next->libre = true;
+				memory_next->pointer = puntero +message->size_message;
+				memory_next->size = size_free;
+				list_add(new_list,memory_next);
+			}
 
 			for(int k=i+1; k<list_size(list_memory);k++){
 				t_nodo_memory* memory_fill =list_get(list_memory,k);
@@ -1895,7 +1908,9 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 	}
 	list_memory = new_list ;
 	broker_logger_warn("terminado reemplazo");
+	broker_logger_warn("Estado actual");
 	estado_memoria(list_memory);
+	broker_logger_warn("Estado final");
 	return pointer_busy;
 }
 
@@ -2009,12 +2024,15 @@ void aplicar_algoritmo_reemplazo_LRU(){
 }
 
 void estado_memoria(t_list *list){
+	broker_logger_warn("Estado Actual");
 	for (int i=0; i<list_size(list);i++){
 		t_nodo_memory *nodo_memoria =list_get(list,i);
-		broker_logger_info(" Posicion %d",nodo_memoria->pointer);
+		broker_logger_info(" Posicion %d",i);
 		broker_logger_info(" Pointer %d",nodo_memoria->pointer);
+		broker_logger_info(" Cola %d",nodo_memoria->cola);
 		broker_logger_info(" estado %d",nodo_memoria->libre);
 		broker_logger_info(" size %d",nodo_memoria->size);
 		broker_logger_info(" time %d",nodo_memoria->time_lru);
 	}
+	broker_logger_warn("Estado Final");
 }
