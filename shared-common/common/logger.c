@@ -4,7 +4,7 @@
 
 t_log* logger_create(char* file, char* program_name)
 {
-	return log_create(file, program_name, false, LOG_LEVEL_TRACE);
+	return log_create(file, program_name, true, LOG_LEVEL_TRACE);
 }
 
 void logger_destroy(t_log* logger)
