@@ -1118,7 +1118,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		memcpy(&caught_rcv->result, message, sizeof(uint32_t));
-		if (!caught_rcv->result) {
+		if (caught_rcv->result != 0) {
 			broker_logger_info("Result: Caught");
 		} else {
 			broker_logger_info("Result: Failed");
