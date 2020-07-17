@@ -119,6 +119,7 @@ void send_message_catch(t_catch_pokemon* catch_send,t_entrenador_pokemon* entren
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador->list_id_catch, (void*) catch_send->id_correlacional);
 	} else {
+		list_remove(exec_queue, 0);
 		atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
 	}
 	usleep(500000);
@@ -325,7 +326,9 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		send_message_catch(catch_send, entrenador);
 
 		entrenador->se_movio = false;
-		list_remove(exec_queue, 0);
+		if(!list_is_empty(exec_queue)){
+			list_remove(exec_queue, 0);
+		}
 		sem_post(&sem_planificador);
 	}
 }
