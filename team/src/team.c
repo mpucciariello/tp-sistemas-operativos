@@ -294,12 +294,14 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 
 		int steps = fabs(aux_x) + fabs(aux_y);
 
-		for (int i = 0; i <= steps; i++) {
-			sleep(team_config->retardo_ciclo_cpu);
-			team_planner_new_cpu_cicle(entrenador);
+		if(entrenador->position->pos_x != entrenador->pokemon_a_atrapar->position->pos_x || entrenador->position->pos_y != entrenador->pokemon_a_atrapar->position->pos_y){
+			for (int i = 0; i < steps; i++) {
+				sleep(team_config->retardo_ciclo_cpu);
+				team_planner_new_cpu_cicle(entrenador);
+			}
 		}
 
-		if(!entrenador->envio_catch){
+		if(!entrenador->se_movio){
 			team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d).", entrenador->id,
 																				  entrenador->position->pos_x,
 																				  entrenador->position->pos_y,
@@ -309,19 +311,20 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
 			entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
 
-			t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
-			catch_send->id_correlacional = 0;
-			catch_send->nombre_pokemon = entrenador->pokemon_a_atrapar->name;
-			catch_send->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
-			catch_send->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
-			catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
-
-			send_message_catch(catch_send, entrenador);
 			team_planner_new_cpu_cicle(entrenador);
-			entrenador->envio_catch = true;
+			entrenador->se_movio = true;
 		}
 
-		entrenador->envio_catch = false;
+		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
+		catch_send->id_correlacional = 0;
+		catch_send->nombre_pokemon = string_duplicate(entrenador->pokemon_a_atrapar->name);
+		catch_send->tamanio_nombre = strlen(catch_send->nombre_pokemon);
+		catch_send->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
+		catch_send->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
+
+		send_message_catch(catch_send, entrenador);
+
+		entrenador->se_movio = false;
 		sem_post(&sem_planificador);
 	}
 }

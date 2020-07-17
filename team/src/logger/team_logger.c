@@ -5,7 +5,7 @@ int team_logger_create(char* logfile_name)
 	team_log = logger_create(logfile_name, PROGRAM_NAME);
 	if (team_log == NULL || team_log < 0)
 	{
-		perror("No ha sido posible instanciar el team_logger");
+		perror("No ha sido posible instanciar el team_logger.");
 		return -1;
 	}
 

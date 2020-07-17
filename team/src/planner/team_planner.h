@@ -37,7 +37,7 @@ typedef struct {
 	t_pokemon* pokemon_a_atrapar; 
 	bool deadlock;
 	int diferencia;
-	bool envio_catch;
+	bool se_movio;
 } t_entrenador_pokemon;
 
 typedef enum {
@@ -78,6 +78,7 @@ t_list* lista_auxiliar;
 t_list* pokemons_localized;
 t_list* real_targets_pokemons;
 t_list* get_id_corr;
+t_list*	entrenadores_disponibles;
 
 bool appeared_recibidos;
 

@@ -29,7 +29,8 @@ void team_planner_algoritmo_cercania() {
 		int c = -1;
 		int min_steps = 0;
 
-		t_list*	entrenadores_disponibles = team_planner_create_ready_queue();
+		list_clean(entrenadores_disponibles);
+		entrenadores_disponibles = team_planner_create_ready_queue();
 
 		for (int i = 0; i < list_size(entrenadores_disponibles); i++) {
 			t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
@@ -150,7 +151,7 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->deadlock = false;
 	entrenador->list_id_catch = list_create();
 	entrenador->diferencia = team_planner_calcular_diferencia(entrenador);
-	entrenador->envio_catch = false;
+	entrenador->se_movio = false;
 	pthread_mutex_init(&entrenador->sem_move_trainers, NULL);
 	pthread_mutex_lock(&entrenador->sem_move_trainers);
 	pthread_create(&entrenador->hilo_entrenador, NULL, (void*) move_trainers_and_catch_pokemon, entrenador);
@@ -231,7 +232,7 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	entrenador->state = EXIT;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
-	entrenador->envio_catch = false;
+	entrenador->se_movio = false;
 	team_logger_info("El entrenador %d terminó exitosamente!", entrenador->id);
 	team_planner_delete_from_bloqued_queue(entrenador, 1);
 	list_add(exit_queue, entrenador);
@@ -336,6 +337,7 @@ void planner_init_quees() {
 	lista_auxiliar = list_create();
 	pokemons_localized = list_create();
 	get_id_corr = list_create();
+	entrenadores_disponibles = list_create();
 }
 
 int team_planner_get_least_estimate_index() {
@@ -707,16 +709,21 @@ void team_planner_print_fullfill_target() {
 	}
 	int total_cpu = (int) list_fold(trainners, 0, (void*) add_burst_time);
 	team_logger_info("Cantidad de ciclos de CPU totales: %d.", total_cpu);
+	printf("Cantidad de ciclos de CPU totales: %d.", total_cpu);
 	team_logger_info("Cantidad de cambios de contexto realizados: %d.", context_switch_qty);
+	printf("Cantidad de cambios de contexto realizados: %d.", context_switch_qty);
 	team_logger_info("Cantidad de ciclos de CPU realizados por entrenador:");
+	printf("Cantidad de ciclos de CPU realizados por entrenador:");
 
 	void _list_burst_trainner(t_entrenador_pokemon *trainner) {
 		team_logger_info("Entrenador %d -> Ciclos de CPU realizados: %d", trainner->id, trainner->total_burst_time);
+		printf("Entrenador %d -> Ciclos de CPU realizados: %d", trainner->id, trainner->total_burst_time);
 	}
 	list_iterate(trainners, (void*) _list_burst_trainner);
 
 	list_destroy(trainners);
 	team_logger_info("Deadlocks producidos: %d  y resueltos: %d.", deadlocks_detected, deadlocks_resolved);
+	printf("Deadlocks producidos: %d  y resueltos: %d.", deadlocks_detected, deadlocks_resolved);
 }
 
 void team_planner_init() {
@@ -759,7 +766,9 @@ void team_planner_destroy_pokemons(t_pokemon* pokemon) {
 void team_planner_destroy_entrenador(t_entrenador_pokemon* entrenador) {
 
 	if(entrenador != NULL){
-		pthread_mutex_destroy(&entrenador->sem_move_trainers);
+		if(&entrenador->sem_move_trainers != NULL){
+			pthread_mutex_destroy(&entrenador->sem_move_trainers);
+		}
 
 		if(list_size(entrenador->list_id_catch) == 0){
 			list_destroy(entrenador->list_id_catch);
@@ -792,6 +801,10 @@ void planner_destroy_quees() {
 
 	if(list_size(exit_queue) != 0){
 		list_destroy_and_destroy_elements(exit_queue, (void*) team_planner_destroy_entrenador);
+	}
+
+	if(list_size(entrenadores_disponibles) != 0){
+		list_destroy_and_destroy_elements(entrenadores_disponibles, (void*) team_planner_destroy_entrenador);
 	}
 
 	if(!list_is_empty(total_targets_pokemons)){
