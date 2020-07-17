@@ -374,7 +374,6 @@ static void *handle_connection(void *arg) {
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			new_snd->id_correlacional = new_receive->id_correlacional;
 			create_message_ack(new_snd->id_correlacional, new_queue, NEW_QUEUE);
-			pthread_mutex_unlock(&msave);
 
 			// To GC
 			new_protocol = NEW_POKEMON;
@@ -387,6 +386,7 @@ static void *handle_connection(void *arg) {
 							new_snd);
 				}
 			}
+			pthread_mutex_unlock(&msave);
 			usleep(50000);
 			break;
 		}
@@ -420,7 +420,7 @@ static void *handle_connection(void *arg) {
 					APPEARED_QUEUE);
 
 			appeared_snd->id_correlacional = appeared_rcv->id_correlacional;
-			pthread_mutex_unlock(&msave);
+
 
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
@@ -433,6 +433,7 @@ static void *handle_connection(void *arg) {
 							appeared_snd);
 				}
 			}
+			pthread_mutex_unlock(&msave);
 			usleep(500000);
 			break;
 		}
@@ -462,7 +463,7 @@ static void *handle_connection(void *arg) {
 			send(client_fd, &get_rcv->id_correlacional, sizeof(uint32_t), 0);
 
 			create_message_ack(get_rcv->id_correlacional, get_queue, GET_QUEUE);
-			pthread_mutex_unlock(&msave);
+
 			// To GC
 			get_protocol = GET_POKEMON;
 			broker_logger_info("GET SENT TO GAMECARD");
@@ -474,6 +475,7 @@ static void *handle_connection(void *arg) {
 							get_snd);
 				}
 			}
+			pthread_mutex_unlock(&msave);
 			usleep(500000);
 			break;
 		}
@@ -507,7 +509,7 @@ static void *handle_connection(void *arg) {
 
 			create_message_ack(catch_rcv->id_correlacional, catch_queue,
 					CATCH_QUEUE);
-			pthread_mutex_unlock(&msave);
+
 
 			// To GC
 			catch_protocol = CATCH_POKEMON;
@@ -520,6 +522,7 @@ static void *handle_connection(void *arg) {
 							catch_send);
 				}
 			}
+			pthread_mutex_unlock(&msave);
 			usleep(500000);
 			break;
 		}
@@ -556,7 +559,6 @@ static void *handle_connection(void *arg) {
 					LOCALIZED_QUEUE);
 
 			loc_snd->id_correlacional = loc_rcv->id_correlacional;
-			pthread_mutex_unlock(&msave);
 
 			// To team
 			localized_protocol = LOCALIZED_POKEMON;
@@ -570,6 +572,7 @@ static void *handle_connection(void *arg) {
 							loc_snd);
 				}
 			}
+			pthread_mutex_unlock(&msave);
 			usleep(50000);
 			break;
 		}
@@ -611,7 +614,6 @@ static void *handle_connection(void *arg) {
 					CAUGHT_QUEUE);
 
 			caught_snd->id_correlacional = caught_rcv->id_correlacional;
-			pthread_mutex_unlock(&msave);
 
 			// To Team
 			caught_protocol = CAUGHT_POKEMON;
@@ -624,6 +626,7 @@ static void *handle_connection(void *arg) {
 							caught_snd);
 				}
 			}
+			pthread_mutex_unlock(&msave);
 			usleep(50000);
 			break;
 		}
@@ -1115,7 +1118,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		memcpy(&caught_rcv->result, message, sizeof(uint32_t));
-		if (caught_rcv->result) {
+		if (!caught_rcv->result) {
 			broker_logger_info("Result: Caught");
 		} else {
 			broker_logger_info("Result: Failed");
