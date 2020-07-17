@@ -340,8 +340,7 @@ static void *handle_connection(void *arg) {
 			t_subscribe_message_node* node_ack = list_find(list_msg_subscribers,
 					(void*) node_matches_received_queue);
 
-			broker_logger_warn("ID %d, cola: %s", node_ack->id,
-					get_queue_name(node_ack->cola));
+			broker_logger_warn("ID %d Cola: %s", node_ack->id, get_queue_name(node_ack->cola));
 			t_subscribe_ack_node* node_subscriber = list_find(
 					node_ack->list, (void*) subscriber_listed_for_ack);
 			node_subscriber->ack = true;
@@ -608,7 +607,7 @@ static void *handle_connection(void *arg) {
 					CAUGHT_QUEUE, caught_rcv->id_correlacional);
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from,
 					memory);
-			create_message_ack(caught_snd->id_correlacional, caught_queue,
+			create_message_ack(caught_rcv->id_correlacional, caught_queue,
 					CAUGHT_QUEUE);
 
 			caught_snd->id_correlacional = caught_rcv->id_correlacional;

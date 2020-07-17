@@ -249,6 +249,8 @@ void subscriber_command(char** arguments, int arguments_size) {
 			ack_send->id_corr_msg = new_receive->id_correlacional;
 			ack_send->queue = NEW_QUEUE;
 			ack_send->sender_name = "GAMEBOY";
+			ack_send->ip = game_boy_config->ip_broker;
+			ack_send->port = game_boy_config->puerto_broker;
 
 			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
@@ -272,6 +274,8 @@ void subscriber_command(char** arguments, int arguments_size) {
 			ack_send->id_corr_msg = get_rcv->id_correlacional;
 			ack_send->queue = GET_QUEUE;
 			ack_send->sender_name = "GAMEBOY";
+			ack_send->ip = game_boy_config->ip_broker;
+			ack_send->port = game_boy_config->puerto_broker;
 
 			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
@@ -298,6 +302,8 @@ void subscriber_command(char** arguments, int arguments_size) {
 			ack_send->id_corr_msg = catch_rcv->id_correlacional;
 			ack_send->queue = CATCH_QUEUE;
 			ack_send->sender_name = "GAMEBOY";
+			ack_send->ip = game_boy_config->ip_broker;
+			ack_send->port = game_boy_config->puerto_broker;
 
 			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
@@ -320,6 +326,8 @@ void subscriber_command(char** arguments, int arguments_size) {
 			ack_send->id_corr_msg = caught_rcv->id_correlacional;
 			ack_send->queue = CAUGHT_QUEUE;
 			ack_send->sender_name = "GAMEBOY";
+			ack_send->ip = game_boy_config->ip_broker;
+			ack_send->port = game_boy_config->puerto_broker;
 
 			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
@@ -357,6 +365,8 @@ void subscriber_command(char** arguments, int arguments_size) {
 			ack_send->id_corr_msg = loc_rcv->id_correlacional;
 			ack_send->queue = LOCALIZED_QUEUE;
 			ack_send->sender_name = "GAMEBOY";
+			ack_send->ip = game_boy_config->ip_broker;
+			ack_send->port = game_boy_config->puerto_broker;
 
 			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
@@ -384,6 +394,8 @@ void subscriber_command(char** arguments, int arguments_size) {
 			ack_send->id_corr_msg = appeared_rcv->id_correlacional;
 			ack_send->queue = APPEARED_QUEUE;
 			ack_send->sender_name = "GAMEBOY";
+			ack_send->ip = game_boy_config->ip_broker;
+			ack_send->port = game_boy_config->puerto_broker;
 
 			utils_serialize_and_send(game_boy_broker_fd, ack_protocol, ack_send);
 
