@@ -943,7 +943,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		t_caught_pokemon *caught_rcv = (t_caught_pokemon*) package_recv;
 		message_to_void->message = malloc(sizeof(uint32_t));
 
-		memcpy(message_to_void->message, &caught_rcv->result, sizeof(uint32_t));
+		memcpy(message_to_void->message + offset, &caught_rcv->result, sizeof(uint32_t));
 		message_to_void->size_message = sizeof(uint32_t);
 		break;
 	}
