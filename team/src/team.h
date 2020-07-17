@@ -49,7 +49,7 @@ bool team_planner_all_finished();
 bool pokemon_not_localized(char*);
 bool todavia_quedan_pokemones_restantes(char*);
 bool tengo_en_pokemon_to_catch(char*);
-
+bool team_is_my_caught(uint32_t id_correlacional);
 
 
 #endif /* TEAM_H_ */
