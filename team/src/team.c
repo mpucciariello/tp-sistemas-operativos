@@ -294,14 +294,14 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 
 		int steps = fabs(aux_x) + fabs(aux_y);
 
-		if(entrenador->position->pos_x != entrenador->pokemon_a_atrapar->position->pos_x || entrenador->position->pos_y != entrenador->pokemon_a_atrapar->position->pos_y){
+		if (entrenador->position->pos_x != entrenador->pokemon_a_atrapar->position->pos_x || entrenador->position->pos_y != entrenador->pokemon_a_atrapar->position->pos_y) {
 			for (int i = 0; i < steps; i++) {
 				sleep(team_config->retardo_ciclo_cpu);
 				team_planner_new_cpu_cicle(entrenador);
 			}
 		}
 
-		if(!entrenador->se_movio){
+		if (!entrenador->se_movio) {
 			team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d).", entrenador->id,
 																				  entrenador->position->pos_x,
 																				  entrenador->position->pos_y,
@@ -547,7 +547,7 @@ void *receive_msg(int fd, int send_to) {
 				add_to_pokemon_to_catch(pokemon);
 			}
 
-			if(!appeared_recibidos){
+			if (!appeared_recibidos) {
 				appeared_recibidos = true;
 				sem_post(&appeared_recibido);
 			}
@@ -571,7 +571,7 @@ bool pokemon_not_localized(char* nombre) {
 }
 
 void quitar_de_pokemones_pendientes(char* pokemon) {
-	if(!list_is_empty(pokemones_pendientes)){
+	if (!list_is_empty(pokemones_pendientes)) {
 		for (int i = 0; i < list_size(pokemones_pendientes); i++) {
 			char* nombre = list_get(pokemones_pendientes, i);
 			if (string_equals_ignore_case(pokemon, nombre)) {
@@ -583,7 +583,7 @@ void quitar_de_pokemones_pendientes(char* pokemon) {
 }
 
 void quitar_de_real_target(char* pokemon) {
-	if(!list_is_empty(real_targets_pokemons)){
+	if (!list_is_empty(real_targets_pokemons)) {
 		for (int i = 0; i < list_size(real_targets_pokemons); i++) {
 			t_pokemon* pok = list_get(real_targets_pokemons, i);
 			if (string_equals_ignore_case(pokemon, pok->name)) {
@@ -599,8 +599,7 @@ void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	list_add(pokemon_to_catch, pokemon);
 	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 
-
-	if(pokemon_not_pendant(pokemon->name)){
+	if (pokemon_not_pendant(pokemon->name)) {
 		sem_post(&sem_message_on_queue);
 	}
 }

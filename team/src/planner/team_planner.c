@@ -110,13 +110,13 @@ void team_planner_delete_from_bloqued_queue(t_entrenador_pokemon* entrenador, in
 		t_entrenador_pokemon* entrenador_aux = list_get(block_queue, i);
 		if (entrenador_aux->id == entrenador->id) {
 			list_remove(block_queue, i);
-			if (cola == 0 && !entrenador->deadlock) {
-				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY. Fue seleccionado por el algoritmo de cercanía!", entrenador->id);
-			}
-			if(cola == 0 && entrenador->deadlock) {
-				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY. Fue seleccionado por el algoritmo de detección de deadlocks!", entrenador->id);
-			}
-			if (cola == 1) {
+			if (cola == 0) {
+				if (!entrenador->deadlock) {
+					team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY. Fue seleccionado por el algoritmo de cercanía!", entrenador->id);
+				} else {
+					team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a READY. Fue seleccionado por el algoritmo de detección de deadlocks!", entrenador->id);
+				}
+			} else {
 				team_logger_info("Se eliminó al entrenador %d de la cola BLOCK porque pasará a EXIT!", entrenador->id);
 			}
 		}
@@ -648,7 +648,7 @@ t_pokemon* team_planner_ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador
 	lista_auxiliar = list_duplicate(entrenador->targets);
 	int m = 0;
 
-	while(m < list_size(pokemons_que_tiene)){
+	while (m < list_size(pokemons_que_tiene)) {
 		for (int i = 0; i < list_size(pokemons_que_tiene); i++) {
 			pokemon_a_entregar = list_get(pokemons_que_tiene, i);
 
@@ -668,7 +668,7 @@ t_pokemon* team_planner_ver_a_quien_no_necesita(t_entrenador_pokemon* entrenador
 			}
 		}
 
-		if (list_size(lista_auxiliar) > 0) {
+		if (!list_is_empty(lista_auxiliar)) {
 			if (team_planner_entrenador_que_necesita(pokemon_a_entregar) != NULL) {
 				return pokemon_a_entregar;
 			}
@@ -757,20 +757,18 @@ bool team_planner_trainer_completed_with_success(t_entrenador_pokemon* entrenado
 }
 
 void team_planner_destroy_pokemons(t_pokemon* pokemon) {
-
-	if(pokemon != NULL){
+	if (pokemon != NULL) {
 		free(pokemon->name);
 	}
 }
 
 void team_planner_destroy_entrenador(t_entrenador_pokemon* entrenador) {
-
-	if(entrenador != NULL){
-		if(&entrenador->sem_move_trainers != NULL){
+	if (entrenador != NULL) {
+		if (&entrenador->sem_move_trainers != NULL) {
 			pthread_mutex_destroy(&entrenador->sem_move_trainers);
 		}
 
-		if(list_size(entrenador->list_id_catch) == 0){
+		if (list_is_empty(entrenador->list_id_catch)) {
 			list_destroy(entrenador->list_id_catch);
 		}
 	}
@@ -787,27 +785,27 @@ void planner_destroy_quees() {
 	list_destroy(got_pokemons);
 	list_destroy(pokemon_to_catch);
 
-	if(list_size(new_queue) != 0){
+	if (!list_is_empty(new_queue)) {
 		list_destroy_and_destroy_elements(new_queue, (void*) team_planner_destroy_entrenador);
 	}
 
-	if(list_size(ready_queue) != 0){
+	if (!list_is_empty(ready_queue)) {
 		list_destroy_and_destroy_elements(ready_queue, (void*) team_planner_destroy_entrenador);
 	}
 
-	if(list_size(block_queue) != 0){
+	if (!list_is_emptye(block_queue)) {
 		list_destroy_and_destroy_elements(block_queue, (void*) team_planner_destroy_entrenador);
 	}
 
-	if(list_size(exit_queue) != 0){
+	if (!list_is_empty(exit_queue)) {
 		list_destroy_and_destroy_elements(exit_queue, (void*) team_planner_destroy_entrenador);
 	}
 
-	if(list_size(entrenadores_disponibles) != 0){
+	if (!list_is_empty(entrenadores_disponibles)) {
 		list_destroy_and_destroy_elements(entrenadores_disponibles, (void*) team_planner_destroy_entrenador);
 	}
 
-	if(!list_is_empty(total_targets_pokemons)){
+	if (!list_is_empty(total_targets_pokemons)) {
 		list_destroy_and_destroy_elements(total_targets_pokemons, (void*) team_planner_destroy_pokemons);
 	}
 }
