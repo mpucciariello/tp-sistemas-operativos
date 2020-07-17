@@ -164,8 +164,6 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 	quitar_de_pokemones_pendientes(pokemon_name);
 	quitar_de_real_target(pokemon_name);
 
-
-
 	if (team_planner_trainer_completed_with_success(entrenador)) {
 		team_planner_finish_trainner(entrenador);
 	}
@@ -197,7 +195,7 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 		}
 	}
 
-	if (entrenador->status && !entrenador->deadlock && entrenador->state == BLOCK && !trainer_is_in_deadlock_caught(entrenador) && !team_planner_trainer_completed_with_success(entrenador)) {
+	if (entrenador->status && !entrenador->deadlock && entrenador->state == BLOCK && !team_planner_trainer_completed_with_success(entrenador)) {
 		sem_post(&sem_entrenadores_disponibles);
 	}
 }
@@ -290,6 +288,7 @@ void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	while (true) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
+		list_add(exec_queue, entrenador);
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
@@ -326,6 +325,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		send_message_catch(catch_send, entrenador);
 
 		entrenador->se_movio = false;
+		list_remove(exec_queue, 0);
 		sem_post(&sem_planificador);
 	}
 }
@@ -464,6 +464,7 @@ void *receive_msg(int fd, int send_to) {
 				quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
 
 				if (caught_rcv->result == 1) {
+					team_planner_change_block_status_by_trainer(false, entrenador);
 					atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
 				} else {
 					team_planner_change_block_status_by_trainer(true, entrenador);

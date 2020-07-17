@@ -14,6 +14,7 @@ void team_planner_run_planification() {
 
 		team_logger_info("El entrenador %d pasará a EXEC!", entrenador->id);
 		context_switch_qty++;
+
 		pthread_mutex_unlock(&entrenador->sem_move_trainers);
 	}
 }
@@ -326,6 +327,7 @@ void planner_init_quees() {
 	lista_auxiliar = list_create();
 	pokemons_localized = list_create();
 	get_id_corr = list_create();
+	exec_queue = list_create();
 }
 
 int team_planner_get_least_estimate_index() {
@@ -461,7 +463,7 @@ bool team_planner_all_queues_are_empty_except_block() {
 	int bloqueados_en_deadlock = list_size(team_planner_filter_by_deadlock());
 	int bloqueados = list_size(block_queue);
 
-	return (bloqueados_en_deadlock == bloqueados) && list_is_empty(new_queue) && list_is_empty(ready_queue) && (list_size(exit_queue) != list_size(team_planner_get_trainners()));
+	return (bloqueados_en_deadlock == bloqueados) && list_is_empty(new_queue) && list_is_empty(exec_queue) && list_is_empty(filter_block_list_by_1()) && list_is_empty(ready_queue) && (list_size(exit_queue) != list_size(team_planner_get_trainners()));
 }
 
 void team_planner_solve_deadlock() {
@@ -685,6 +687,7 @@ t_list* team_planner_get_trainners() {
 	list_add_all(trainners, ready_queue);
 	list_add_all(trainners, block_queue);
 	list_add_all(trainners, exit_queue);
+	list_add_all(trainners, exec_queue);
 
 	return trainners;
 }
@@ -787,6 +790,10 @@ void planner_destroy_quees() {
 
 	if (!list_is_empty(exit_queue)) {
 		list_destroy_and_destroy_elements(exit_queue, (void*) team_planner_destroy_entrenador);
+	}
+
+	if (!list_is_empty(exec_queue)) {
+		list_destroy_and_destroy_elements(exec_queue, (void*) team_planner_destroy_entrenador);
 	}
 
 	if (!list_is_empty(total_targets_pokemons)) {
