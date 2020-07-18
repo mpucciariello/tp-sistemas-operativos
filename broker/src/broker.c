@@ -1608,11 +1608,11 @@ _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
 }
 
 void send_all_messages(t_subscribe *subscriber) {
-	broker_logger_info("----xxxxxx Estado xxxxxxx-----");
-	estado_memoria(list_memory);
-	broker_logger_info("----xxxxxx Estado Final xxxxxxx-----");
-
-
+	if (!is_buddy()) {
+		broker_logger_info("----xxxxxx Estado xxxxxxx-----");
+		estado_memoria(list_memory);
+		broker_logger_info("----xxxxxx Estado Final xxxxxxx-----");
+	}
 
 	_Bool msg_match(t_nodo_memory *node) {
 		return node->cola == subscriber->cola;
@@ -2152,15 +2152,16 @@ void dump_partition() {
 }
 
 void estado_ack(t_list *list_msg_subscribers){
-	for(int i=0;i<list_size(list_msg_subscribers);i++){
-		t_subscribe_message_node *node = list_get(list_msg_subscribers,i);
-		broker_logger_info("Id msj %d",node->id);
-		broker_logger_info("cola del msj %s",get_queue_name(node->cola));
-		for(int k=0;k<list_size(node->list);k++){
-			t_subscribe_ack_node *node_ack = list_get(node->list,k);
-			broker_logger_info("Puerto %d",node_ack->subscribe->puerto);
-			broker_logger_info("IP %s",node_ack->subscribe->ip);
+	if (!is_buddy()) {
+		for(int i=0;i<list_size(list_msg_subscribers);i++){
+			t_subscribe_message_node *node = list_get(list_msg_subscribers,i);
+			broker_logger_info("Id msj %d",node->id);
+			broker_logger_info("cola del msj %s",get_queue_name(node->cola));
+			for(int k=0;k<list_size(node->list);k++){
+				t_subscribe_ack_node *node_ack = list_get(node->list,k);
+				broker_logger_info("Puerto %d",node_ack->subscribe->puerto);
+				broker_logger_info("IP %s",node_ack->subscribe->ip);
+			}
 		}
 	}
-
 }
