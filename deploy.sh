@@ -81,7 +81,6 @@ make all
 sudo make install
 cd $CWD
 
-
 for i in $OPTIONS
 do
     case $i in
@@ -99,9 +98,7 @@ do
     esac
 done
 
-
 echo -e "\n\nCloning external libraries\n\n"
-
 
 for i in "${LIBRARIES[@]}"
 do
@@ -127,13 +124,23 @@ do
 done
 
 echo -e "\n\nBuilding projects...\n\n"
-cd $PROJECTROOT/${REPONAME}
 
+cd $PROJECTROOT/${REPONAME}
 for i in "${PROYECTS[@]}"
 do
   cd $i
   make
   cd $PROJECTROOT/${REPONAME}
 done
+
+echo -e "\n\n Copying tests script in game-boy...\n\n"
+
+cd $PROJECTROOT/${REPONAME}/"delibird-pruebas"
+for f in *.sh
+do 
+   cp -v "$f" $PROJECTROOT/${REPONAME}/game-boy/"${f%.sh}".sh
+done
+
+echo -e 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/git/tp-2020-1c-CDev20/shared-common'
 
 echo -e "\n\nDeploy done!\n\n"
