@@ -105,4 +105,5 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 void signal_handler(int signum);
 char* get_queue_name(t_cola q);
 void dump_partition();
+void estado_ack(t_list *list_msg_subscribers);
 #endif  /* BROKER_H_ */
