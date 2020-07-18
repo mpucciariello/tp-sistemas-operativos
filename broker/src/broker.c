@@ -340,9 +340,10 @@ static void *handle_connection(void *arg) {
 			t_subscribe_message_node* node_ack = list_find(list_msg_subscribers,
 					(void*) node_matches_received_queue);
 
-			broker_logger_warn("ID %d Cola: %s", node_ack->id, get_queue_name(node_ack->cola));
-			t_subscribe_ack_node* node_subscriber = list_find(
-					node_ack->list, (void*) subscriber_listed_for_ack);
+			broker_logger_warn("ID %d Cola: %s", node_ack->id,
+					get_queue_name(node_ack->cola));
+			t_subscribe_ack_node* node_subscriber = list_find(node_ack->list,
+					(void*) subscriber_listed_for_ack);
 			node_subscriber->ack = true;
 			pthread_mutex_unlock(&msubs);
 
@@ -420,7 +421,6 @@ static void *handle_connection(void *arg) {
 					APPEARED_QUEUE);
 
 			appeared_snd->id_correlacional = appeared_rcv->id_correlacional;
-
 
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
@@ -509,7 +509,6 @@ static void *handle_connection(void *arg) {
 
 			create_message_ack(catch_rcv->id_correlacional, catch_queue,
 					CATCH_QUEUE);
-
 
 			// To GC
 			catch_protocol = CATCH_POKEMON;
@@ -685,7 +684,8 @@ void add_to(t_list *list, t_subscribe* subscriber) {
 		for (int i = 0; i < list_size(list_msg_subscribers); ++i) {
 			t_subscribe_message_node* node = list_get(list_msg_subscribers, i);
 
-			t_subscribe_ack_node* ack_node = malloc(sizeof(t_subscribe_ack_node));
+			t_subscribe_ack_node* ack_node = malloc(
+					sizeof(t_subscribe_ack_node));
 			ack_node->ack = false;
 			ack_node->subscribe = sub_node;
 
@@ -943,7 +943,8 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		t_caught_pokemon *caught_rcv = (t_caught_pokemon*) package_recv;
 		message_to_void->message = malloc(sizeof(uint32_t));
 
-		memcpy(message_to_void->message + offset, &caught_rcv->result, sizeof(uint32_t));
+		memcpy(message_to_void->message + offset, &caught_rcv->result,
+				sizeof(uint32_t));
 		message_to_void->size_message = sizeof(uint32_t);
 		break;
 	}
@@ -1254,8 +1255,8 @@ void purge_msg() {
 			node->id, get_queue_name(node->cola),
 			(int) (node->timestamp - base_time));
 	_Bool find_msg(t_subscribe_message_node* n) {
-		return string_equals_ignore_case(get_queue_name(n->cola), get_queue_name(node->cola))
-			&& n->id == node->id;
+		return string_equals_ignore_case(get_queue_name(n->cola),
+				get_queue_name(node->cola)) && n->id == node->id;
 	}
 
 	list_remove(list_memory, 0);
@@ -1328,75 +1329,148 @@ t_nodo_memory* find_node(t_nodo_memory* node) {
 	return list_get(list_memory, ret_pos);
 }
 
+_Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
+	_Bool node_is_match(t_subscribe_message_node* msg_ack) {
+		return node->id == msg_ack->id
+				&& string_equals_ignore_case(get_queue_name(node->cola),
+						get_queue_name(msg_ack->cola));
+	}
+
+	_Bool is_ackd(t_subscribe_ack_node* m) {
+		return m->ack == true;
+	}
+
+	_Bool msg_is_from_process(t_subscribe_ack_node* acknode) {
+		return string_equals_ignore_case(acknode->subscribe->ip, sub->ip)
+				&& acknode->subscribe->puerto == sub->puerto;
+	}
+
+	t_subscribe_message_node* ack_msg_node = list_find(list_msg_subscribers,
+			(void*) node_is_match);
+	t_subscribe_ack_node* msgsub = list_find(ack_msg_node->list,
+			(void*) msg_is_from_process);
+
+	_Bool find_sub(t_subscribe_nodo* node) {
+		return string_equals_ignore_case(node->ip, sub->ip)
+				&& node->puerto == sub->puerto;
+	}
+
+	t_subscribe_nodo* s = malloc(sizeof(t_subscribe_nodo));
+
+	switch(sub->cola) {
+
+	case NEW_QUEUE: {
+		s = list_find(new_queue, (void*) find_sub);
+		break;
+	}
+	case APPEARED_QUEUE: {
+		s = list_find(appeared_queue, (void*) find_sub);
+		break;
+	}
+	case GET_QUEUE: {
+		s = list_find(get_queue, (void*) find_sub);
+		break;
+	}
+	case CATCH_QUEUE: {
+		s = list_find(catch_queue, (void*) find_sub);
+		break;
+	}
+	case LOCALIZED_QUEUE: {
+		s = list_find(localized_queue, (void*) find_sub);
+		break;
+	}
+	case CAUGHT_QUEUE: {
+		s = list_find(caught_queue, (void*) find_sub);
+		break;
+	}
+	}
+
+	if (msgsub == NULL) {
+		t_subscribe_ack_node* ack_subscriptor = malloc(
+				sizeof(t_subscribe_ack_node));
+		ack_subscriptor->subscribe = s;
+		ack_subscriptor->ack = false;
+		list_add(ack_msg_node->list, ack_subscriptor);
+		return false;
+	}
+
+	return msgsub->ack;
+}
+
 void send_all_messages(t_subscribe *subscriber) {
 	_Bool msg_match(t_nodo_memory *node) {
 		return node->cola == subscriber->cola;
 	}
+
 	pthread_mutex_lock(&mmem);
 	t_list* list_cpy = list_filter(list_memory, (void*) msg_match);
 	pthread_mutex_unlock(&mmem);
 	int cant = list_size(list_cpy);
+
 	for (int i = 0; i < cant; i++) {
 		t_nodo_memory *nodo_cpy = list_get(list_cpy, i);
 
-		pthread_mutex_lock(&mmem);
-		t_nodo_memory *nodo_mem = find_node(nodo_cpy);
-		update_timings(nodo_mem);
-		pthread_mutex_unlock(&mmem);
+		if (!is_msg_ackd(nodo_cpy, subscriber)) {
 
-		switch (subscriber->cola) {
-		case NEW_QUEUE: {
-			t_new_pokemon* new_snd = get_from_memory(NEW_POKEMON,
-					nodo_mem->pointer, memory);
-			new_snd->id_correlacional = nodo_mem->id;
-			utils_serialize_and_send(subscriber->f_desc, NEW_POKEMON, new_snd);
-			break;
-		}
-		case CATCH_QUEUE: {
-			t_catch_pokemon* catch_snd = get_from_memory(CATCH_POKEMON,
-					nodo_mem->pointer, memory);
-			catch_snd->id_correlacional = nodo_mem->id;
-			utils_serialize_and_send(subscriber->f_desc, CATCH_POKEMON,
-					catch_snd);
-			break;
-		}
-		case CAUGHT_QUEUE: {
-			t_caught_pokemon* caught_snd = get_from_memory(CAUGHT_POKEMON,
-					nodo_mem->pointer, memory);
-			caught_snd->id_correlacional = nodo_mem->id;
-			utils_serialize_and_send(subscriber->f_desc, CAUGHT_POKEMON,
-					caught_snd);
-			break;
-		}
-		case GET_QUEUE: {
-			t_get_pokemon* get_snd = get_from_memory(GET_POKEMON,
-					nodo_mem->pointer, memory);
-			get_snd->id_correlacional = nodo_mem->id;
-			utils_serialize_and_send(subscriber->f_desc, GET_POKEMON, get_snd);
-			break;
-		}
-		case LOCALIZED_QUEUE: {
-			t_localized_pokemon* localized_snd = get_from_memory(
-					LOCALIZED_POKEMON, nodo_mem->pointer, memory);
-			localized_snd->id_correlacional = nodo_mem->id;
-			utils_serialize_and_send(subscriber->f_desc, LOCALIZED_POKEMON,
-					localized_snd);
-			break;
-		}
-		case APPEARED_QUEUE: {
-			t_appeared_pokemon* appeared_snd = get_from_memory(APPEARED_POKEMON,
-					nodo_mem->pointer, memory);
-			appeared_snd->id_correlacional = nodo_mem->id;
-			utils_serialize_and_send(subscriber->f_desc, APPEARED_POKEMON,
-					appeared_snd);
-			break;
-		}
+			pthread_mutex_lock(&mmem);
+			t_nodo_memory *nodo_mem = find_node(nodo_cpy);
+			update_timings(nodo_mem);
+			pthread_mutex_unlock(&mmem);
 
-		}
+			switch (subscriber->cola) {
+			case NEW_QUEUE: {
+				t_new_pokemon* new_snd = get_from_memory(NEW_POKEMON,
+						nodo_mem->pointer, memory);
+				new_snd->id_correlacional = nodo_mem->id;
+				utils_serialize_and_send(subscriber->f_desc, NEW_POKEMON,
+						new_snd);
+				break;
+			}
+			case CATCH_QUEUE: {
+				t_catch_pokemon* catch_snd = get_from_memory(CATCH_POKEMON,
+						nodo_mem->pointer, memory);
+				catch_snd->id_correlacional = nodo_mem->id;
+				utils_serialize_and_send(subscriber->f_desc, CATCH_POKEMON,
+						catch_snd);
+				break;
+			}
+			case CAUGHT_QUEUE: {
+				t_caught_pokemon* caught_snd = get_from_memory(CAUGHT_POKEMON,
+						nodo_mem->pointer, memory);
+				caught_snd->id_correlacional = nodo_mem->id;
+				utils_serialize_and_send(subscriber->f_desc, CAUGHT_POKEMON,
+						caught_snd);
+				break;
+			}
+			case GET_QUEUE: {
+				t_get_pokemon* get_snd = get_from_memory(GET_POKEMON,
+						nodo_mem->pointer, memory);
+				get_snd->id_correlacional = nodo_mem->id;
+				utils_serialize_and_send(subscriber->f_desc, GET_POKEMON,
+						get_snd);
+				break;
+			}
+			case LOCALIZED_QUEUE: {
+				t_localized_pokemon* localized_snd = get_from_memory(
+						LOCALIZED_POKEMON, nodo_mem->pointer, memory);
+				localized_snd->id_correlacional = nodo_mem->id;
+				utils_serialize_and_send(subscriber->f_desc, LOCALIZED_POKEMON,
+						localized_snd);
+				break;
+			}
+			case APPEARED_QUEUE: {
+				t_appeared_pokemon* appeared_snd = get_from_memory(
+						APPEARED_POKEMON, nodo_mem->pointer, memory);
+				appeared_snd->id_correlacional = nodo_mem->id;
+				utils_serialize_and_send(subscriber->f_desc, APPEARED_POKEMON,
+						appeared_snd);
+				break;
+			}
 
+			}
+		}
 	}
 }
-
 void create_message_ack(int id, t_list *cola, t_cola unCola) {
 	t_subscribe_message_node* message_node = malloc(
 			sizeof(t_subscribe_message_node));
