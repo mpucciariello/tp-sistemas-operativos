@@ -36,6 +36,7 @@ static inline unsigned next_power_of_2(int size) {
 
 void signal_handler(int signum) {
 	if (signum == SIGUSR1) {
+		broker_logger_info("Signal SIGUSR1 received. Dumping memory contents into memdump.txt");
 		if(!is_buddy()){
 			dump_partition();
 		}
@@ -128,17 +129,19 @@ unsigned choose_better_child(struct buddy *self, int index, uint32_t size) {
  * @return the offset from the beginning of memory to be managed */
 int buddy_alloc(struct buddy *self, uint32_t size) {
 	if (self == NULL || self->size < size) {
-		broker_logger_error(
+		/* broker_logger_error(
 				"Data couldn't be stored. Reason: Insufficient memory");
+		*/
 		return -1;
 	}
 	size = next_power_of_2(size);
 
 	uint32_t index = 0;
 	while (self->longest[index] < size) {
-		broker_logger_error(
+		/* broker_logger_error(
 				"Data couldn't be stored. Reason: External fragmentation");
 		broker_logger_info("Freeing memory...");
+		*/
 		purge_msg();
 	}
 
@@ -163,7 +166,7 @@ int buddy_alloc(struct buddy *self, uint32_t size) {
 
 void buddy_free(struct buddy *self, int offset) {
 	if (self == NULL || offset < 0 || offset > self->size) {
-		broker_logger_error("Error: value out of bounds");
+		// broker_logger_error("Error: value out of bounds");
 		return;
 	}
 
@@ -297,9 +300,10 @@ void broker_server_init() {
 		if ((accepted_fd = accept(broker_socket,
 				(struct sockaddr *) &client_info, &addrlen)) != -1) {
 
-			broker_logger_info(
+			/* broker_logger_info(
 					"Creando un hilo para atender una conexión en el socket %d",
 					accepted_fd);
+					*/
 			pthread_create(&tid, NULL, (void*) handle_connection,
 					(void*) &accepted_fd);
 			pthread_detach(tid);
@@ -320,7 +324,7 @@ static void *handle_connection(void *arg) {
 	t_protocol appeared_protocol;
 	t_protocol localized_protocol;
 
-	broker_logger_info("Conexion establecida con cliente: %d", client_fd);
+	// broker_logger_info("Conexion establecida con cliente: %d", client_fd);
 
 	int received_bytes;
 	int protocol;
@@ -328,7 +332,7 @@ static void *handle_connection(void *arg) {
 		received_bytes = recv(client_fd, &protocol, sizeof(int), 0);
 
 		if (received_bytes <= 0) {
-			broker_logger_error("Se perdio la conexion");
+			// broker_logger_error("Se perdio la conexion");
 			handle_disconnection(client_fd);
 			return NULL;
 		}
@@ -357,8 +361,9 @@ static void *handle_connection(void *arg) {
 			t_subscribe_message_node* node_ack = list_find(list_msg_subscribers,
 					(void*) node_matches_received_queue);
 
-			broker_logger_warn("ID %d Cola: %s", node_ack->id,
+			/* broker_logger_warn("ID %d Cola: %s", node_ack->id,
 					get_queue_name(node_ack->cola));
+			*/
 			t_subscribe_ack_node* node_subscriber = list_find(node_ack->list,
 					(void*) subscriber_listed_for_ack);
 			node_subscriber->ack = true;
@@ -370,11 +375,11 @@ static void *handle_connection(void *arg) {
 			// From GB
 		case NEW_POKEMON: {
 			
-			broker_logger_info("NEW RECEIVED FROM GB");
+			broker_logger_info("NEW RECEIVED");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
 			new_receive->id_correlacional = generar_id();
-			broker_logger_info("ID Correlacional: %d",
+			/* broker_logger_info("ID Correlacional: %d",
 					new_receive->id_correlacional);
 			broker_logger_info("Cantidad: %d", new_receive->cantidad);
 			broker_logger_info("Nombre Pokemon: %s",
@@ -382,6 +387,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", new_receive->pos_x);
 			broker_logger_info("Posicion Y: %d", new_receive->pos_y);
+			*/
 			usleep(100000);
 			t_message_to_void *message_void = convert_to_void(protocol,
 					new_receive);
@@ -396,14 +402,14 @@ static void *handle_connection(void *arg) {
 				from = save_on_memory_pd(message_void,NEW_QUEUE,new_receive->id_correlacional);
 			}
 			
-			broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
+			// broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			new_snd->id_correlacional = new_receive->id_correlacional;
 			create_message_ack(new_snd->id_correlacional, new_queue, NEW_QUEUE);
 
 			// To GC
 			new_protocol = NEW_POKEMON;
-			broker_logger_info("NEW SENT TO GC");
+			broker_logger_info("NEW SENT");
 
 			for (int i = 0; i < list_size(new_queue); i++) {
 				t_subscribe_nodo* node = list_get(new_queue, i);
@@ -423,7 +429,7 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("APPEARED RECEIVED");
 			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
-			broker_logger_info("ID correlacional: %d",
+			/* broker_logger_info("ID correlacional: %d",
 					appeared_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s",
 					appeared_rcv->nombre_pokemon);
@@ -431,7 +437,7 @@ static void *handle_connection(void *arg) {
 					appeared_rcv->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", appeared_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
-
+			*/
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
 			pthread_mutex_lock(&msave);
@@ -445,7 +451,7 @@ static void *handle_connection(void *arg) {
 				from = save_on_memory_pd(message_void,APPEARED_QUEUE,appeared_rcv->id_correlacional);
 			}
 			
-			broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d", from);
+			// broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d", from);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
 					memory);
 			create_message_ack(appeared_rcv->id_correlacional, appeared_queue,
@@ -455,7 +461,7 @@ static void *handle_connection(void *arg) {
 
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
-			broker_logger_info("APPEARED SENT TO TEAM");
+			broker_logger_info("APPEARED SENT");
 
 			create_message_ack(appeared_rcv->id_correlacional, appeared_queue, APPEARED_QUEUE);
 
@@ -473,14 +479,16 @@ static void *handle_connection(void *arg) {
 
 			// From team
 		case GET_POKEMON: {
-			broker_logger_info("GET RECEIVED FROM TEAM");
+			broker_logger_info("GET RECEIVED");
 			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd,
 					protocol);
+			/*
 			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
 			get_rcv->id_correlacional = generar_id();
 			broker_logger_info("ID correlacional: %d",
 					get_rcv->id_correlacional);
+			*/
 			usleep(50000);
 
 			t_message_to_void *message_void = convert_to_void(protocol,
@@ -495,7 +503,7 @@ static void *handle_connection(void *arg) {
 			else {
 				from = save_on_memory_pd(message_void,GET_QUEUE,get_rcv->id_correlacional);
 			}
-			broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
+			// broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 			get_snd->id_correlacional = get_rcv->id_correlacional;
 
@@ -505,7 +513,7 @@ static void *handle_connection(void *arg) {
 
 			// To GC
 			get_protocol = GET_POKEMON;
-			broker_logger_info("GET SENT TO GAMECARD");
+			broker_logger_info("GET SENT");
 
 			for (int i = 0; i < list_size(get_queue); i++) {
 				t_subscribe_nodo* node = list_get(get_queue, i);
@@ -521,9 +529,10 @@ static void *handle_connection(void *arg) {
 
 			// From team
 		case CATCH_POKEMON: {
-			broker_logger_info("CATCH RECEIVED FROM TEAM");
+			broker_logger_info("CATCH RECEIVED");
 			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
+			/*
 			broker_logger_info("Nombre Pokemon: %s", catch_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", catch_rcv->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
@@ -531,6 +540,7 @@ static void *handle_connection(void *arg) {
 			catch_rcv->id_correlacional = generar_id();
 			broker_logger_info("ID correlacional: %d",
 					catch_rcv->id_correlacional);
+			*/
 			usleep(50000);
 
 			t_message_to_void *message_void = convert_to_void(protocol,
@@ -545,7 +555,7 @@ static void *handle_connection(void *arg) {
 			else {
 				from = save_on_memory_pd(message_void,CATCH_QUEUE,catch_rcv->id_correlacional);
 			}
-			broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
+			// broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from,
 					memory);
 			catch_send->id_correlacional = catch_rcv->id_correlacional;
@@ -557,7 +567,7 @@ static void *handle_connection(void *arg) {
 
 			// To GC
 			catch_protocol = CATCH_POKEMON;
-			broker_logger_info("CATCH SENT TO GC");
+			broker_logger_info("CATCH SENT");
 
 			for (int i = 0; i < list_size(catch_queue); i++) {
 				t_subscribe_nodo* node = list_get(catch_queue, i);
@@ -573,20 +583,24 @@ static void *handle_connection(void *arg) {
 
 			// From GC
 		case LOCALIZED_POKEMON: {
-			broker_logger_info("LOCALIZED RECEIVED FROM GC");
+			broker_logger_info("LOCALIZED RECEIVED");
 			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
+			/*
 			broker_logger_info("ID correlacional: %d",
 					loc_rcv->id_correlacional);
 			broker_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
 			broker_logger_info("Cant Elementos en lista: %d",
 					loc_rcv->cant_elem);
+			*/
+
 			for (int el = 0; el < loc_rcv->cant_elem; el++) {
 				t_position* pos = malloc(sizeof(t_position));
 				pos = list_get(loc_rcv->posiciones, el);
-				broker_logger_info("Position is (%d, %d)", pos->pos_x,
+				/* broker_logger_info("Position is (%d, %d)", pos->pos_x,
 						pos->pos_y);
+				*/
 			}
 			t_message_to_void *message_void = convert_to_void(protocol,
 					loc_rcv);
@@ -601,7 +615,7 @@ static void *handle_connection(void *arg) {
 				from = save_on_memory_pd(message_void,LOCALIZED_QUEUE, loc_rcv->id_correlacional);
 			}
 			
-			broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d", from);
+			// broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d", from);
 			
 			t_localized_pokemon* loc_snd = get_from_memory(protocol, from,
 					memory);
@@ -613,7 +627,7 @@ static void *handle_connection(void *arg) {
 
 			// To team
 			localized_protocol = LOCALIZED_POKEMON;
-			broker_logger_info("LOCALIZED SENT TO TEAM");
+			broker_logger_info("LOCALIZED SENT");
 			loc_snd->posiciones = loc_rcv->posiciones;
 
 			for (int i = 0; i < list_size(localized_queue); i++) {
@@ -635,8 +649,8 @@ static void *handle_connection(void *arg) {
 					protocol);
 			pthread_mutex_lock(&msave);
 			char * ip = string_duplicate(sub_rcv->ip);
-			broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
-			broker_logger_info("IP Recibido: %s", ip);
+			// broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
+			// broker_logger_info("IP Recibido: %s", ip);
 			sub_rcv->f_desc = client_fd;
 			search_queue(sub_rcv);
 			pthread_mutex_unlock(&msave);
@@ -649,9 +663,10 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("CAUGHT RECEIVED");
 			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
-			broker_logger_info("ID correlacional: %d",
+			/* broker_logger_info("ID correlacional: %d",
 					caught_rcv->id_correlacional);
 			broker_logger_info("Resultado (0/1): %d", caught_rcv->result);
+			*/
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol,
 					caught_rcv);
@@ -665,8 +680,7 @@ static void *handle_connection(void *arg) {
 			else {
 				from = save_on_memory_pd(message_void,CAUGHT_QUEUE, caught_rcv->id_correlacional);
 			}
-			broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d",
-					from);
+			// broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d", from);
 
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from,
 					memory);
@@ -677,7 +691,7 @@ static void *handle_connection(void *arg) {
 
 			// To Team
 			caught_protocol = CAUGHT_POKEMON;
-			broker_logger_info("CAUGHT SENT TO TEAM");
+			broker_logger_info("CAUGHT SENT");
 
 			for (int i = 0; i < list_size(caught_queue); i++) {
 				t_subscribe_nodo* node = list_get(caught_queue, i);
@@ -734,7 +748,7 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 			free(noop);
 			list_remove_by_condition(q, (void*) is_gb_subscriber);
 			broker_logger_info(
-					"Game boy has been kicked from subscribers list");
+					"Game boy subscription timed out");
 			return;
 		}
 		usleep((n / 2) * 100000);
@@ -797,7 +811,7 @@ void add_to(t_list *list, t_subscribe* subscriber) {
 			usleep(100000);
 		}
 	} else {
-		broker_logger_info("Ya esta suscripto");
+		broker_logger_info("Process already subscribed");
 		node->f_desc = subscriber->f_desc;
 	}
 }
@@ -806,7 +820,7 @@ void search_queue(t_subscribe *subscriber) {
 
 	switch (subscriber->cola) {
 	case NEW_QUEUE: {
-		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola NEW ",
+		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to NEW queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mnew);
 		add_to(new_queue, subscriber);
@@ -815,7 +829,7 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case CATCH_QUEUE: {
-		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CATCH ",
+		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to CATCH queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mcatch);
 		add_to(catch_queue, subscriber);
@@ -824,7 +838,7 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case CAUGHT_QUEUE: {
-		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola CAUGHT ",
+		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to CAUGHT queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mcaught);
 		add_to(caught_queue, subscriber);
@@ -833,7 +847,7 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case GET_QUEUE: {
-		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola GET ",
+		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to GET queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mget);
 		add_to(get_queue, subscriber);
@@ -842,7 +856,7 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case LOCALIZED_QUEUE: {
-		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola LOCALIZED ",
+		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to LOCALIZED queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mloc);
 		add_to(localized_queue, subscriber);
@@ -851,7 +865,7 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case APPEARED_QUEUE: {
-		broker_logger_info("Suscripto IP: %s, PUERTO: %d,  a Cola APPEARED ",
+		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to APPEARED queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mappeared);
 		add_to(appeared_queue, subscriber);
@@ -889,7 +903,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 		break;
 	}
 	case NEW_POKEMON: {
-		broker_logger_info("NEW RECEIVED, CONVERTING to VOID*..");
+		// broker_logger_info("NEW RECEIVED, CONVERTING to VOID*..");
 		t_new_pokemon *new_receive = (t_new_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				new_receive->tamanio_nombre + (sizeof(uint32_t) * 4));
@@ -915,7 +929,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
 		// From GB or GC
 	case APPEARED_POKEMON: {
-		broker_logger_info("APPEARED RECEIVED, CONVERTING TO VOID*..");
+		// broker_logger_info("APPEARED RECEIVED, CONVERTING TO VOID*..");
 
 		t_appeared_pokemon *appeared_rcv = (t_appeared_pokemon*) package_recv;
 		message_to_void->message = malloc(
@@ -940,7 +954,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	}
 		// From team
 	case GET_POKEMON: {
-		broker_logger_info("GET RECEIVED, CONVERTING TO VOID*..");
+		// broker_logger_info("GET RECEIVED, CONVERTING TO VOID*..");
 		t_get_pokemon *get_rcv = (t_get_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				get_rcv->tamanio_nombre + sizeof(uint32_t));
@@ -957,7 +971,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 
 		// From team
 	case CATCH_POKEMON: {
-		broker_logger_info("CATCH RECEIVED, CONVERTING TO VOID*..");
+		// broker_logger_info("CATCH RECEIVED, CONVERTING TO VOID*..");
 		t_catch_pokemon *catch_rcv = (t_catch_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				catch_rcv->tamanio_nombre + sizeof(uint32_t) * 3);
@@ -980,7 +994,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	}
 		// From GC
 	case LOCALIZED_POKEMON: {
-		broker_logger_info("LOCALIZED RECEIVED, CONVERTING TO VOID*..");
+		// broker_logger_info("LOCALIZED RECEIVED, CONVERTING TO VOID*..");
 		t_localized_pokemon *loc_rcv = (t_localized_pokemon*) package_recv;
 		message_to_void->message = malloc(
 				loc_rcv->tamanio_nombre + sizeof(uint32_t) + sizeof(uint32_t)
@@ -1011,7 +1025,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv) {
 	}
 
 	case CAUGHT_POKEMON: {
-		broker_logger_info("CAUGHT RECEIVED, CONVERTING TO VOID*..");
+		// broker_logger_info("CAUGHT RECEIVED, CONVERTING TO VOID*..");
 		t_caught_pokemon *caught_rcv = (t_caught_pokemon*) package_recv;
 		message_to_void->message = malloc(sizeof(uint32_t));
 
@@ -1044,7 +1058,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		break;
 	}
 	case NEW_POKEMON: {
-		broker_logger_info("GETTING \"NEW\" MESSAGE FROM  MEMORY..");
+		// broker_logger_info("GETTING \"NEW\" MESSAGE FROM  MEMORY..");
 		t_new_pokemon *new_receive = malloc(sizeof(t_new_pokemon));
 
 		memcpy(&new_receive->tamanio_nombre, message + offset,
@@ -1061,7 +1075,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		memcpy(&new_receive->pos_y, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 		memcpy(&new_receive->cantidad, message + offset, sizeof(uint32_t));
-
+		/*
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		broker_logger_info("Pokemon: %s", new_receive->nombre_pokemon);
@@ -1069,14 +1083,14 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("X Axis position: %d", new_receive->pos_x);
 		broker_logger_info("Y Axis position: %d", new_receive->pos_y);
 		broker_logger_info("Quantity: %d", new_receive->cantidad);
-
+		*/
 		return new_receive;
 
 	}
 
 		// From GB or GC
 	case APPEARED_POKEMON: {
-		broker_logger_info("GETTING \"APPEARED\" MESSAGE FROM  MEMORY..");
+		// broker_logger_info("GETTING \"APPEARED\" MESSAGE FROM  MEMORY..");
 
 		t_appeared_pokemon *appeared_rcv = malloc(sizeof(t_appeared_pokemon));
 
@@ -1095,19 +1109,19 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		offset += sizeof(uint32_t);
 		memcpy(&appeared_rcv->pos_y, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
-
+		/*
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		broker_logger_info("Pokemon: %s", appeared_rcv->nombre_pokemon);
 		broker_logger_info("Name length: %d", appeared_rcv->tamanio_nombre);
 		broker_logger_info("X Axis position: %d", appeared_rcv->pos_x);
 		broker_logger_info("Y Axis position: %d", appeared_rcv->pos_y);
-
+		*/
 		return appeared_rcv;
 	}
 		// From team
 	case GET_POKEMON: {
-		broker_logger_info("GETING \"GET\" MESSAGE FROM  MEMORY..");
+		// broker_logger_info("GETING \"GET\" MESSAGE FROM  MEMORY..");
 		t_get_pokemon* get_rcv = malloc(sizeof(t_get_pokemon));
 
 		memcpy(&get_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
@@ -1116,18 +1130,18 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		memset(get_rcv->nombre_pokemon, 0, get_rcv->tamanio_nombre + 1);
 		memcpy(get_rcv->nombre_pokemon, message + offset,
 				get_rcv->tamanio_nombre);
-
+		/*
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		broker_logger_info("Pokemon: %s", get_rcv->nombre_pokemon);
 		broker_logger_info("Name length: %d", get_rcv->tamanio_nombre);
-
+		*/
 		return get_rcv;
 	}
 
 		// From team
 	case CATCH_POKEMON: {
-		broker_logger_info("GETTING \"CATCH\" MESSAGE FROM  MEMORY..");
+		// broker_logger_info("GETTING \"CATCH\" MESSAGE FROM  MEMORY..");
 		t_catch_pokemon *catch_rcv = malloc(sizeof(t_catch_pokemon));
 		memcpy(&catch_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
@@ -1139,19 +1153,19 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		memcpy(&catch_rcv->pos_x, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 		memcpy(&catch_rcv->pos_y, message + offset, sizeof(uint32_t));
-
+		/*
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		broker_logger_info("Pokemon: %s", catch_rcv->nombre_pokemon);
 		broker_logger_info("Name length: %d", catch_rcv->tamanio_nombre);
 		broker_logger_info("X Position: %d", catch_rcv->pos_x);
 		broker_logger_info("Y Position: %d", catch_rcv->pos_y);
-
+		*/
 		return catch_rcv;
 	}
 		// From GC
 	case LOCALIZED_POKEMON: {
-		broker_logger_info("GETTING \"LOCALIZED\" MESSAGE FROM MEMORY..");
+		// broker_logger_info("GETTING \"LOCALIZED\" MESSAGE FROM MEMORY..");
 		t_localized_pokemon *loc_rcv = malloc(sizeof(t_localized_pokemon));
 
 		memcpy(&loc_rcv->tamanio_nombre, message + offset, sizeof(uint32_t));
@@ -1164,12 +1178,13 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		loc_rcv->posiciones = list_create();
 		offset += loc_rcv->tamanio_nombre;
 		memcpy(&loc_rcv->cant_elem, message + offset, sizeof(uint32_t));
-
+		/*
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		broker_logger_info("Pokemon: %s", loc_rcv->nombre_pokemon);
 		broker_logger_info("Name length: %d", loc_rcv->tamanio_nombre);
 		broker_logger_info("Quantity: %d", loc_rcv->cant_elem);
+		*/
 		for (int i = 0; i < loc_rcv->cant_elem; i++) {
 			offset += sizeof(uint32_t);
 			t_position* pos = malloc(sizeof(t_position));
@@ -1177,26 +1192,28 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 			offset += sizeof(uint32_t);
 			memcpy(&pos->pos_y, message + offset, sizeof(uint32_t));
 			list_add(loc_rcv->posiciones, pos);
+			/*
 			broker_logger_info("X Axis Position: %d", pos->pos_x);
 			broker_logger_info("Y Axis Position: %d", pos->pos_y);
-
+			*/
 		}
 		return loc_rcv;
 	}
 
 	case CAUGHT_POKEMON: {
-		broker_logger_info("GETTING \"CAUGHT\" MESSAGE FROM MEMORY..");
+		// broker_logger_info("GETTING \"CAUGHT\" MESSAGE FROM MEMORY..");
 		t_caught_pokemon *caught_rcv = malloc(sizeof(t_caught_pokemon));
-
+		memcpy(&caught_rcv->result, message + offset, sizeof(uint32_t));
+		/*
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
-		memcpy(&caught_rcv->result, message + offset, sizeof(uint32_t));
+
 		if (caught_rcv->result) {
 			broker_logger_info("Result: Caught");
 		} else {
 			broker_logger_info("Result: Failed");
 		}
-
+		*/
 		return caught_rcv;
 	}
 	}
@@ -1323,13 +1340,16 @@ void purge_msg() {
 
 	t_nodo_memory* node = (t_nodo_memory*) list_get(list_memory, 0);
 	broker_logger_warn(
-			"The message with ID %d from %s, last modified at instant T=%d will be removed",
+			"The message with ID %d from %s, located at position %d, last modified at instant T=%d will be removed",
 			node->id, get_queue_name(node->cola),
+			node->pointer,
 			(int) (node->timestamp - base_time));
+
 	_Bool find_msg(t_subscribe_message_node* n) {
 		return string_equals_ignore_case(get_queue_name(n->cola),
 				get_queue_name(node->cola)) && n->id == node->id;
 	}
+
 	list_remove(list_memory, 0);
 	pthread_mutex_unlock(&mmem);
 	pthread_mutex_lock(&msubs);
@@ -1353,7 +1373,7 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 		if (pointer + message_void->size_message > broker_config->tamano_memoria){
 			from = save_on_memory_partition(message_void,cola,id_correlacional);
 			memcpy(memory + from, message_void->message, message_void->size_message);
-			broker_logger_info("Pointer %d",from);
+			// broker_logger_info("Pointer %d",from);
 			pthread_mutex_unlock(&mpointer);
 
 			return from;
@@ -1385,17 +1405,17 @@ int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_
 						fallas = 0;
 					}
 					if(broker_config->algoritmo_particion_libre == FF){
-						broker_logger_info("Aplicar algoritmo FIRST FIT");
+						// broker_logger_info("Aplicar algoritmo FIRST FIT");
 						from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
 						}
 					else{
-							broker_logger_info("Aplicar algoritmo BEST FIT");
+							// broker_logger_info("Aplicar algoritmo BEST FIT");
 							from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
 					}
 					if(from == -1){
 					    fallas ++;
 						flag = 2;//para entrar a compactacion
-						broker_logger_info("No se pudo aplicar FF");
+						// broker_logger_info("No se pudo aplicar FF");
 						if(broker_config->algoritmo_reemplazo == FIFO){
 							aplicar_algoritmo_reemplazo_FIFO();
 						}
@@ -1445,7 +1465,7 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 		t_nodo_memory * node_found =  list_find(list_memory,(void *)node_matches_received_queue);
 		if (node_found == NULL){
 			estado_memoria(list_memory);
-			broker_logger_warn("Puntero elegido %d",pointer);
+			broker_logger_warn("Message saved at position: %d",pointer);
 		}
 		int size = node_found->size;
 
@@ -1530,7 +1550,7 @@ _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
 	t_subscribe_message_node* ack_msg_node = list_find(list_msg_subscribers,
 			(void*) node_is_match);
 	if(ack_msg_node == NULL){
-		broker_logger_warn("Devolvio nulo el ack");
+		// broker_logger_warn("Devolvio nulo el ack");
 		return false;
 	}
 	t_subscribe_ack_node* msgsub = list_find(ack_msg_node->list,
@@ -1585,9 +1605,9 @@ _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
 
 void send_all_messages(t_subscribe *subscriber) {
 	if (!is_buddy()) {
-		broker_logger_info("----xxxxxx Estado xxxxxxx-----");
+		// broker_logger_info("----xxxxxx Estado xxxxxxx-----");
 		estado_memoria(list_memory);
-		broker_logger_info("----xxxxxx Estado Final xxxxxxx-----");
+		// broker_logger_info("----xxxxxx Estado Final xxxxxxx-----");
 	}
 
 	_Bool msg_match(t_nodo_memory *node) {
@@ -1837,7 +1857,7 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 	while(i<list_size(list_memory)){
 		t_nodo_memory* memory_node =list_get(list_memory,i);
 		if (i == position){
-			broker_logger_warn("iniciando reemplazo");
+			// broker_logger_warn("iniciando reemplazo");
 			flag = 1;
 			int puntero = memory_node->pointer;
 			memory_node->cola = cola;
@@ -1898,7 +1918,7 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 
 		t_nodo_memory* memory_node =list_get(list_memory,i);
 		if(memory_node->libre == true  &&  max(message->size_message,broker_config->tamano_minimo_particion) <= memory_node->size && flag == 0 ){
-			broker_logger_warn("iniciando reemplazo");
+			// broker_logger_warn("iniciando reemplazo");
 			//estado_memoria(list_memory);
 			flag = 1;
 			int puntero = memory_node->pointer;
@@ -1966,9 +1986,9 @@ void liberar_memoria(int id_correlacional,t_cola cola){
 void compactacion(){
 	estado_memoria(list_memory);
     //estado_memoria(list_memory);
-	broker_logger_info("cantidad elementos previa a compactacion de lista %d",list_size(list_memory));
+	// broker_logger_info("cantidad elementos previa a compactacion de lista %d",list_size(list_memory));
 	t_list *new_list = list_create();
-	broker_logger_info(" iniciando compactacion");
+	broker_logger_info("Compaction started");
 	int flag= 0;
 	for(int i=0;i<list_size(list_memory);i++){
 		t_nodo_memory* memory_node_free = list_get(list_memory,i);
@@ -1991,6 +2011,7 @@ void compactacion(){
 			if(memory_node_next != NULL && memory_node_next->libre==true){
 				memory_node_free->size =  memory_node_free->size + memory_node_next->size;
 				list_remove(list_memory,i+1);
+				broker_logger_info("The partition starting at position %d had been removed ", memory_node_next->pointer);
 				i--;
 
 			}
@@ -2014,9 +2035,9 @@ void compactacion(){
 				i=-1;
 				new_list = list_create();
 			}
-			broker_logger_warn("movido nodo de lugar");
+			// broker_logger_warn("movido nodo de lugar");
 			//estado_memoria(list_memory);
-			broker_logger_warn("estado nodo de lugar");
+			// broker_logger_warn("estado nodo de lugar");
 
 		}
 
@@ -2040,8 +2061,8 @@ void compactacion(){
 
 
 	//estado_memoria(list_memory);
-	broker_logger_info("Terminado compactacion");
-	broker_logger_info("cantidad elementos de lista %d",list_size(list_memory));
+	broker_logger_info("Compaction finished");
+	// broker_logger_info("cantidad elementos de lista %d",list_size(list_memory));
 
 }
 
