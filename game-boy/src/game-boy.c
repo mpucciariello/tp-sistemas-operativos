@@ -111,7 +111,7 @@ void game_boy_init(int argcount, char* arguments[]) {
 
 		if (string_equals_ignore_case(match, "BROKER")
 				|| string_equals_ignore_case(match, "SUBSCRIBE")) {
-			game_boy_logger_info("Creando un hilo para enviar al broker %d");
+			game_boy_logger_info("Creando un hilo para enviar al broker");
 			pthread_create(&tid[0], NULL, (void*) connect_to_broker, NULL);
 		}
 

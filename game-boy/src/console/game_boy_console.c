@@ -207,8 +207,8 @@ void subscriber_command(char** arguments, int arguments_size) {
 	t_subscribe* sub_snd = malloc(sizeof(t_subscribe));
 	t_protocol subscribe_protocol = SUBSCRIBE;
 	sub_snd->proceso = GAME_BOY;
-	sub_snd->ip = "GB";
-	sub_snd->puerto = 0;
+	sub_snd->ip = game_boy_config->ip_broker;
+	sub_snd->puerto = game_boy_config->puerto_broker;
 	sub_snd->cola = get_queue_by_name(arguments[1]);
 	sub_snd->seconds = atoi(arguments[2]);
 	utils_serialize_and_send(game_boy_broker_fd, subscribe_protocol, sub_snd);
