@@ -12,11 +12,9 @@
 
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
-#include "../shared-common/common/utils.h"
+#include "../../shared-common/common/utils.h"
 
-#include "./setup.h"
-
-
+#include "setup.h"
 
 typedef struct {
 	uint32_t cantidad;

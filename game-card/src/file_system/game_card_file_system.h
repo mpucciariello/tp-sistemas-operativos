@@ -14,11 +14,11 @@
 
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
-#include "../shared-common/common/utils.h"
+#include "../../shared-common/common/utils.h"
 
 
-#include "./bloques_handler.h"
-#include "./game_card_handler.h"
+#include "bloques_handler.h"
+#include "game_card_handler.h"
 
 
 t_dictionary* files_open;

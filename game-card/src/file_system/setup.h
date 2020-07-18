@@ -12,8 +12,8 @@
 
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
-#include "../shared-common/common/utils.h"
-#include "./bitmap.h"
+#include "../../shared-common/common/utils.h"
+#include "bitmap.h"
 
 typedef enum {
 	METADATA,
