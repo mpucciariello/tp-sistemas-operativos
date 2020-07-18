@@ -36,6 +36,7 @@ void connect_to_broker() {
 	if (game_boy_broker_fd < 0) {
 		game_boy_logger_warn("No se pudo conectar con BROKER");
 		socket_close_conection(game_boy_broker_fd);
+		exit(EXIT_FAILURE);
 	} else {
 		game_boy_logger_info("Conexion con BROKER establecida correctamente!");
 		connected = true;
