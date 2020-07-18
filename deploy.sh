@@ -135,7 +135,7 @@ done
 
 echo -e "\n\n Copying tests script in game-boy...\n\n"
 
-cd $PROJECTROOT/${REPONAME}/"delibird-pruebas"
+cd $PROJECTROOT/${REPONAME}/"updated-test-scripts"
 for f in *.sh
 do 
    cp -v "$f" $PROJECTROOT/${REPONAME}/game-boy/"${f%.sh}".sh
