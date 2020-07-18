@@ -28,13 +28,13 @@ endif
 all: broker
 
 dependents:
-	-cd /home/utnso/git/tp-2020-1c-CDev20/shared-common/Debug && $(MAKE) all
+	-cd /home/utnso/git/tp-2020-1c-CDev20/shared-common && $(MAKE) all
 
 # Tool invocations
-broker: $(OBJS) $(USER_OBJS) /home/utnso/git/tp-2020-1c-CDev20/shared-common/Debug/libshared-common.so
+broker: $(OBJS) $(USER_OBJS) /home/utnso/git/tp-2020-1c-CDev20/shared-common/libshared-common.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -L"/home/utnso/git/tp-2020-1c-CDev20/shared-common/Debug" -L"/home/utnso/git/tp-2020-1c-CDev20/shared-common" -o "broker" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -L"/home/utnso/git/tp-2020-1c-CDev20/shared-common" -o "broker" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -44,6 +44,6 @@ clean:
 	-@echo ' '
 
 .PHONY: all clean dependents
-/home/utnso/git/tp-2020-1c-CDev20/shared-common/Debug/libshared-common.so:
+/home/utnso/git/tp-2020-1c-CDev20/shared-common/libshared-common.so:
 
 -include ../makefile.targets
