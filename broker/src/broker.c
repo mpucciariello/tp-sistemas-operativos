@@ -341,7 +341,9 @@ static void *handle_connection(void *arg) {
 					"Received ACK for msg with ID %d Protocol %s from process %s",
 					ack_rcv->id_corr_msg, get_protocol_name(ack_rcv->queue),
 					ack_rcv->sender_name);
-
+			if(ack_rcv->id_corr_msg == 0){
+				break;
+			}
 			_Bool node_matches_received_queue(t_subscribe_message_node* node) {
 				return node->id == ack_rcv->id_corr_msg
 						&& node->cola == ack_rcv->queue;
@@ -631,11 +633,13 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("SUBSCRIBE RECEIVED");
 			t_subscribe *sub_rcv = utils_receive_and_deserialize(client_fd,
 					protocol);
+			pthread_mutex_lock(&msave);
 			char * ip = string_duplicate(sub_rcv->ip);
 			broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
 			broker_logger_info("IP Recibido: %s", ip);
 			sub_rcv->f_desc = client_fd;
 			search_queue(sub_rcv);
+			pthread_mutex_unlock(&msave);
 			usleep(50000);
 			break;
 		}
@@ -695,7 +699,7 @@ static void *handle_connection(void *arg) {
 }
 
 void initialize_queue() {
-	id = 0;
+	id = 1;
 	get_queue = list_create();
 	appeared_queue = list_create();
 	new_queue = list_create();
@@ -739,6 +743,16 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 
 void add_to(t_list *list, t_subscribe* subscriber) {
 	void add_sub_to_msg(t_subscribe_nodo* sub_node) {
+		for(int k=0; k<list_size(list_msg_subscribers);k++){
+			t_subscribe_message_node* node_m = list_get(list_msg_subscribers, k);
+			for(int t=0; t<list_size(node_m->list);t++){
+				t_subscribe_ack_node *node_ack = list_get(node_m->list, t);
+				if(string_equals_ignore_case(node_ack->subscribe->ip,
+						subscriber->ip)&&node_ack->subscribe->puerto == subscriber->puerto){
+					return;
+				}
+			}
+		}
 		for (int i = 0; i < list_size(list_msg_subscribers); ++i) {
 			t_subscribe_message_node* node = list_get(list_msg_subscribers, i);
 
@@ -1328,6 +1342,12 @@ void purge_msg() {
 
 int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correlacional) {
 	pthread_mutex_lock(&mpointer);
+
+	estado_memoria(list_memory);
+
+	int last = list_size(list_memory);
+	t_nodo_memory *last_node = list_get(list_memory,last-1);
+	pointer = last_node->pointer;
 	int from = pointer;
 	if (!is_buddy()) {
 		if (pointer + message_void->size_message > broker_config->tamano_memoria){
@@ -1341,6 +1361,8 @@ int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correla
 		pointer +=  max(message_void->size_message,broker_config->tamano_minimo_particion);
 		save_node_list_memory(from, message_void->size_message, cola,
 												id_correlacional);
+
+
 		memcpy(memory + from, message_void->message, message_void->size_message);
 	}
 	pthread_mutex_unlock(&mpointer);
@@ -1444,16 +1466,20 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 			return node->pointer == pointer;
 		}
 
-		t_nodo_memory * node_finded =  list_find(list_memory,(void *)node_matches_received_queue);
-		int size = node_finded->size;
+		t_nodo_memory * node_found =  list_find(list_memory,(void *)node_matches_received_queue);
+		if (node_found == NULL){
+			estado_memoria(list_memory);
+			broker_logger_warn("Puntero elegido %d",pointer);
+		}
+		int size = node_found->size;
 
-		int next_pointer = node_finded->pointer + max (broker_config->tamano_minimo_particion,msg_size);
+		int next_pointer = node_found->pointer + max (broker_config->tamano_minimo_particion,msg_size);
 
-		node_finded->size = max (broker_config->tamano_minimo_particion,msg_size);
-	    node_finded->cola = cola;
-		node_finded->id = id;
-		node_finded->libre = false;
-		node_finded->timestamp = (unsigned) time(NULL);
+		node_found->size = max (broker_config->tamano_minimo_particion,msg_size);
+	    node_found->cola = cola;
+		node_found->id = id;
+		node_found->libre = false;
+		node_found->timestamp = (unsigned) time(NULL);
 
 		nodo_mem->cola = cola;
 		nodo_mem->size = size - max (broker_config->tamano_minimo_particion,msg_size);
@@ -1489,15 +1515,27 @@ t_nodo_memory* find_node(t_nodo_memory* node) {
 		int id_nodo_mem = nodo_mem->id;
 		t_cola queue_nodo_mem = nodo_mem->cola;
 
-		if (node->id == id_nodo_mem && node->cola == queue_nodo_mem) {
-			ret_pos = i;
-			break;
+		if (!is_buddy()){
+			if (node->id == id_nodo_mem && node->cola == queue_nodo_mem && node->libre==false) {
+				ret_pos = i;
+				break;
+			}
 		}
+		else{
+			if (node->id == id_nodo_mem && node->cola == queue_nodo_mem) {
+				ret_pos = i;
+				break;
+			}
+		}
+
 	}
 	return list_get(list_memory, ret_pos);
 }
 
 _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
+	if(!is_buddy() && node->libre == true){
+		return true;
+	}
 	_Bool node_is_match(t_subscribe_message_node* msg_ack) {
 		return node->id == msg_ack->id
 				&& string_equals_ignore_case(get_queue_name(node->cola),
@@ -1515,6 +1553,10 @@ _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
 
 	t_subscribe_message_node* ack_msg_node = list_find(list_msg_subscribers,
 			(void*) node_is_match);
+	if(ack_msg_node == NULL){
+		broker_logger_warn("Devolvio nulo el ack");
+		return false;
+	}
 	t_subscribe_ack_node* msgsub = list_find(ack_msg_node->list,
 			(void*) msg_is_from_process);
 
@@ -1566,6 +1608,12 @@ _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
 }
 
 void send_all_messages(t_subscribe *subscriber) {
+	if (!is_buddy()) {
+		broker_logger_info("----xxxxxx Estado xxxxxxx-----");
+		estado_memoria(list_memory);
+		broker_logger_info("----xxxxxx Estado Final xxxxxxx-----");
+	}
+
 	_Bool msg_match(t_nodo_memory *node) {
 		return node->cola == subscriber->cola;
 	}
@@ -1574,18 +1622,21 @@ void send_all_messages(t_subscribe *subscriber) {
 	t_list* list_cpy = list_filter(list_memory, (void*) msg_match);
 	pthread_mutex_unlock(&mmem);
 	int cant = list_size(list_cpy);
+	if(cant == 1 && broker_config->estrategia_memoria == PD){
+		return;
+	}
 
 	for (int i = 0; i < cant; i++) {
+		estado_ack(list_msg_subscribers);
 		t_nodo_memory *nodo_cpy = list_get(list_cpy, i);
 
 		if (!is_msg_ackd(nodo_cpy, subscriber)) {
 
 			pthread_mutex_lock(&mmem);
 			t_nodo_memory *nodo_mem = find_node(nodo_cpy);
-			if (is_buddy()) {
-				update_timings(nodo_mem);
-			}
-			
+
+			update_timings(nodo_mem);
+
 			pthread_mutex_unlock(&mmem);
 
 			switch (subscriber->cola) {
@@ -1861,6 +1912,7 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 }
 
 int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void *message){
+	estado_memoria(list_memory);
 	int size_free;
 	int pointer_busy;
 	t_list *new_list = list_create();
@@ -1893,11 +1945,12 @@ int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void 
 				memory_next->timestamp = (unsigned) time (NULL);
 				list_add(new_list,memory_next);
 			}
-
+			t_nodo_memory* memory_fill;
 			for(int k=i+1; k<list_size(list_memory);k++){
-				t_nodo_memory* memory_fill =list_get(list_memory,k);
+				memory_fill=list_get(list_memory,k);
 				list_add(new_list,memory_fill);
 			}
+			//pointer = memory_fill->pointer;
 			break;
 		}
 		else{
@@ -1935,6 +1988,7 @@ void liberar_memoria(int id_correlacional,t_cola cola){
 }
 
 void compactacion(){
+	estado_memoria(list_memory);
     //estado_memoria(list_memory);
 	broker_logger_info("cantidad elementos previa a compactacion de lista %d",list_size(list_memory));
 	t_list *new_list = list_create();
@@ -2012,6 +2066,7 @@ void aplicar_algoritmo_reemplazo_FIFO(){
 }
 
 void aplicar_algoritmo_reemplazo_LRU(){
+	estado_memoria(list_memory);
 	int flag = 0;
 	int position;
 	uint32_t less_time;
@@ -2073,7 +2128,13 @@ void dump_partition() {
 
 		    t_nodo_memory* node = list_get(list_clone, i);
 			fprintf(f, "Particion %04d: %04d - %04d\t\t",i ,node->pointer, node->pointer +  node->size -1);
-			fprintf(f, "[L]\t\t");
+			if(node->libre == false){
+				fprintf(f, "[X]\t\t");
+			}
+			else{
+				fprintf(f, "[X]\t\t");
+			}
+
 			fprintf(f, "Size: %04d B \t\t", node->size);
 			if(node->libre == false){
 				fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
@@ -2088,4 +2149,19 @@ void dump_partition() {
 	fclose(f);
 	return;
 
+}
+
+void estado_ack(t_list *list_msg_subscribers){
+	if (!is_buddy()) {
+		for(int i=0;i<list_size(list_msg_subscribers);i++){
+			t_subscribe_message_node *node = list_get(list_msg_subscribers,i);
+			broker_logger_info("Id msj %d",node->id);
+			broker_logger_info("cola del msj %s",get_queue_name(node->cola));
+			for(int k=0;k<list_size(node->list);k++){
+				t_subscribe_ack_node *node_ack = list_get(node->list,k);
+				broker_logger_info("Puerto %d",node_ack->subscribe->puerto);
+				broker_logger_info("IP %s",node_ack->subscribe->ip);
+			}
+		}
+	}
 }
