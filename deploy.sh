@@ -142,6 +142,10 @@ do
    cp -v "$f" $PROJECTROOT/${REPONAME}/game-boy/"${f%.sh}".sh
 done
 
+echo -e "\n\n Creating team 2...\n\n"
+cp -R $PROJECTROOT/${REPONAME}/"team" $PROJECTROOT/${REPONAME}/"team2"
+cp $PROJECTROOT/${REPONAME}/"team"/"team2"/"team.config" $PROJECTROOT/${REPONAME}/"team2"
+
 echo -e 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/git/tp-2020-1c-CDev20/shared-common'
 
 echo -e "\n\nDeploy done!\n\n"
