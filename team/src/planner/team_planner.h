@@ -29,7 +29,9 @@ typedef struct {
 	t_list* targets;
 	int current_burst_time;
 	int total_burst_time;
-	float estimated_time;
+	float estimated_burst;
+	float previus_estimation;
+	float previus_burst;
 	bool status;
 	pthread_t hilo_entrenador;
 	pthread_mutex_t sem_move_trainers;

@@ -14,6 +14,7 @@ void team_planner_run_planification() {
 
 		team_logger_info("El entrenador %d pasará a EXEC!", entrenador->id);
 		context_switch_qty++;
+		entrenador->previus_estimation = entrenador->estimated_burst;
 
 		pthread_mutex_unlock(&entrenador->sem_move_trainers);
 	}
@@ -69,16 +70,7 @@ void team_planner_algoritmo_cercania() {
 				}
 			}
 		}
-
-		if (team_planner_is_SJF_algorithm()) {
-			entrenador->estimated_time = team_planner_calculate_exponential_mean(entrenador);
-			entrenador->current_burst_time = 0;
-		}
-
-		if (team_config->algoritmo_planificacion == RR) {
-			entrenador->current_burst_time = 0;
-		}
-
+		entrenador->current_burst_time = 0;
 		entrenador->pokemon_a_atrapar = pokemon;
 
 		team_planner_add_to_ready_queue(entrenador);
@@ -135,7 +127,9 @@ t_entrenador_pokemon* team_planner_entrenador_create(int id_entrenador, t_positi
 	entrenador->targets = targets;
 	entrenador->current_burst_time = 0;
 	entrenador->total_burst_time = 0;
-	entrenador->estimated_time = (float)team_config->estimacion_inicial;
+	entrenador->previus_burst = 0;
+	entrenador->previus_estimation = (float)team_config->estimacion_inicial;
+	entrenador->estimated_burst = 0;
 	entrenador->status = true;
 	entrenador->pokemon_a_atrapar = NULL;
 	entrenador->deadlock = false;
@@ -334,13 +328,15 @@ int team_planner_get_least_estimate_index() {
 	int least_index = 0;
 
 	float aux_estimated = 1000.0f;
-	for (int i = 0; i < list_size(ready_queue); i++) {
-		t_entrenador_pokemon* entrenador = list_get(ready_queue, i);
-		float estimated = team_planner_calculate_exponential_mean(entrenador);
+	if(list_size(ready_queue) != 0){
+		for (int i = 0; i < list_size(ready_queue); i++) {
+			t_entrenador_pokemon* entrenador = list_get(ready_queue, i);
+			float estimated = team_planner_calculate_exponential_mean(entrenador);
 
-		if (estimated < aux_estimated) {
-			aux_estimated = estimated;
-			least_index = i; 
+			if (estimated < aux_estimated) {
+				aux_estimated = estimated;
+				least_index = i;
+			}
 		}
 	}
 	return least_index;
@@ -349,7 +345,7 @@ int team_planner_get_least_estimate_index() {
 void team_planner_new_cpu_cicle(t_entrenador_pokemon* entrenador) {
 	entrenador->current_burst_time++;
 	entrenador->total_burst_time++;
-	entrenador->estimated_time--;
+	entrenador->estimated_burst--;
 
 	if (team_config->algoritmo_planificacion == RR && !entrenador->deadlock) {
 		team_planner_check_RR_burst(entrenador); 
@@ -362,7 +358,7 @@ void team_planner_new_cpu_cicle(t_entrenador_pokemon* entrenador) {
 
 float team_planner_calculate_exponential_mean(t_entrenador_pokemon* entrenador) {
 	float alpha = team_config->alpha;
-	float next_tn = alpha * (float) entrenador->current_burst_time + (1.0 - alpha) * entrenador->estimated_time;
+	float next_tn = (alpha * (float) entrenador->previus_estimation) + ((1.0 - alpha) * entrenador->previus_burst);
 	return next_tn;
 }
 
@@ -378,7 +374,7 @@ bool team_planner_is_SJF_algorithm() {
 }
 
 bool _is_available(t_entrenador_pokemon* trainner) {
-	return trainner->status && !trainner->deadlock; //status true: esta disponible
+	return trainner->status && !trainner->deadlock;
 }
 
 t_list* filter_block_list_by_0() {
@@ -417,6 +413,7 @@ t_list* team_planner_trainers_waiting_messages() {
 t_entrenador_pokemon* team_planner_apply_SJF() {
 	int least_estimate_index = team_planner_get_least_estimate_index();	
 	t_entrenador_pokemon* entrenador = list_get(ready_queue, least_estimate_index);
+	entrenador->estimated_burst = team_planner_calculate_exponential_mean(entrenador);
 	list_remove(ready_queue, least_estimate_index);	
 	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar.", entrenador->id);
 	

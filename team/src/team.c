@@ -266,6 +266,7 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 void team_planner_check_RR_burst(t_entrenador_pokemon* entrenador) {
 	if (entrenador->current_burst_time == team_config->quantum) {
 		team_planner_add_to_ready_queue(entrenador);
+		list_remove(exec_queue, 0);
 		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
 		team_logger_info("El entrenador %d paso a la cola de READY ya que terminó su QUANTUM.", entrenador->id);
@@ -275,12 +276,15 @@ void team_planner_check_RR_burst(t_entrenador_pokemon* entrenador) {
 
 void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 	t_entrenador_pokemon* lower_estimated_trainer = list_get(ready_queue, team_planner_get_least_estimate_index());
+
 	if (lower_estimated_trainer != NULL) {
-		if (entrenador->estimated_time > lower_estimated_trainer->estimated_time) {
+
+		if (entrenador->estimated_burst > team_planner_calculate_exponential_mean(lower_estimated_trainer)) {
+			list_remove(exec_queue, 0);
 			team_planner_add_to_ready_queue(entrenador);
 			sem_post(&sem_trainers_in_ready_queue);
 			sem_post(&sem_planificador);
-			team_logger_info("El entrenador %d pasó a la cola de READY ya que será desalojado.", entrenador->id);
+			team_logger_info("El entrenador %d pasó a la cola de READY ya que será DESALOJADO.", entrenador->id);
 			pthread_mutex_lock(&entrenador->sem_move_trainers);
 		}
 	}
@@ -326,6 +330,7 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		send_message_catch(catch_send, entrenador);
 
 		entrenador->se_movio = false;
+		entrenador->previus_burst = steps + 1;
 		if(!list_is_empty(exec_queue)){
 			list_remove(exec_queue, 0);
 		}
