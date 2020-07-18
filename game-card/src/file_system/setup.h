@@ -1,3 +1,5 @@
+#ifndef SETUP_H_
+#define SETUP_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +14,7 @@
 
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
-#include "../../shared-common/common/utils.h"
+#include "../shared-common/common/utils.h"
 #include "bitmap.h"
 
 typedef enum {
@@ -45,3 +47,5 @@ void createBitmap(char* bitmapBin);
 void createMetaDataFile(char* metadataBin);
 void readBitmap(char* bitmapBin);
 void readMetaData(char* metadataPath);
+
+#endif /* SETUP_H_ */

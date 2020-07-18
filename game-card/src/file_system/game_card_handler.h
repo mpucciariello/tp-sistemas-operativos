@@ -1,3 +1,6 @@
+#ifndef GAME_CARD_HANDLER_H_
+#define GAME_CARD_HANDLER_H_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -11,7 +14,6 @@
 #include <commons/collections/list.h>
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
-#include "../shared-common/common/utils.h"
 
 typedef struct {
 	int blockSize;
@@ -25,3 +27,4 @@ int _mkpath(char* file_path, mode_t mode);
 char* obtenerPathDelNumeroDeBloque(int numeroDeBloque);
 pokemonMetadata readPokemonMetadata(char* pokemonPath);
 
+#endif /* GAME_CARD_HANDLER_H_ */

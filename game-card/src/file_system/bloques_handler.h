@@ -1,3 +1,6 @@
+#ifndef BLOQUES_HANDLER_H_
+#define BLOQUES_HANDLER_H_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -12,7 +15,6 @@
 
 #include "../logger/game_card_logger.h"
 #include "../config/game_card_config.h"
-#include "../../shared-common/common/utils.h"
 
 #include "setup.h"
 
@@ -36,3 +38,5 @@ void printListOfPokemonReadedLines(t_list* pokemonLines);
 
 void writeBlocks(char* value, t_list* bloques);
 t_list* readPokemonLines(t_list* blocks);
+
+#endif /* BLOQUES_HANDLER_H_ */

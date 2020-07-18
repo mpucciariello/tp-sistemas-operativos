@@ -1,3 +1,6 @@
+#ifndef BITMAP_H_
+#define BITMAP_H_
+
 #include <string.h>
 #include <stdio.h>
 #include <commons/bitarray.h>
@@ -20,3 +23,5 @@ void setear_bloque_libre_en_posicion(t_bitarray* bitmap, off_t pos);
 bool testear_bloque_libre_en_posicion(t_bitarray* bitmap, int pos);
 int getAndSetFreeBlock(t_bitarray* bitmap, unsigned int blocks);
 int getFreeBlocks(int metadataBlocks, t_bitarray* bitmap);
+
+#endif /* BITMAP_H_ */
