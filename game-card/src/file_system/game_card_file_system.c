@@ -352,7 +352,7 @@ void operateNewPokemonFile(t_new_pokemon* newPokemon, char* completePath, int fr
 		if(string_equals_ignore_case(pokemonMetadata.isOpen, "N")) {
 			game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
 			pthread_mutex_lock(&pokemonOpenTad->mArchivo);
-			updateOpenFileState(newPokemon->nombre_pokemon, "Y");
+			updateOpenFileState(newPokemon->nombre_pokemon, "N");
 //			pthread_mutex_unlock(&pokemonOpenTad->mArchivo);
 			
 			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
@@ -424,7 +424,7 @@ t_list* operateGetPokemonFile(t_get_pokemon* getPokemon, char* completePath) {
 			game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
 			
 			pthread_mutex_lock(&pokemonOpenTad->mArchivo);
-			updateOpenFileState(getPokemon->nombre_pokemon, "Y");
+			updateOpenFileState(getPokemon->nombre_pokemon, "N");
 			//pthread_mutex_unlock(&pokemonOpenTad->mArchivo);
 
 			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
@@ -467,7 +467,7 @@ int operateCatchPokemonFile(t_catch_pokemon* catchPokemon, char* completePath) {
 			game_card_logger_info("El archivo no esta abierto por ningun proceso, se procede a abrir el mismo.");
 			
 			pthread_mutex_lock(&pokemonOpenTad->mArchivo);
-			updateOpenFileState(catchPokemon->nombre_pokemon, "Y");
+			updateOpenFileState(catchPokemon->nombre_pokemon, "N");
 			//pthread_mutex_unlock(&pokemonOpenTad->mArchivo);
 
 			t_list* listBlocks = stringBlocksToList(pokemonMetadata.blocks);
