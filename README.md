@@ -65,5 +65,4 @@ repo
       └─── makefile
 ```
 
-
-export LD_LIBRARY_PATH=/{PATH_PROYECTO}/shared-common/Debug
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/git/tp-2020-1c-CDev20/shared-common
