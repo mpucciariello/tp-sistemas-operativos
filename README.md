@@ -20,9 +20,9 @@ Nombre y Apellido: Fernando Sierra
 Legajo: 1352404
 E-Mail: fernandosierra9@gmail.com
 
-Nombre y Apellido: Martin Yoo
-Legajo: 1589635
-E-Mail: mrtnyoo@gmail.com>
+Nombre y Apellido: Micaela Pucciariello
+Legajo: 1685466
+E-Mail: pucciariellomicaela@gmail.com
 
 
 # formating-style-tp-so.xml
@@ -49,7 +49,7 @@ Para ver informacion de como usarlo, ejecutar con la opcion -h (help) `./deploy.
 
 ### Ejemplo
 
-`deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy tp-2020-1c-CDev20`
+`/deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy tp-2020-1c-CDev20`
 
 ### Requerimientos
 

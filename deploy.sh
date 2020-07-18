@@ -65,11 +65,17 @@ LIBRARIES=()
 DEPENDENCIES=()
 PROYECTS=()
 
+cd $CWD
+mkdir git
+cd $CWD
+
+PROJECTROOT="/home/utnso/git"
+
 echo -e "\n\nInstalling commons libraries...\n\n"
 
+cd $PROJECTROOT
 COMMONS="so-commons-library"
-git clone "https://github.com/sisoputnfrba/${COMMONS}.git" $COMMONS
-cd $COMMONS
+git clone "https://github.com/sisoputnfrba/${COMMONS}.git"
 sudo make uninstall
 make all
 sudo make install
@@ -104,9 +110,9 @@ do
   cd $CWD
 done
 
+cd $PROJECTROOT
 git clone "https://github.com/sisoputnfrba/${REPONAME}.git"
 cd $REPONAME
-PROJECTROOT=$PWD
 
 echo -e "\n\nBuilding dependencies\n\n"
 
@@ -114,19 +120,20 @@ for i in "${DEPENDENCIES[@]}"
 do
   echo -e "Building ${i}"
   cd $i
-  make install
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PROJECTROOT/${REPONAME}/$i/Debug
+  make
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PROJECTROOT/${REPONAME}/$i
   echo -e "\n LD_LIBRARY_PATH:..\n" $LD_LIBRARY_PATH
-  cd $PROJECTROOT 
+  cd $PROJECTROOT
 done
 
 echo -e "\n\nBuilding projects...\n\n"
+cd $PROJECTROOT/${REPONAME}
 
 for i in "${PROYECTS[@]}"
 do
   cd $i
   make
-  cd $PROJECTROOT
+  cd $PROJECTROOT/${REPONAME}
 done
 
 echo -e "\n\nDeploy done!\n\n"
