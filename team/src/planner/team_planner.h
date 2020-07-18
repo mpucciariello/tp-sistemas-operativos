@@ -66,6 +66,7 @@ pthread_t planificator;
 pthread_t algoritmo_cercania_entrenadores;
 
 pthread_mutex_t cola_pokemons_a_atrapar;
+pthread_mutex_t cola_exec;
 
 t_list* new_queue;
 t_list* ready_queue;
