@@ -4,25 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/file_system/bitmap.c \
-../src/file_system/bloques_handler.c \
-../src/file_system/game_card_file_system.c \
-../src/file_system/game_card_handler.c \
-../src/file_system/setup.c 
+../src/file_system/game_card_file_system.c 
 
 OBJS += \
-./src/file_system/bitmap.o \
-./src/file_system/bloques_handler.o \
-./src/file_system/game_card_file_system.o \
-./src/file_system/game_card_handler.o \
-./src/file_system/setup.o 
+./src/file_system/game_card_file_system.o 
 
 C_DEPS += \
-./src/file_system/bitmap.d \
-./src/file_system/bloques_handler.d \
-./src/file_system/game_card_file_system.d \
-./src/file_system/game_card_handler.d \
-./src/file_system/setup.d 
+./src/file_system/game_card_file_system.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

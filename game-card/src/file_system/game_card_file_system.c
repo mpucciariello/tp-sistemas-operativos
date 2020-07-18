@@ -556,3 +556,488 @@ pokemon_open_tad* new_pokemon_open_tad() {
     pthread_mutex_init(&pokemonOpenTad->mArchivo, NULL);
     return pokemonOpenTad;
 }
+
+/***
+ * Game card handler
+ * /
+
+/*
+ * 	Evalua si el ultimo caracter de str es chr.
+ */
+int lastchar(const char* str, char chr){
+	if ( ( str[strlen(str)-1]  == chr) ) return 1;
+	return 0;
+}
+
+/*
+ * 	DESC
+ * 		Divide el path con formato de [RUTA] en: [RUTA_SUPERIOR] y [NOMBRE].
+ * 		Ejemplo:
+ * 			path: /home/utnso/algo.txt == /home/utnso - algo.txt
+ * 			path: /home/utnso/ == /home - utnso
+ *
+ * 	PARAM
+ * 		path - Ruta a dividir
+ * 		super_path - Puntero sobre el cual se guardara la ruta superior.
+ * 		name - Puntero al nombre del archivo
+ *
+ * 	RET
+ * 		0... SIEMPRE!;
+ */
+
+int split_path(const char* path, char** super_path, char** name){
+	int aux;
+	strcpy(*super_path, path);
+	strcpy(*name, path);
+	// Obtiene y acomoda el nombre del archivo.
+	if (lastchar(path, '/')) {
+		(*name)[strlen(*name)-1] = '\0';
+	}
+	*name = strrchr(*name, '/');
+	*name = *name + 1; // Acomoda el nombre, ya que el primer digito siempre es '/'
+
+	// Acomoda el super_path
+	if (lastchar(*super_path, '/')) {
+		(*super_path)[strlen(*super_path)-1] = '\0';
+	}
+	aux = strlen(*super_path) - strlen(*name);
+	(*super_path)[aux] = '\0';
+
+	return 0;
+}
+
+int _mkpath(char* file_path, mode_t mode)
+{
+	assert(file_path && *file_path);
+	char* p;
+	for(p = strchr(file_path + 1, '/'); p; p = strchr(p + 1, '/'))
+	{
+		*p = '\0';
+		if(mkdir(file_path, mode) == -1)
+		{
+			if (errno != EEXIST)
+			{
+				*p = '/';
+				return -1;
+			}
+		}
+		*p = '/';
+	}
+	return 0;
+}
+
+
+char* obtenerPathDelNumeroDeBloque(int numeroDeBloque){
+	char* path_del_bloque = malloc(strlen(game_card_config->punto_montaje_tallgrass)+strlen("/Bloques")+20);
+	sprintf(path_del_bloque,"%sBloques/%d.bin",game_card_config->punto_montaje_tallgrass, numeroDeBloque);
+	return path_del_bloque;
+}
+
+
+pokemonMetadata readPokemonMetadata(char* pokemonPath) {
+	char* existingPokemonMetadata = string_new();
+	char* existingPokemonBlocks = string_new();
+
+	pokemonMetadata metadata;
+
+	metadata.blocks = string_new();
+	metadata.isOpen = string_new();
+
+	string_append(&existingPokemonMetadata, pokemonPath);
+	string_append(&existingPokemonMetadata, "/Metadata.bin");
+
+	t_config* metadataFile = config_create(existingPokemonMetadata);
+	metadata.blockSize = config_get_int_value(metadataFile, "SIZE");
+	metadata.blocks = string_duplicate(config_get_string_value(metadataFile, "BLOCKS"));
+	metadata.isOpen = string_duplicate(config_get_string_value(metadataFile, "OPEN"));
+	config_destroy(metadataFile);
+
+	free(existingPokemonMetadata);
+	free(existingPokemonBlocks);
+	return metadata;
+}
+
+/**
+ * BLoques handler
+ *
+ * */
+
+int cuantosBloquesOcupa(char* value) {
+    int tamanio = string_length(value);
+    return calcualarBloques(tamanio);
+}
+
+int calcualarBloques(int tamanio) {
+    // Redondea hacia arriba
+    return 1 + ((tamanio - 1) / lfsMetaData.blockSize);
+}
+
+void writeBlocks(char* value, t_list* bloques) {
+
+    int limite = string_length(value);
+    char* valorAGuardar = string_duplicate(value);
+
+    for(int i = 0; i < list_size(bloques) && limite > 0; i++) {
+
+        char* pathBloque = obtenerPathDelNumeroDeBloque((int) list_get(bloques, i));
+
+        FILE * bloque = fopen(pathBloque, "w+");
+
+        int limiteSuperior;
+
+        if(limite >= lfsMetaData.blockSize) {
+            limiteSuperior = lfsMetaData.blockSize;
+        } else {
+            limiteSuperior = limite;
+        }
+
+        char* take = string_substring(valorAGuardar, 0, limiteSuperior);
+
+        int write = fwrite(take,1,limiteSuperior,bloque);
+         limite -= string_length(take);
+
+        if(limite > 0) {
+            valorAGuardar = string_substring_from(valorAGuardar, limiteSuperior);
+        }
+
+        fclose(bloque);
+        free(pathBloque);
+        free(take);
+    }
+
+    free(valorAGuardar);
+}
+
+// Dado una lista de bloques t_list 1,2,3 se leen los contenidos de dichos bloques
+// y se retorna una lista con los contenidos leidos
+// t_list(int) => t_list (blockLine)
+// is_break determina si el contenido fue partido en otro bloque (si es que al grabar no entro todo el contenido y el \n esta en el bloque siguiente)
+t_list* readPokemonLines(t_list* blocks) {
+	t_list* retList = list_create();
+	size_t len = 0;
+	char* line = NULL;
+	ssize_t read;
+	FILE* blockFile;
+	int isBreakFile = 0;
+	char* previousLastLine = string_new();
+
+	for (int i = 0; i < list_size(blocks); i++) {
+		char* blockPath = string_new();
+        string_append(&blockPath, struct_paths[BLOCKS]);
+        string_append(&blockPath, string_itoa(list_get(blocks, i)));
+		string_append(&blockPath, ".bin");
+
+		blockFile = fopen(blockPath, "r");
+
+		if (blockFile == NULL) {
+			game_card_logger_error("No ha sido posible leer el archivo");
+		}
+
+		while((read = getline(&line, &len, blockFile)) != -1) {
+			blockLine* blockLine;
+			if(string_contains(line, "\n") == 0) {
+				isBreakFile = 1;
+				string_append(&previousLastLine, line);
+			} else if(isBreakFile == 1) {
+				string_append(&previousLastLine, line);
+				blockLine = formatStringToBlockLine(previousLastLine);
+				isBreakFile = 0;
+				previousLastLine = string_new();
+				list_add(retList, blockLine);
+			} else {
+				blockLine = formatStringToBlockLine(line);
+				list_add(retList, blockLine);
+			}
+		}
+
+		free(blockPath);
+	}
+
+	fclose(blockFile);
+	if (line) free(line);
+
+
+	return retList;
+}
+
+
+// Dado un string con formato [1,2,3,...] se devuelve una lista con los enteros que simbolizan un numero de bloque
+t_list* stringBlocksToList(char* blocks) {
+	t_list* retList = list_create();
+	// Solo esta usando un bloque
+	if (strlen(blocks) <= 3) {
+		char* blockStrWithoutBraces = string_substring(blocks, 1, 1);
+		list_add(retList, atoi(blockStrWithoutBraces));
+	} // Mas de un bloque siendo usado
+	else {
+		char* blocksStrWithoutBraces = string_substring(blocks, 1, strlen(blocks) - 2);
+		char** blocksWithoutCommaSeparator = string_split(blocksStrWithoutBraces, ",");
+		int i = 0;
+		while(blocksWithoutCommaSeparator[i] != NULL) {
+			list_add(retList, atoi(blocksWithoutCommaSeparator[i]));
+			i++;
+		}
+	}
+
+	return retList;
+}
+
+// Dado una linea con formato "1-1=100/n" se devuelve la estructura correspondiente para poder manipularla
+blockLine* formatStringToBlockLine(char* blockline) {
+	blockLine* newLineBlock = malloc(sizeof(blockLine));
+	char** splittedLine = string_split(blockline, "=");
+	char** coordinates = string_split(splittedLine[0], "-");
+	newLineBlock->posX = atoi(coordinates[0]);
+	newLineBlock->posY = atoi(coordinates[1]);
+	newLineBlock->cantidad = atoi(splittedLine[1]);
+	return newLineBlock;
+}
+
+// Formatea una lista de blockLines al string final que se va escribir "1-3=10\n1-3=50\n"
+char* formatListToStringLine(t_list* pokemonLines) {
+	char* retChar = string_new();
+	for(int j=0; j<list_size(pokemonLines); j++) {
+		blockLine* newLineBlock = list_get(pokemonLines, j);
+		string_append(&retChar, formatToBlockLine(newLineBlock->posX, newLineBlock->posY, newLineBlock->cantidad));
+	}
+	return retChar;
+}
+
+
+// Formatea unas coordenadas y cantidad a "1-1=100" string
+char* formatToBlockLine(int intPosX, int intPosY, int intCantidad) {
+	char* pokemonPerPosition = string_new();
+	char* posX = string_itoa(intPosX);
+	char* posY = string_itoa(intPosY);
+	char* cantidad = string_itoa(intCantidad);
+
+	string_append(&pokemonPerPosition, posX);
+	string_append(&pokemonPerPosition, "-");
+	string_append(&pokemonPerPosition, posY);
+	string_append(&pokemonPerPosition, "=");
+	string_append(&pokemonPerPosition, cantidad);
+	string_append(&pokemonPerPosition, "\n");
+
+	free(posX);
+	free(posY);
+	free(cantidad);
+	return pokemonPerPosition;
+}
+
+blockLine* createBlockLine(int intPosX, int intPosY, int intCantidad) {
+	blockLine* newLineBlock = malloc(sizeof(blockLine));
+	newLineBlock->posX = intPosX;
+	newLineBlock->posY = intPosY;
+	newLineBlock->cantidad = intCantidad;
+	return newLineBlock;
+}
+
+void printListOfPokemonReadedLines(t_list* pokemonLines) {
+	game_card_logger_info("Size lista %d:", list_size(pokemonLines));
+	for (int i=0; i<list_size(pokemonLines); i++) {
+		blockLine* newLineBlock = list_get(pokemonLines, i);
+		game_card_logger_info("Elemento i %d:", i);
+		game_card_logger_info("Pokemon Line %s:", formatToBlockLine(newLineBlock->posX, newLineBlock->posY, newLineBlock->cantidad));
+	}
+}
+
+//Chequea si el string a escribir entra en los bloques
+bool stringFitsInBlocks(char* stringToWrite, t_list* listBlocks) {
+	int stringToWriteSize = strlen(stringToWrite);
+	int spaceToAllocateString = list_size(listBlocks) * lfsMetaData.blockSize;
+	return stringToWriteSize <= spaceToAllocateString;
+}
+
+/**
+ * Bitmap
+ * */
+void mostrar_bitarray(t_bitarray* bitmap){
+	for(int k =0;k<(bitarray_get_max_bit(bitmap));k++)
+	printf("test bit posicion, es  %d en posicion %d \n", bitarray_test_bit(bitmap,k),k);
+}
+
+void setear_bloque_ocupado_en_posicion(t_bitarray* bitmap, off_t pos){
+	bitarray_set_bit(bitmap, pos);
+}
+
+void setear_bloque_libre_en_posicion(t_bitarray* bitmap, off_t pos){
+	bitarray_clean_bit(bitmap, pos);
+}
+
+bool testear_bloque_libre_en_posicion(t_bitarray* bitmap, int pos){
+	return bitarray_test_bit(bitmap, (off_t)(pos));
+}
+
+// Obtiene y setea el proximo bloque libre
+int getAndSetFreeBlock(t_bitarray* bitmap, unsigned int blocks){
+	int j;
+	for(j =0; testear_bloque_libre_en_posicion(bitmap, j); j++); // Hasta un bloque lbre
+	setear_bloque_ocupado_en_posicion(bitmap, j);
+	return j;
+}
+
+// Retorna la cantidad de bloques libres
+int getFreeBlocks(int metadataBlocks, t_bitarray* bitmap){
+
+    int bloques_libres = 0;
+    int bloque_libre;
+    int bit = 0;
+    int tamMaximo = metadataBlocks;
+    while(bit < tamMaximo)
+    {
+        bloque_libre = bitarray_test_bit(bitmap,bit);
+        if(bloque_libre == 0)bloques_libres ++;
+        bit++;
+    }
+
+    return bloques_libres;
+}
+
+/**
+ * Setup
+ * */
+void createRootFiles() {
+	char* dir_tallGrass = string_new();
+	string_append(&dir_tallGrass, game_card_config->punto_montaje_tallgrass);
+
+	char* dir_metadata = string_new();
+	string_append(&dir_metadata, game_card_config->punto_montaje_tallgrass);
+	string_append(&dir_metadata, "Metadata/");
+
+	char* archivos = string_new();
+	string_append(&archivos, game_card_config->punto_montaje_tallgrass);
+	string_append(&archivos, "Files/");
+
+	char* dir_bloques = string_new();
+	string_append(&dir_bloques, game_card_config->punto_montaje_tallgrass);
+	string_append(&dir_bloques, "Bloques/");
+
+	if(_mkpath(game_card_config->punto_montaje_tallgrass, 0755) == -1) {
+		game_card_logger_error("_mkpath");
+	} else {
+		// Creo carpetas
+		mkdir(dir_metadata, 0777);
+		game_card_logger_info("Creada carpeta Metadata/");
+		mkdir(archivos, 0777);
+		game_card_logger_info("Creada carpeta Files/");
+		game_card_logger_info("Creada carpeta Files/ %s", dir_bloques);
+		mkdir(dir_bloques, 0777);
+		game_card_logger_info("Creada carpeta Bloques/");
+	}
+
+	struct_paths[METADATA] = dir_metadata;
+	struct_paths[FILES] = archivos;
+	struct_paths[BLOCKS] = dir_bloques;
+	struct_paths[TALL_GRASS] = dir_tallGrass;
+}
+
+void setupMetadata() {
+	char* metadataBin = string_new();
+	char* bitmapBin = string_new();
+
+	string_append(&metadataBin, struct_paths[METADATA]);
+	string_append(&metadataBin, "Metadata.bin");
+
+	if(access(metadataBin, F_OK) != -1) {
+        readMetaData(metadataBin);
+    } else {
+        createMetaDataFile(metadataBin);
+        readMetaData(metadataBin);
+    }
+
+	string_append(&bitmapBin, struct_paths[METADATA]);
+	string_append(&bitmapBin, "Bitmap.bin");
+
+	if(access(bitmapBin, F_OK) != -1){
+        readBitmap(bitmapBin);
+    } else {
+        // Creo bloques + bitmap
+        createBitmap(bitmapBin);
+        readBitmap(bitmapBin);
+        createBlocks();
+    }
+
+	free(metadataBin);
+	free(bitmapBin);
+}
+
+
+void setupFilesDirectory() {
+	char* pokemonBasePath = string_new();
+	char* pokemonBaseBin = string_new();
+	string_append(&pokemonBasePath, struct_paths[FILES]);
+	string_append(&pokemonBasePath, "Pokemon/");
+
+	struct_paths[POKEMON] = pokemonBasePath;
+
+	mkdir(pokemonBasePath, 0777);
+
+	string_append(&pokemonBaseBin, pokemonBasePath);
+	string_append(&pokemonBaseBin, "Metadata.bin");
+
+	FILE* pokemonMetadata = fopen(pokemonBaseBin, "w+b");
+	t_config* pokemonConfigMetadata = config_create(pokemonBaseBin);
+	config_set_value(pokemonConfigMetadata, "DIRECTORY", "Y");
+	config_save(pokemonConfigMetadata);
+	game_card_logger_info("Creado directorio base /Pokemon y su Metadata.bin");
+	fclose(pokemonMetadata);
+
+	free(pokemonBasePath);
+	free(pokemonBaseBin);
+}
+
+void createBlocks(){
+	game_card_logger_info("Creando bloques en el path /Bloques");
+	FILE* newBloque;
+	for(int i=0; i <= lfsMetaData.blocks-1; i++){
+        char* pathBloque = obtenerPathDelNumeroDeBloque(i);
+        newBloque = fopen(pathBloque,"w+b");
+        fclose(newBloque);
+		free(pathBloque);
+    }
+}
+
+void createBitmap(char* bitmapBin) {
+	game_card_logger_info("Creando el Bitmap.bin por primera vez");
+	bitmap_file = fopen(bitmapBin, "wb+");
+	char* bitarray_limpio_temp = calloc(1, ceiling(lfsMetaData.blocks, 8));
+	fwrite((void*) bitarray_limpio_temp, ceiling(lfsMetaData.blocks, 8), 1, bitmap_file);
+	fflush(bitmap_file);
+	free(bitarray_limpio_temp);
+}
+
+void createMetaDataFile(char* metadataBin){
+	game_card_logger_info("Creando Metadata.bin por primera vez");
+	FILE* metadata = fopen(metadataBin, "w+b");
+	config_metadata = config_create(metadataBin);
+	config_set_value(config_metadata, "BLOCK_SIZE", "64");
+	config_set_value(config_metadata, "BLOCKS", "4096"); // asi no tengo 5492 bloques :P
+	config_set_value(config_metadata, "MAGIC_NUMBER", "TALL_GRASS");
+	config_save(config_metadata);
+	config_destroy(config_metadata);
+	fclose(metadata);
+}
+
+void readMetaData(char* metadataPath) {
+	game_card_logger_info("Leyendo Metadata.bin");
+	t_config* metadataFile = config_create(metadataPath);
+	lfsMetaData.blocks = config_get_int_value(metadataFile,"BLOCKS");
+    lfsMetaData.magicNumber = string_duplicate(config_get_string_value(metadataFile,"MAGIC_NUMBER"));
+	lfsMetaData.blockSize = config_get_int_value(metadataFile,"BLOCK_SIZE");
+	config_destroy(metadataFile);
+}
+
+void readBitmap(char* bitmapBin) {
+	game_card_logger_info("Leyendo Bitmap.bin");
+	bitmap_file = fopen(bitmapBin, "rb+");
+	fseek(bitmap_file, 0, SEEK_END);
+	int file_size = ftell(bitmap_file);
+	fseek(bitmap_file, 0, SEEK_SET);
+	char* bitarray_str = (char*) mmap(NULL, file_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED, fileno(bitmap_file), 0);
+	if(bitarray_str == (char*) -1)
+	{
+		game_card_logger_error("Fallo el mmap: %s", strerror(errno));
+	}
+	fread((void*) bitarray_str, sizeof(char), file_size, bitmap_file);
+	bitmap = bitarray_create_with_mode(bitarray_str, file_size, MSB_FIRST);
+}
