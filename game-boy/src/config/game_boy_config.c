@@ -5,7 +5,7 @@ void print_config();
 
 int game_boy_config_load()
 {
-	game_boy_logger_info("Se establecerá la configuración");
+	//game_boy_logger_info("Se establecerá la configuración");
 	return config_load(game_boy_log_get(), CONFIG_FILE_PATH, read_config, print_config);
 }
 
@@ -33,10 +33,10 @@ void read_config(t_config* config_file)
 
 void print_config()
 {
-	game_boy_logger_info("IP_BROKER: %s", game_boy_config->ip_broker);
-	game_boy_logger_info("IP_TEAM: %s", game_boy_config->ip_team);
-	game_boy_logger_info("IP_GAMECARD: %s", game_boy_config->ip_gamecard);
-	game_boy_logger_info("PUERTO_BROKER: %d", game_boy_config->puerto_broker);
-	game_boy_logger_info("PUERTO_TEAM: %d", game_boy_config->puerto_team);
-	game_boy_logger_info("PUERTO_GAMECARD: %d", game_boy_config->puerto_gamecard);
+	//game_boy_logger_info("IP_BROKER: %s", game_boy_config->ip_broker);
+	//game_boy_logger_info("IP_TEAM: %s", game_boy_config->ip_team);
+	//game_boy_logger_info("IP_GAMECARD: %s", game_boy_config->ip_gamecard);
+	//game_boy_logger_info("PUERTO_BROKER: %d", game_boy_config->puerto_broker);
+	//game_boy_logger_info("PUERTO_TEAM: %d", game_boy_config->puerto_team);
+	//game_boy_logger_info("PUERTO_GAMECARD: %d", game_boy_config->puerto_gamecard);
 }

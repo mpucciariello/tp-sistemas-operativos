@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 		game_boy_exit();
 	}
 	else {
-		game_boy_logger_error("Error al iniciar GameBoy. Faltan parametros");
+		//game_boy_logger_error("Error al iniciar GameBoy. Faltan parametros");
 		return EXIT_FAILURE;
 	}
 
@@ -34,7 +34,7 @@ void connect_to_broker() {
 	game_boy_broker_fd = socket_connect_to_server(game_boy_config->ip_broker,
 			game_boy_config->puerto_broker);
 	if (game_boy_broker_fd < 0) {
-		game_boy_logger_warn("No se pudo conectar con BROKER");
+		//game_boy_logger_warn("No se pudo conectar con BROKER");
 		socket_close_conection(game_boy_broker_fd);
 		exit(EXIT_FAILURE);
 	} else {
@@ -47,7 +47,7 @@ void connect_to_team() {
 	game_boy_team_fd = socket_connect_to_server(game_boy_config->ip_team,
 			game_boy_config->puerto_team);
 	if (game_boy_team_fd < 0) {
-		game_boy_logger_warn("No se pudo conectar con TEAM");
+		//game_boy_logger_warn("No se pudo conectar con TEAM");
 		socket_close_conection(game_boy_team_fd);
 	} else {
 		game_boy_logger_info("Conexion con TEAM establecida correctamente!");
@@ -59,7 +59,7 @@ void connect_to_game_card() {
 	game_boy_game_card_fd = socket_connect_to_server(
 			game_boy_config->ip_gamecard, game_boy_config->puerto_gamecard);
 	if (game_boy_game_card_fd < 0) {
-		game_boy_logger_warn("No se pudo conectar con GAME CARD");
+		//game_boy_logger_warn("No se pudo conectar con GAME CARD");
 		socket_close_conection(game_boy_game_card_fd);
 	} else {
 		game_boy_logger_info(
@@ -76,7 +76,7 @@ void game_boy_console(void* _args_) {
 }
 
 void game_boy_init(int argcount, char* arguments[]) {
-	game_boy_logger_info("Inicando GAME BOY..");
+	//game_boy_logger_info("Inicando GAME BOY..");
 
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
@@ -92,9 +92,9 @@ void game_boy_init(int argcount, char* arguments[]) {
 	}
 
 	if (string_is_empty(match)) {
-		game_boy_logger_warn("Opcion %s no valida!", option);
-		game_boy_logger_warn(
-				"Opciones disponibles: BROKER, GAMECARD, TEAM, SUBSCRIBE");
+		//game_boy_logger_warn("Opcion %s no valida!", option);
+		//game_boy_logger_warn(
+				//"Opciones disponibles: BROKER, GAMECARD, TEAM, SUBSCRIBE");
 		exit(EXIT_FAILURE);
 	}
 

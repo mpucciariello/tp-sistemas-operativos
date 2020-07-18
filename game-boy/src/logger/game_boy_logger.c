@@ -5,7 +5,7 @@ int game_boy_logger_create()
 	game_boy_log = logger_create(LOG_FILE, PROGRAM_NAME);
 	if (game_boy_log == NULL || game_boy_log < 0)
 	{
-		perror("No ha sido posible instanciar el game_boy_logger");
+		//perror("No ha sido posible instanciar el game_boy_logger");
 		return -1;
 	}
 
