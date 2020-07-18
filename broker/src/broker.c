@@ -36,7 +36,12 @@ static inline unsigned next_power_of_2(int size) {
 
 void signal_handler(int signum) {
 	if (signum == SIGUSR1) {
-		dump();
+		if(!is_buddy()){
+			dump_partition();
+		}
+		else{
+			dump();
+		}
 	}
 }
 
@@ -53,6 +58,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	pointer = 0;
+	id =  1;
 	broker_server_init();
 	broker_exit();
 
@@ -196,6 +202,7 @@ void buddy_free(struct buddy *self, int offset) {
 // Broker init
 int broker_load() {
 	int response = broker_config_load();
+
 	if (response < 0)
 		return response;
 
@@ -207,6 +214,16 @@ int broker_load() {
 	broker_print_config();
 
 	// Create mutex for pointer
+	if(!is_buddy()){
+			t_nodo_memory *nodo_memory = malloc(sizeof(t_nodo_memory));
+			nodo_memory->pointer = 0;
+			nodo_memory->libre = true;
+			nodo_memory->size = broker_config->tamano_memoria;
+			nodo_memory->timestamp = (unsigned) time (NULL);
+			list_add(list_memory,nodo_memory);
+			pointer = 0;
+	}
+
 	if (pthread_mutex_init(&mpointer, NULL) != 0) {
 		printf("\n mutex init failed\n");
 		return 1;
@@ -255,7 +272,6 @@ int broker_load() {
 }
 
 void broker_server_init() {
-
 	base_time = time(NULL);
 	broker_socket = socket_create_listener(broker_config->ip_broker,
 			broker_config->puerto_broker);
@@ -313,7 +329,6 @@ static void *handle_connection(void *arg) {
 
 		if (received_bytes <= 0) {
 			broker_logger_error("Se perdio la conexion");
-			// TODO: Test!
 			handle_disconnection(client_fd);
 			return NULL;
 		}
@@ -352,6 +367,7 @@ static void *handle_connection(void *arg) {
 		}
 			// From GB
 		case NEW_POKEMON: {
+			
 			broker_logger_info("NEW RECEIVED FROM GB");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
@@ -368,10 +384,17 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					new_receive);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
+						new_receive->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,NEW_QUEUE,new_receive->id_correlacional);
+			}
+			
 			broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
-			save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
-					new_receive->id_correlacional);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			new_snd->id_correlacional = new_receive->id_correlacional;
 			create_message_ack(new_snd->id_correlacional, new_queue, NEW_QUEUE);
@@ -394,7 +417,7 @@ static void *handle_connection(void *arg) {
 
 			// From GB or GC
 		case APPEARED_POKEMON: {
-			pthread_mutex_lock(&msave);
+			
 			broker_logger_info("APPEARED RECEIVED");
 			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
@@ -409,12 +432,18 @@ static void *handle_connection(void *arg) {
 
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
-
-			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d",
-					from);
-			save_node_list_memory(from, message_void->size_message,
-					APPEARED_QUEUE, appeared_rcv->id_correlacional);
+			pthread_mutex_lock(&msave);
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message,
+						APPEARED_QUEUE, appeared_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,APPEARED_QUEUE,appeared_rcv->id_correlacional);
+			}
+			
+			broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d", from);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
 					memory);
 			create_message_ack(appeared_rcv->id_correlacional, appeared_queue,
@@ -425,6 +454,8 @@ static void *handle_connection(void *arg) {
 			// To Team
 			appeared_protocol = APPEARED_POKEMON;
 			broker_logger_info("APPEARED SENT TO TEAM");
+
+			create_message_ack(appeared_rcv->id_correlacional, appeared_queue, APPEARED_QUEUE);
 
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
@@ -453,10 +484,16 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					get_rcv);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
-			save_node_list_memory(from, message_void->size_message, GET_QUEUE,
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message, GET_QUEUE,
 					get_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,GET_QUEUE,get_rcv->id_correlacional);
+			}
+			broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 			get_snd->id_correlacional = get_rcv->id_correlacional;
 
@@ -497,10 +534,16 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					catch_rcv);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
-			save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
+			int from = 0;
+			if (is_buddy()) {	
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
 					catch_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,CATCH_QUEUE,catch_rcv->id_correlacional);
+			}
+			broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from,
 					memory);
 			catch_send->id_correlacional = catch_rcv->id_correlacional;
@@ -546,11 +589,18 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					loc_rcv);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
-			broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d",
-					from);
-			save_node_list_memory(from, message_void->size_message,
-					LOCALIZED_QUEUE, loc_rcv->id_correlacional);
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message,
+						LOCALIZED_QUEUE, loc_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,LOCALIZED_QUEUE, loc_rcv->id_correlacional);
+			}
+			
+			broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d", from);
+			
 			t_localized_pokemon* loc_snd = get_from_memory(protocol, from,
 					memory);
 
@@ -602,11 +652,18 @@ static void *handle_connection(void *arg) {
 			t_message_to_void *message_void = convert_to_void(protocol,
 					caught_rcv);
 			pthread_mutex_lock(&msave);
-			int from = save_on_memory(message_void);
+			int from = 0;
+			if (is_buddy()) {
+				from = save_on_memory(message_void);
+				save_node_list_memory(from, message_void->size_message,
+					CAUGHT_QUEUE, caught_rcv->id_correlacional);
+			}
+			else {
+				from = save_on_memory_pd(message_void,CAUGHT_QUEUE, caught_rcv->id_correlacional);
+			}
 			broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d",
 					from);
-			save_node_list_memory(from, message_void->size_message,
-					CAUGHT_QUEUE, caught_rcv->id_correlacional);
+
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from,
 					memory);
 			create_message_ack(caught_rcv->id_correlacional, caught_queue,
@@ -634,6 +691,7 @@ static void *handle_connection(void *arg) {
 			break;
 		}
 	}
+	socket_close_conection(client_fd);
 }
 
 void initialize_queue() {
@@ -669,7 +727,7 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 			t_empty* noop = malloc(sizeof(t_empty));
 			t_protocol noop_protocol = NOOP;
 			utils_serialize_and_send(sub->f_desc, noop_protocol, noop);
-
+			free(noop);
 			list_remove_by_condition(q, (void*) is_gb_subscriber);
 			broker_logger_info(
 					"Game boy has been kicked from subscribers list");
@@ -1119,7 +1177,7 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		broker_logger_info("******************************************");
 		broker_logger_info("RECEIVED:");
 		memcpy(&caught_rcv->result, message + offset, sizeof(uint32_t));
-		if (caught_rcv->result != 0) {
+		if (caught_rcv->result) {
 			broker_logger_info("Result: Caught");
 		} else {
 			broker_logger_info("Result: Failed");
@@ -1258,7 +1316,6 @@ void purge_msg() {
 		return string_equals_ignore_case(get_queue_name(n->cola),
 				get_queue_name(node->cola)) && n->id == node->id;
 	}
-
 	list_remove(list_memory, 0);
 	pthread_mutex_unlock(&mmem);
 	pthread_mutex_lock(&msubs);
@@ -1267,6 +1324,93 @@ void purge_msg() {
 	buddy_free(buddy, node->pointer);
 	broker_logger_info("Message removed successfully");
 	broker_logger_info("Memory consolidated");
+}
+
+int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correlacional) {
+	pthread_mutex_lock(&mpointer);
+	int from = pointer;
+	if (!is_buddy()) {
+		if (pointer + message_void->size_message > broker_config->tamano_memoria){
+			from = save_on_memory_partition(message_void,cola,id_correlacional);
+			memcpy(memory + from, message_void->message, message_void->size_message);
+			broker_logger_info("Pointer %d",from);
+			pthread_mutex_unlock(&mpointer);
+
+			return from;
+		}
+		pointer +=  max(message_void->size_message,broker_config->tamano_minimo_particion);
+		save_node_list_memory(from, message_void->size_message, cola,
+												id_correlacional);
+		memcpy(memory + from, message_void->message, message_void->size_message);
+	}
+	pthread_mutex_unlock(&mpointer);
+	return from;
+}
+
+
+int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_correlacional){
+	int from ;
+	int flag = 1;
+	int done_compactacion =0;
+	int close_while = 0;
+	int fallas = 0;
+	while (1){
+					if(close_while == 1){
+						break;
+					}
+					switch (flag){
+						case 1:{
+							if(broker_config->algoritmo_particion_libre == FF){
+								broker_logger_info("Aplicar algoritmo FIRST FIT");
+								from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
+							}
+							else{
+								broker_logger_info("Aplicar algoritmo BEST FIT");
+								from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
+							}
+							if(from == -1){
+								flag = 2;//para entrar a compactacion
+								broker_logger_info("No se pudo aplicar FF");
+								if(done_compactacion == 1){
+									broker_logger_info("Compactacion ya aplicado previamente , ir a paso 3");
+									flag = 3;
+								}
+								fallas ++;
+							}
+							else {
+								broker_logger_info("Pointer %d",from);
+								close_while = 1;
+							}
+							break;
+						}
+						case 2:{
+							broker_logger_info("Aplicado compactacion");
+							flag = 1;
+							done_compactacion = 1;
+							if(fallas == broker_config->frecuencia_compactacion){
+								compactacion();
+								fallas = 0;
+							}														broker_logger_info("IR A PASO 1");
+							break;
+						}
+						case 3:{
+							broker_logger_warn("Aplicado algoritmo de reemplazo");
+							flag = 1;
+							done_compactacion = 0;
+							if(broker_config->algoritmo_reemplazo == FIFO){
+								aplicar_algoritmo_reemplazo_FIFO();
+							}
+							else{
+								aplicar_algoritmo_reemplazo_LRU();
+							}
+							broker_logger_warn("IR a PAso 1");
+							fallas = 0;
+							break;
+
+						}
+					}
+				}
+	return from;
 }
 
 int save_on_memory(t_message_to_void *message_void) {
@@ -1292,19 +1436,44 @@ int save_on_memory(t_message_to_void *message_void) {
 }
 
 void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
+
 	t_nodo_memory * nodo_mem = malloc(sizeof(t_nodo_memory));
 
-	nodo_mem->pointer = pointer;
+	if (!is_buddy()) {
+		_Bool node_matches_received_queue(t_nodo_memory* node) {
+			return node->pointer == pointer;
+		}
 
-	nodo_mem->size =
+		t_nodo_memory * node_finded =  list_find(list_memory,(void *)node_matches_received_queue);
+		int size = node_finded->size;
+
+		int next_pointer = node_finded->pointer + max (broker_config->tamano_minimo_particion,msg_size);
+
+		node_finded->size = max (broker_config->tamano_minimo_particion,msg_size);
+	    node_finded->cola = cola;
+		node_finded->id = id;
+		node_finded->libre = false;
+		node_finded->timestamp = (unsigned) time(NULL);
+
+		nodo_mem->cola = cola;
+		nodo_mem->size = size - max (broker_config->tamano_minimo_particion,msg_size);
+		nodo_mem->pointer = next_pointer;
+		nodo_mem->libre = true;
+		nodo_mem->id = id;
+		nodo_mem->timestamp = (unsigned) time(NULL);
+	}
+
+	else {
+		nodo_mem->pointer = pointer;
+		nodo_mem->size =
 			!is_buddy() ?
 					((msg_size < broker_config->tamano_minimo_particion) ?
 							broker_config->tamano_minimo_particion : msg_size) :
 					msg_size;
-
-	nodo_mem->cola = cola;
-	nodo_mem->id = id;
-	nodo_mem->timestamp = time(NULL);
+		nodo_mem->cola = cola;
+		nodo_mem->id = id;
+		nodo_mem->timestamp = time(NULL);
+	}
 
 	pthread_mutex_lock(&mmem);
 	list_add(list_memory, nodo_mem);
@@ -1325,7 +1494,6 @@ t_nodo_memory* find_node(t_nodo_memory* node) {
 			break;
 		}
 	}
-
 	return list_get(list_memory, ret_pos);
 }
 
@@ -1414,7 +1582,10 @@ void send_all_messages(t_subscribe *subscriber) {
 
 			pthread_mutex_lock(&mmem);
 			t_nodo_memory *nodo_mem = find_node(nodo_cpy);
-			update_timings(nodo_mem);
+			if (is_buddy()) {
+				update_timings(nodo_mem);
+			}
+			
 			pthread_mutex_unlock(&mmem);
 
 			switch (subscriber->cola) {
@@ -1599,4 +1770,322 @@ int generar_id() {
 	id++;
 	pthread_mutex_unlock(&mid);
 	return id;
+}
+
+
+int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *message){
+	int size_free;
+	int pointer_busy;
+	t_list *new_list = list_create();
+
+
+	int position;
+	int size = 0;
+	int flag_first = 0;
+
+
+	for(int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory* memory_node = list_get(list_memory,i);
+		if(memory_node->libre == true  && max(message->size_message,broker_config->tamano_minimo_particion) <= memory_node->size){
+
+			if(flag_first == 0){
+				position = i;
+				size = memory_node->size ;
+				flag_first = 1;
+			}
+			if (memory_node->size < size){
+				position = i;
+				size=memory_node->size;
+			}
+		}
+	}
+	if(flag_first == 0){
+		return -1;
+	}
+	int i=0;
+	int flag =0;
+	if (flag_first == 0){
+		return -1;
+	}
+	while(i<list_size(list_memory)){
+		t_nodo_memory* memory_node =list_get(list_memory,i);
+		if (i == position){
+			broker_logger_warn("iniciando reemplazo");
+			flag = 1;
+			int puntero = memory_node->pointer;
+			memory_node->cola = cola;
+			memory_node->id = id_correlacional;
+			size_free = memory_node->size - max (message->size_message,broker_config->tamano_minimo_particion);
+			memory_node->size = max (message->size_message,broker_config->tamano_minimo_particion) ;
+			pointer_busy = memory_node->pointer;
+			memory_node->libre = false;
+			memory_node->timestamp = (unsigned) time(NULL);
+			list_add(new_list,memory_node);
+			if(size_free != 0){
+				t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
+				memory_next->cola = cola;
+				memory_next->id = 0;
+				memory_next->libre = true;
+				memory_next->pointer = puntero +message->size_message;
+				memory_next->size = size_free;
+				memory_next->timestamp = (unsigned) time(NULL);
+				list_add(new_list,memory_next);
+			}
+
+			for(int k=i+1; k<list_size(list_memory);k++){
+				t_nodo_memory* memory_fill =list_get(list_memory,k);
+				list_add(new_list,memory_fill);
+			}
+		break;
+
+		}
+		else{
+			list_add(new_list,memory_node);
+		}
+		i++;
+	}
+	if(list_size (new_list) !=0 ){
+		 list_destroy(list_memory );
+		list_memory =  new_list;
+	}
+	if(flag == 0){
+			pointer_busy =  -1;
+	}
+	list_memory = new_list ;
+    /*broker_logger_warn("terminado reemplazo");
+    broker_logger_warn("Estado memoria actual");
+	estado_memoria(list_memory);
+	broker_logger_warn("Terminado memoria actual");
+	*/
+	return pointer_busy;
+}
+
+int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void *message){
+	int size_free;
+	int pointer_busy;
+	t_list *new_list = list_create();
+	int flag =0 ;
+	int i=0;
+	while(i<list_size(list_memory)){
+
+		t_nodo_memory* memory_node =list_get(list_memory,i);
+		if(memory_node->libre == true  &&  max(message->size_message,broker_config->tamano_minimo_particion) <= memory_node->size && flag == 0 ){
+			broker_logger_warn("iniciando reemplazo");
+			//estado_memoria(list_memory);
+			flag = 1;
+			int puntero = memory_node->pointer;
+			memory_node->cola = cola;
+			memory_node->id = id_correlacional;
+			size_free = memory_node->size - max (message->size_message,broker_config->tamano_minimo_particion);
+			memory_node->size = max (message->size_message,broker_config->tamano_minimo_particion) ;
+			pointer_busy = memory_node->pointer;
+			memory_node->libre = false;
+			memory_node->timestamp = (unsigned) time (NULL);
+			list_add(new_list,memory_node);
+
+			if(size_free != 0){
+				t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
+				memory_next->cola = cola;
+				memory_next->id = 0;
+				memory_next->libre = true;
+				memory_next->pointer = puntero +message->size_message;
+				memory_next->size = size_free;
+				memory_next->timestamp = (unsigned) time (NULL);
+				list_add(new_list,memory_next);
+			}
+
+			for(int k=i+1; k<list_size(list_memory);k++){
+				t_nodo_memory* memory_fill =list_get(list_memory,k);
+				list_add(new_list,memory_fill);
+			}
+			break;
+		}
+		else{
+			list_add(new_list,memory_node);
+		}
+		i++;
+	}
+
+
+	//list_destroy(list_memory );
+	if(flag == 0){
+		pointer_busy =  -1;
+	}
+	if(list_size (new_list) !=0 ){
+			list_destroy(list_memory);
+			list_memory =  new_list;
+	}
+	/*broker_logger_warn("terminado reemplazo");
+	broker_logger_warn("Estado actual");
+	estado_memoria(list_memory);
+	broker_logger_warn("Estado final");
+	*/
+	return pointer_busy;
+}
+
+void liberar_memoria(int id_correlacional,t_cola cola){
+
+	for(int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory* memory_node = list_get(list_memory,i);
+		if(memory_node->id == id_correlacional  && memory_node->cola == cola){
+			memory_node->id = 0;
+			memory_node->libre = true;
+		}
+	}
+}
+
+void compactacion(){
+    //estado_memoria(list_memory);
+	broker_logger_info("cantidad elementos previa a compactacion de lista %d",list_size(list_memory));
+	t_list *new_list = list_create();
+	broker_logger_info(" iniciando compactacion");
+	int flag= 0;
+	for(int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory* memory_node_free = list_get(list_memory,i);
+		if(i == (list_size(list_memory)-1)){
+			list_add(new_list,memory_node_free);
+			break;
+
+		}
+		if(memory_node_free->libre == false){
+			list_add(new_list,memory_node_free);
+		}
+		if(memory_node_free->libre == true ){
+
+			t_nodo_memory* memory_node_add;
+			t_nodo_memory* memory_node_next = NULL;
+			int last_pointer = memory_node_free->pointer;
+			if(i+1<list_size(list_memory)){
+				memory_node_next= list_get(list_memory,i+1);
+			}
+			if(memory_node_next != NULL && memory_node_next->libre==true){
+				memory_node_free->size =  memory_node_free->size + memory_node_next->size;
+				list_remove(list_memory,i+1);
+				i--;
+
+			}
+			else{
+				int offset = memory_node_free->pointer;
+				for(int k=i+1;k<list_size(list_memory);k++){
+					memory_node_add= list_get(list_memory,k);
+					memcpy(memory+offset,memory+memory_node_add->pointer,memory_node_add->size);
+					memory_node_add->pointer = offset ;
+					list_add(new_list,memory_node_add);
+					offset = offset + memory_node_add->size;
+					last_pointer = offset;
+				}
+				flag = 1;
+			}
+			memory_node_free->pointer = last_pointer;
+			list_add(new_list,memory_node_free);
+			list_memory =  new_list;
+			//list_destroy(new_list);
+			if(flag == 1){
+				i=-1;
+				new_list = list_create();
+			}
+			broker_logger_warn("movido nodo de lugar");
+			//estado_memoria(list_memory);
+			broker_logger_warn("estado nodo de lugar");
+
+		}
+
+	}
+	if(list_size (new_list) !=0 ){
+		list_destroy(list_memory);
+		list_memory =  new_list;
+	}
+	//estado_memoria(list_memory);
+	broker_logger_info("Terminado compactacion");
+	broker_logger_info("cantidad elementos de lista %d",list_size(list_memory));
+
+}
+
+void aplicar_algoritmo_reemplazo_FIFO(){
+	for (int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory *nodo_memoria =list_get(list_memory,i);
+		if (nodo_memoria->libre == false){
+			nodo_memoria->libre =true;
+			break;
+		}
+	}
+}
+
+void aplicar_algoritmo_reemplazo_LRU(){
+	int flag = 0;
+	int position;
+	uint32_t less_time;
+	for (int i=0;i<list_size(list_memory);i++){
+		t_nodo_memory *nodo_memoria =list_get(list_memory,i);
+		if (nodo_memoria->libre == false){
+			if(flag == 0){
+				less_time = nodo_memoria->timestamp;
+				position =i;
+				flag =1;
+			}
+			if(nodo_memoria->timestamp < less_time){
+				less_time = nodo_memoria->timestamp;
+				position =i;
+			}
+		}
+	}
+	t_nodo_memory *nodo_memoria =list_get(list_memory,position);
+	nodo_memoria->libre = true;
+}
+
+void estado_memoria(t_list *list){
+	broker_logger_warn("Estado Actual");
+	for (int i=0; i<list_size(list);i++){
+		t_nodo_memory *nodo_memoria =list_get(list,i);
+		broker_logger_info(" Posicion %d",i);
+		broker_logger_info(" Pointer %d",nodo_memoria->pointer);
+		broker_logger_info(" Cola %d",nodo_memoria->cola);
+		broker_logger_info(" estado %d",nodo_memoria->libre);
+		broker_logger_info(" size %d",nodo_memoria->size);
+		broker_logger_info(" time %d",nodo_memoria->timestamp);
+	}
+	broker_logger_warn("Estado Final");
+}
+
+void dump_partition() {
+
+	FILE *f = NULL;
+	f = fopen("memdump.txt", "a");
+
+	if (f == NULL) {
+		broker_logger_error("Operation failed: Couldn't dump memory contents");
+		return;
+	}
+	if (ftell(f) != 0) {
+		fprintf(f,
+				"------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+	}
+	time_t _time = time(NULL);
+	struct tm *tm = localtime(&_time);
+	char s[64];
+	strftime(s, sizeof(s), "%c", tm);
+	fprintf(f, "Dump %s\n", s);
+	pthread_mutex_lock(&mmem);
+	t_list* list_clone = list_duplicate(list_memory);
+	pthread_mutex_unlock(&mmem);
+
+	for (int i = 0; i < list_size(list_clone); ++i) {
+
+		    t_nodo_memory* node = list_get(list_clone, i);
+			fprintf(f, "Particion %04d: %04d - %04d\t\t",i ,node->pointer, node->pointer +  node->size -1);
+			fprintf(f, "[L]\t\t");
+			fprintf(f, "Size: %04d B \t\t", node->size);
+			if(node->libre == false){
+				fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
+				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
+			}
+			else
+				fprintf(f, "Queue: %s\t\t", "LIBRE");
+
+			fprintf(f, "ID: %04d\n", node->id);
+
+	}
+	fclose(f);
+	return;
+
 }

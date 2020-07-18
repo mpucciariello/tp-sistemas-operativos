@@ -15,6 +15,7 @@
 int broker_socket;
 time_t base_time;
 
+
 int broker_load();
 void broker_server_init();
 static void *handle_connection(void *arg);
@@ -22,6 +23,7 @@ void broker_exit();
 void search_queue(t_subscribe *unSubscribe);
 void initialize_queue();
 void add_to(t_list *list, t_subscribe* sub);
+void compactacion();
 
 pthread_mutex_t mpointer, mid, msubs, msave, mget, mappeared, mloc, mcatch, mcaught, mnew, mmem;
 
@@ -30,6 +32,9 @@ char *memory;
 uint32_t pointer;
 
 uint32_t id;
+
+time_t base_time;
+
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
 
 t_list *list_memory;
@@ -60,6 +65,7 @@ typedef struct {
 	t_cola cola;
 	int id;
 	time_t timestamp;
+	bool libre;
 } t_nodo_memory;
 
 typedef struct {
@@ -79,6 +85,7 @@ t_message_to_void *convert_to_void(t_protocol protocol, void *package_recv);
 void *get_from_memory(t_protocol protocol, int posicion, void *message);
 int save_on_memory(t_message_to_void *message_void);
 char* get_protocol_name(t_cola q);
+int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id);
 void save_node_list_memory(int pointer, int size,t_cola cola,int id);
 void send_all_messages(t_subscribe *subscriber);
 void purge_msg();
@@ -87,4 +94,15 @@ void handle_disconnection(int fdesc);
 void dump();
 _Bool is_buddy();
 void create_message_ack(int id,t_list *cola,t_cola unCola);
+int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void *message_void);
+int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *message_void);
+void aplicar_algoritmo_reemplazo_LRU();
+void aplicar_algoritmo_reemplazo_FIFO();
+void estado_memoria(t_list *list);
+_Bool is_buddy();
+void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n);
+int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_correlacional);
+void signal_handler(int signum);
+char* get_queue_name(t_cola q);
+void dump_partition();
 #endif  /* BROKER_H_ */

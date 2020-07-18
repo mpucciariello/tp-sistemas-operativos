@@ -614,7 +614,6 @@ t_entrenador_pokemon* team_planner_entrenador_que_necesita(t_pokemon* pokemon_de
 	}
 	t_list* entrenadores_pokemon_bloqueante = list_filter(block_queue, (void*) _necesitan_pokemon_bloquante);
 
-
 	int _entrenador_no_tiene_pokemon_bloqueante(t_entrenador_pokemon *trainner) {
 
 		int cantidad_repetidos = 0;
