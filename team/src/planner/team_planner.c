@@ -16,6 +16,9 @@ void team_planner_run_planification() {
 		context_switch_qty++;
 		entrenador->previus_estimation = entrenador->estimated_burst;
 
+		pthread_mutex_lock(&cola_exec);
+		list_add(exec_queue, entrenador);
+		pthread_mutex_unlock(&cola_exec);
 		pthread_mutex_unlock(&entrenador->sem_move_trainers);
 	}
 }

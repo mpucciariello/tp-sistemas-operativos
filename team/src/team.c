@@ -34,6 +34,7 @@ void team_init() {
 	sem_init(&appeared_recibido, 0, 0);
 
 	pthread_mutex_init(&cola_pokemons_a_atrapar, NULL);
+	pthread_mutex_init(&cola_exec, NULL);
 
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
@@ -119,7 +120,9 @@ void send_message_catch(t_catch_pokemon* catch_send,t_entrenador_pokemon* entren
 		list_add(message_catch_sended, catch_send);
 		list_add(entrenador->list_id_catch, (void*) catch_send->id_correlacional);
 	} else {
+		pthread_mutex_lock(&cola_exec);
 		list_remove(exec_queue, 0);
+		pthread_mutex_unlock(&cola_exec);
 		atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
 	}
 	usleep(500000);
@@ -266,7 +269,9 @@ int send_message(void* paquete, t_protocol protocolo, t_list* queue) {
 void team_planner_check_RR_burst(t_entrenador_pokemon* entrenador) {
 	if (entrenador->current_burst_time == team_config->quantum) {
 		team_planner_add_to_ready_queue(entrenador);
+		pthread_mutex_lock(&cola_exec);
 		list_remove(exec_queue, 0);
+		pthread_mutex_unlock(&cola_exec);
 		sem_post(&sem_trainers_in_ready_queue);
 		sem_post(&sem_planificador);
 		team_logger_info("El entrenador %d paso a la cola de READY ya que terminó su QUANTUM.", entrenador->id);
@@ -280,7 +285,9 @@ void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 	if (lower_estimated_trainer != NULL) {
 
 		if (entrenador->estimated_burst > team_planner_calculate_exponential_mean(lower_estimated_trainer)) {
+			pthread_mutex_lock(&cola_exec);
 			list_remove(exec_queue, 0);
+			pthread_mutex_unlock(&cola_exec);
 			team_planner_add_to_ready_queue(entrenador);
 			sem_post(&sem_trainers_in_ready_queue);
 			sem_post(&sem_planificador);
@@ -293,7 +300,7 @@ void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 	while (true) {
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
-		list_add(exec_queue, entrenador);
+
 		int aux_x = entrenador->position->pos_x - entrenador->pokemon_a_atrapar->position->pos_x;
 		int aux_y = entrenador->position->pos_y - entrenador->pokemon_a_atrapar->position->pos_y;
 
