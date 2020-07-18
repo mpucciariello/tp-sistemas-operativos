@@ -76,8 +76,9 @@ echo -e "\n\nInstalling commons libraries...\n\n"
 cd $PROJECTROOT
 COMMONS="so-commons-library"
 git clone "https://github.com/sisoputnfrba/${COMMONS}.git"
+cd $COMMONS
 sudo make uninstall
-make all
+sudo make all
 sudo make install
 cd $CWD
 
