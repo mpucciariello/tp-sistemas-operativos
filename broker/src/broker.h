@@ -15,6 +15,7 @@
 int broker_socket;
 time_t base_time;
 
+
 int broker_load();
 void broker_server_init();
 static void *handle_connection(void *arg);
@@ -26,12 +27,13 @@ void compactacion();
 
 pthread_mutex_t mpointer, mid, msubs, msave, mget, mappeared, mloc, mcatch, mcaught, mnew, mmem;
 
-
 char *memory;
 
 uint32_t pointer;
 
 uint32_t id;
+
+time_t base_time;
 
 t_list *get_queue,*appeared_queue,*new_queue,*caught_queue,*catch_queue,*localized_queue;
 
@@ -64,7 +66,6 @@ typedef struct {
 	int id;
 	time_t timestamp;
 	bool libre;
-	uint32_t time_lru;
 } t_nodo_memory;
 
 typedef struct {
@@ -101,4 +102,7 @@ void estado_memoria(t_list *list);
 _Bool is_buddy();
 void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n);
 int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_correlacional);
+void signal_handler(int signum);
+char* get_queue_name(t_cola q);
+void dump_partition();
 #endif  /* BROKER_H_ */
