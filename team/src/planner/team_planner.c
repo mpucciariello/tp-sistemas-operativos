@@ -418,7 +418,7 @@ t_entrenador_pokemon* team_planner_apply_SJF() {
 	int least_estimate_index = team_planner_get_least_estimate_index();	
 	t_entrenador_pokemon* entrenador = list_get(ready_queue, least_estimate_index);
 	list_remove(ready_queue, least_estimate_index);	
-	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar", entrenador->id);
+	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar.", entrenador->id);
 	
 	return team_planner_exec_trainer(entrenador);	
 }
@@ -427,7 +427,7 @@ t_entrenador_pokemon* team_planner_apply_FIFO() {
 	t_entrenador_pokemon* entrenador;
 	entrenador = list_get(ready_queue, 0);
 	list_remove(ready_queue, 0);
-	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar", entrenador->id);
+	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar.", entrenador->id);
 
 	return team_planner_exec_trainer(entrenador);
 }
@@ -436,7 +436,7 @@ t_entrenador_pokemon* team_planner_apply_RR() {
 	t_entrenador_pokemon* entrenador;
 	entrenador = list_get(ready_queue, 0);
 	list_remove(ready_queue, 0);
-	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar", entrenador->id);
+	team_logger_info("Se eliminó al entrenador %d de la cola de READY porque es su turno de ejecutar.", entrenador->id);
 
 	return team_planner_exec_trainer(entrenador);	
 }
@@ -470,6 +470,7 @@ void team_planner_solve_deadlock() {
 
 	team_logger_info("Se iniciará la detección y resolución de DEADLOCKS!");
 	int a = 0;
+	int quantum = 0;
 
 	t_pokemon* pokemon_de_entrenador_bloqueado = malloc(sizeof(t_pokemon));
 	t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
@@ -503,9 +504,20 @@ void team_planner_solve_deadlock() {
 
 		int steps = fabs(aux_x) + fabs(aux_y);
 
-		for (int i = 0; i <= steps; i++) {
+		for (int i = 0; i < steps; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
 			team_planner_new_cpu_cicle(entrenador_bloqueado);
+
+			if(team_config->algoritmo_planificacion == RR){
+				if(quantum == team_config->quantum){
+					quantum = 0;
+					team_logger_info("El entrenador %d pasó a la cola de READY ya que terminó su QUANTUM.", entrenador_bloqueado->id);
+					usleep(500);
+					context_switch_qty++;
+					team_logger_info("El entrenador %d pasará a estado EXEC para realizar el INTERCAMBIO con el entrenador bloqueante %d!", entrenador_bloqueado-> id, entrenador_bloqueante->id);
+				}
+				quantum++;
+			}
 		}
 
 		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador_bloqueado->id,

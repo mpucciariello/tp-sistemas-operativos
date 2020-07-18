@@ -8,10 +8,7 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include src/planner/subdir.mk
--include src/logger/subdir.mk
--include src/config/subdir.mk
--include src/subdir.mk
+-include common/subdir.mk
 -include subdir.mk
 -include objects.mk
 
@@ -26,25 +23,21 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: team
-
-dependents:
-	-cd /home/utnso/git/tp-2020-1c-CDev20/shared-common/Debug && $(MAKE) all
+all: libshared-common.so
 
 # Tool invocations
-team: $(OBJS) $(USER_OBJS) /home/utnso/git/tp-2020-1c-CDev20/shared-common/Debug/libshared-common.so
+libshared-common.so: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -L"/home/utnso/git/tp-2020-1c-CDev20/shared-common/Debug" -o "team" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -shared -o "libshared-common.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) team
+	-$(RM) $(LIBRARIES)$(OBJS)$(C_DEPS) libshared-common.so
 	-@echo ' '
 
 .PHONY: all clean dependents
-/home/utnso/git/tp-2020-1c-CDev20/shared-common/Debug/libshared-common.so:
 
 -include ../makefile.targets
