@@ -485,10 +485,11 @@ static void *handle_connection(void *arg) {
 			/*
 			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
 			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
-			get_rcv->id_correlacional = generar_id();
+			
 			broker_logger_info("ID correlacional: %d",
 					get_rcv->id_correlacional);
 			*/
+			get_rcv->id_correlacional = generar_id();
 			usleep(50000);
 
 			t_message_to_void *message_void = convert_to_void(protocol,
@@ -537,10 +538,12 @@ static void *handle_connection(void *arg) {
 			broker_logger_info("Largo nombre: %d", catch_rcv->tamanio_nombre);
 			broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
 			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
-			catch_rcv->id_correlacional = generar_id();
+			
 			broker_logger_info("ID correlacional: %d",
 					catch_rcv->id_correlacional);
-			*/
+			*/	
+			catch_rcv->id_correlacional = generar_id();
+
 			usleep(50000);
 
 			t_message_to_void *message_void = convert_to_void(protocol,
