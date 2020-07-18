@@ -459,7 +459,7 @@ void *receive_msg(int fd, int send_to) {
 
 			if (is_server == 0) {
 				t_protocol ack_protocol = ACK;
-				team_logger_info("Se envio ACK en respuesta a un CAUGHT al BROKER");
+				//team_logger_info("Se envio ACK en respuesta a un CAUGHT al BROKER");
 
 				t_ack* ack_send = malloc(sizeof(t_ack));
 				ack_send->id_corr_msg = caught_rcv->id_correlacional;
@@ -498,7 +498,7 @@ void *receive_msg(int fd, int send_to) {
 			if (loc_rcv->cant_elem > 0) {
 				if (is_server == 0) {
 					t_protocol ack_protocol = ACK;
-					team_logger_info("Se envio ACK en respuesta a un LOCALIZED al BROKER");
+					//team_logger_info("Se envio ACK en respuesta a un LOCALIZED al BROKER");
 
 					t_ack* ack_send = malloc(sizeof(t_ack));
 					ack_send->id_corr_msg = loc_rcv->id_correlacional;
@@ -542,7 +542,7 @@ void *receive_msg(int fd, int send_to) {
 
 			if (is_server == 0) {
 				t_protocol ack_protocol = ACK;
-				team_logger_info("Se envio ACK en respuesta a un APPEARED al BROKER");
+				//team_logger_info("Se envio ACK en respuesta a un APPEARED al BROKER");
 
 				t_ack* ack_send = malloc(sizeof(t_ack));
 				ack_send->id_corr_msg = appeared_rcv->id_correlacional;
