@@ -7,6 +7,6 @@
 
 ./game-boy BROKER CATCH_POKEMON Onyx 4 5
 
-./game-boy SUBSCRIBE CAUGHT_QUEUE 10
+./game-boy SUSCRIPTOR CAUGHT_POKEMON 10
 
 ./game-boy BROKER CATCH_POKEMON Vaporeon 4 5
