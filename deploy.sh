@@ -119,8 +119,8 @@ do
   echo -e "Building ${i}"
   cd $i
   make
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PROJECTROOT/${REPONAME}/$i
-  echo -e "\n LD_LIBRARY_PATH:..\n" $LD_LIBRARY_PATH
+  sudo mv $PROJECTROOT/${REPONAME}/"common-library.conf" /etc/ld.so.conf.d/
+  sudo ldconfig
   cd $PROJECTROOT
 done
 
