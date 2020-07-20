@@ -12,7 +12,7 @@ void initSemaphore() {
 	files_open = dictionary_create();
 }
 
-int createRecursiveDirectory(const char* path) {
+int createRecursiveDirectory(char* path) {
 	char* completePath = string_new();
 	char* newDirectoryMetadata = string_new();
 	char* super_path = (char*) malloc(strlen(path) +1);
@@ -50,7 +50,7 @@ int createRecursiveDirectory(const char* path) {
 	return 0;
 }
 
-int createFile(const char* fullPath) {
+int createFile(char* fullPath) {
 	char* completePath = string_new();
 	string_append(&completePath, struct_paths[FILES]);
 	string_append(&completePath, fullPath);
@@ -66,7 +66,7 @@ int createFile(const char* fullPath) {
 	free(completePath);
 }
 
-void updatePokemonMetadata(const char* fullPath, const char* directory, const char* size, const char* blocks, const char* open) {
+void updatePokemonMetadata(char* fullPath, char* directory, char* size, char* blocks, char* open) {
 	char* completePath = string_new();
 	char* newDirectoryMetadata = string_new();
 	string_append(&completePath, struct_paths[FILES]);
@@ -89,7 +89,7 @@ void updatePokemonMetadata(const char* fullPath, const char* directory, const ch
 	free(newDirectoryMetadata);
 }
 
-void updateOpenFileState(const char* fullPath, const char* open) {
+void updateOpenFileState(char* fullPath, char* open) {
 	char* completePath = string_new();
 	char* newDirectoryMetadata = string_new();
 	char* blockSize = string_new();
@@ -128,7 +128,7 @@ int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines)
 	int coordinateExist = 0;
 
 	for (int i=0; i<list_size(pokemonLines); i++) {
-		blockLine* newLineBlock = list_get(pokemonLines, i);
+		blockLine* newLineBlock = (blockLine*) list_get(pokemonLines, i);
 
 		if (newLineBlock->posX == posX && newLineBlock->posY == posY) {
 			coordinateExist = 1;
@@ -142,7 +142,7 @@ int coordinateExists(unsigned int posX, unsigned int posY, t_list* pokemonLines)
 // Add pokemon total if coordinate exists
 void addTotalPokemonIfCoordinateExist(t_new_pokemon* newPokemon, t_list* pokemonLines) {
 	for (int i=0; i<list_size(pokemonLines); i++) {
-		blockLine* pokemonLineBlock = list_get(pokemonLines, i);
+		blockLine* pokemonLineBlock = (blockLine*)list_get(pokemonLines, i);
 		if (pokemonLineBlock->posX == newPokemon->pos_x && pokemonLineBlock->posY == newPokemon->pos_y) {
 			pokemonLineBlock->cantidad = pokemonLineBlock->cantidad + newPokemon->cantidad;
 		}
@@ -152,7 +152,7 @@ void addTotalPokemonIfCoordinateExist(t_new_pokemon* newPokemon, t_list* pokemon
 // Delete pokemon total if coordinate exists
 void deletePokemonTotalIfCoordinateExist(t_catch_pokemon* catchPokemon, t_list* pokemonLines) {
 	for (int i=0; i<list_size(pokemonLines); i++) {
-		blockLine* pokemonLineBlock = list_get(pokemonLines, i);
+		blockLine* pokemonLineBlock = (blockLine*)list_get(pokemonLines, i);
 		if (pokemonLineBlock->posX == catchPokemon->pos_x && pokemonLineBlock->posY == catchPokemon->pos_y) {
 			if (pokemonLineBlock->cantidad != 1) {
 				pokemonLineBlock->cantidad = pokemonLineBlock->cantidad - 1;	
@@ -167,7 +167,7 @@ t_list* requestFreeBlocks(int extraBlocksNeeded) {
 	t_list* retList = list_create();
 	for (int i=0; i<extraBlocksNeeded; i++) {
 		int freeBlockPosition = getAndSetFreeBlock(bitmap, lfsMetaData.blocks);
-		list_add(retList, freeBlockPosition);
+		list_add(retList, (void*) freeBlockPosition);
 	}
 	return retList;
 }
@@ -179,13 +179,13 @@ char* formatToMetadataBlocks(t_list* blocks) {
 
 	if (list_size(blocks) > 1) {
 		for(int i=0; i<list_size(blocks); i++) {
-			string_append(&retBlocks, string_itoa(list_get(blocks, i)));
+			string_append(&retBlocks, string_itoa((int)list_get(blocks, i)));
 			if (i != (list_size(blocks) - 1)) string_append(&retBlocks, ",");
 		}
 	} 
 	
 	if (list_size(blocks) == 1) {
-		string_append(&retBlocks, string_itoa(list_get(blocks, 0)));
+		string_append(&retBlocks, string_itoa((int)list_get(blocks, 0)));
 	}
 
 	string_append(&retBlocks, "]");
@@ -241,7 +241,7 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 		  if (freeBlocks > blocksRequired) {
 			int freeBlockPosition = getAndSetFreeBlock(bitmap, lfsMetaData.blocks);
 			t_list* freeBlocks = list_create();
-			list_add(freeBlocks, freeBlockPosition);
+			list_add(freeBlocks, (void*)freeBlockPosition);
 			char* metadataBlocks = formatToMetadataBlocks(freeBlocks);
 			char* stringLength = string_itoa(pokemonPerPositionLength);
 			
@@ -264,7 +264,7 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 		  
 		  t_list* pokemonLines = list_create();
 		  blockLine* newNode = createBlockLine(newPokemon->pos_x, newPokemon->pos_y, newPokemon->cantidad);
-		  list_add(pokemonLines, newNode);
+		  list_add(pokemonLines, (void*)newNode);
 
 		  char* stringToWrite = formatListToStringLine(pokemonLines);
 		  int blocksRequired = cuantosBloquesOcupa(stringToWrite);
@@ -283,7 +283,7 @@ void createNewPokemon(t_new_pokemon* newPokemon) {
 			  game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
 		  }
 		  
-		  list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
+		  list_destroy_and_destroy_elements(pokemonLines, (void*)freeBlockLine);
 		  free(stringToWrite);
 	  	}
 
@@ -361,7 +361,7 @@ void operateNewPokemonFile(t_new_pokemon* newPokemon, char* completePath, int fr
 				addTotalPokemonIfCoordinateExist(newPokemon, pokemonLines);
 			} else {
 				blockLine* newNode = createBlockLine(newPokemon->pos_x, newPokemon->pos_y, newPokemon->cantidad);
-				list_add(pokemonLines, newNode);
+				list_add(pokemonLines, (void*)newNode);
 			}
 			
 			char* stringToWrite = formatListToStringLine(pokemonLines);
@@ -374,7 +374,7 @@ void operateNewPokemonFile(t_new_pokemon* newPokemon, char* completePath, int fr
 					int extraBlocksNeeded = blocksRequired - list_size(listBlocks);
 					t_list* extraBlocks = requestFreeBlocks(extraBlocksNeeded);
 					// Agrego los nuevos bloques en la lista original
-					list_add_all(listBlocks, extraBlocks);
+					list_add_all(listBlocks, (void*)extraBlocks);
 					list_destroy(extraBlocks);
 				} 
 				writeBlocks(stringToWrite, listBlocks);
@@ -390,7 +390,7 @@ void operateNewPokemonFile(t_new_pokemon* newPokemon, char* completePath, int fr
 				game_card_logger_error("No hay bloques disponibles. No se puede hacer la operacion");
 			}
 
-			list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
+			list_destroy_and_destroy_elements(pokemonLines, (void*)freeBlockLine);
 			free(stringToWrite);
 			free(stringLength);
 			break;
@@ -491,7 +491,7 @@ int operateCatchPokemonFile(t_catch_pokemon* catchPokemon, char* completePath) {
 					}
 
 					if (blocksRequired < list_size(listBlocks)) {
-						int lastBlockUsing = list_get(listBlocks, list_size(listBlocks) - 1 );
+						int lastBlockUsing = (int)list_get(listBlocks, list_size(listBlocks) - 1 );
 						list_remove(listBlocks, list_size(listBlocks) - 1);
 						writeBlocks(stringToWrite, listBlocks);
 						char* metadataBlocks = formatToMetadataBlocks(listBlocks);
@@ -511,16 +511,17 @@ int operateCatchPokemonFile(t_catch_pokemon* catchPokemon, char* completePath) {
 				// Edge case donde el pokemon tiene una sola linea, un solo bloque asignado y la unica coordenada es == 1
 				// Asumo que el bloque se queda ocupado pero con size = 0
 				if (strlen(stringToWrite) == 0 && list_size(pokemonLines) == 0) {
-					int blockUsed = list_get(listBlocks, 0);
+					int blockUsed = (int)list_get(listBlocks, 0);
 					char* metadataBlocks = formatToMetadataBlocks(listBlocks);
 					char* zeroLength = string_itoa(0);
 
 					//pthread_mutex_lock(&pokemonOpenTad->mArchivo);
-					updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", zeroLength, metadataBlocks, "N");
+					updatePokemonMetadata(catchPokemon->nombre_pokemon, "N", zeroLength, "[]", "N");
 					
 						
 					// Limpio estructuras que ya no uso
 					fclose(fopen(obtenerPathDelNumeroDeBloque(blockUsed), "w"));
+					setear_bloque_libre_en_posicion(bitmap, blockUsed);
 					free(zeroLength);
 					free(metadataBlocks);
 				}
@@ -533,7 +534,7 @@ int operateCatchPokemonFile(t_catch_pokemon* catchPokemon, char* completePath) {
 				game_card_logger_error("No existen las coordenadas para ese pokemon, no se puede completar la operacion.");
 			}
 
-			list_destroy_and_destroy_elements(pokemonLines, freeBlockLine);
+			list_destroy_and_destroy_elements(pokemonLines, (void*)freeBlockLine);
 			pthread_mutex_unlock(&pokemonOpenTad->mArchivo);
 			break;
 		} else {
@@ -564,7 +565,7 @@ pokemon_open_tad* new_pokemon_open_tad() {
 /*
  * 	Evalua si el ultimo caracter de str es chr.
  */
-int lastchar(const char* str, char chr){
+int lastchar(char* str, char chr){
 	if ( ( str[strlen(str)-1]  == chr) ) return 1;
 	return 0;
 }
@@ -585,7 +586,7 @@ int lastchar(const char* str, char chr){
  * 		0... SIEMPRE!;
  */
 
-int split_path(const char* path, char** super_path, char** name){
+int split_path(char* path, char** super_path, char** name){
 	int aux;
 	strcpy(*super_path, path);
 	strcpy(*name, path);
@@ -724,7 +725,7 @@ t_list* readPokemonLines(t_list* blocks) {
 	for (int i = 0; i < list_size(blocks); i++) {
 		char* blockPath = string_new();
         string_append(&blockPath, struct_paths[BLOCKS]);
-        string_append(&blockPath, string_itoa(list_get(blocks, i)));
+        string_append(&blockPath, string_itoa((int)list_get(blocks, i)));
 		string_append(&blockPath, ".bin");
 
 		blockFile = fopen(blockPath, "r");
@@ -743,10 +744,10 @@ t_list* readPokemonLines(t_list* blocks) {
 				blockLine = formatStringToBlockLine(previousLastLine);
 				isBreakFile = 0;
 				previousLastLine = string_new();
-				list_add(retList, blockLine);
+				list_add(retList, (void*)blockLine);
 			} else {
 				blockLine = formatStringToBlockLine(line);
-				list_add(retList, blockLine);
+				list_add(retList, (void*)blockLine);
 			}
 		}
 
@@ -767,14 +768,14 @@ t_list* stringBlocksToList(char* blocks) {
 	// Solo esta usando un bloque
 	if (strlen(blocks) <= 3) {
 		char* blockStrWithoutBraces = string_substring(blocks, 1, 1);
-		list_add(retList, atoi(blockStrWithoutBraces));
+		list_add(retList, (void*)atoi(blockStrWithoutBraces));
 	} // Mas de un bloque siendo usado
 	else {
 		char* blocksStrWithoutBraces = string_substring(blocks, 1, strlen(blocks) - 2);
 		char** blocksWithoutCommaSeparator = string_split(blocksStrWithoutBraces, ",");
 		int i = 0;
 		while(blocksWithoutCommaSeparator[i] != NULL) {
-			list_add(retList, atoi(blocksWithoutCommaSeparator[i]));
+			list_add(retList, (void*)atoi(blocksWithoutCommaSeparator[i]));
 			i++;
 		}
 	}
@@ -797,7 +798,7 @@ blockLine* formatStringToBlockLine(char* blockline) {
 char* formatListToStringLine(t_list* pokemonLines) {
 	char* retChar = string_new();
 	for(int j=0; j<list_size(pokemonLines); j++) {
-		blockLine* newLineBlock = list_get(pokemonLines, j);
+		blockLine* newLineBlock = (blockLine*) list_get(pokemonLines, j);
 		string_append(&retChar, formatToBlockLine(newLineBlock->posX, newLineBlock->posY, newLineBlock->cantidad));
 	}
 	return retChar;
@@ -835,7 +836,7 @@ blockLine* createBlockLine(int intPosX, int intPosY, int intCantidad) {
 void printListOfPokemonReadedLines(t_list* pokemonLines) {
 	game_card_logger_info("Size lista %d:", list_size(pokemonLines));
 	for (int i=0; i<list_size(pokemonLines); i++) {
-		blockLine* newLineBlock = list_get(pokemonLines, i);
+		blockLine* newLineBlock = (blockLine*) list_get(pokemonLines, i);
 		game_card_logger_info("Elemento i %d:", i);
 		game_card_logger_info("Pokemon Line %s:", formatToBlockLine(newLineBlock->posX, newLineBlock->posY, newLineBlock->cantidad));
 	}
@@ -1011,7 +1012,7 @@ void createMetaDataFile(char* metadataBin){
 	FILE* metadata = fopen(metadataBin, "w+b");
 	config_metadata = config_create(metadataBin);
 	config_set_value(config_metadata, "BLOCK_SIZE", "64");
-	config_set_value(config_metadata, "BLOCKS", "4096"); // asi no tengo 5492 bloques :P
+	config_set_value(config_metadata, "BLOCKS", "1024"); // asi no tengo 5492 bloques :P
 	config_set_value(config_metadata, "MAGIC_NUMBER", "TALL_GRASS");
 	config_save(config_metadata);
 	config_destroy(config_metadata);

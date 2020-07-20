@@ -62,9 +62,9 @@ typedef struct pokemon_open_tad {
 pokemon_open_tad* new_pokemon_open_tad();
 
 char* formatToMetadataBlocks(t_list* blocks);
-void updatePokemonMetadata(const char* fullPath, const char* directory, const char* size, const char* blocks, const char* open);
-int createRecursiveDirectory(const char* path);
-int createFile(const char* fullPath);
+void updatePokemonMetadata(char* fullPath, char* directory, char* size, char* blocks, char* open);
+int createRecursiveDirectory(char* path);
+int createFile(char* fullPath);
 void initSemaphore();
 
 void createNewPokemon(t_new_pokemon* newPokemon);
@@ -83,7 +83,7 @@ t_list* requestFreeBlocks(int extraBlocksNeeded);
 int calcualarBloques(int tamanio);
 int cuantosBloquesOcupa(char* value);
 char* crearPathBloque(int bloque, char* montajeBloques);
-void updateOpenFileState(const char* fullPath, const char* open);
+void updateOpenFileState(char* fullPath, char* open);
 
 void gcfsCreateStructs();
 void gcfsFreeBitmaps();
@@ -98,8 +98,8 @@ typedef struct {
 	char* isOpen;
 } pokemonMetadata;
 
-int lastchar(const char* str, char chr);
-int split_path(const char* path, char** super_path, char** name);
+int lastchar(char* str, char chr);
+int split_path(char* path, char** super_path, char** name);
 int _mkpath(char* file_path, mode_t mode);
 char* obtenerPathDelNumeroDeBloque(int numeroDeBloque);
 pokemonMetadata readPokemonMetadata(char* pokemonPath);
