@@ -49,7 +49,7 @@ Para ver informacion de como usarlo, ejecutar con la opcion -h (help) `./deploy.
 
 ### Ejemplo
 
-`/deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy tp-2020-1c-CDev20`
+`sudo ./deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy tp-2020-1c-CDev20`
 
 ### Requerimientos
 
