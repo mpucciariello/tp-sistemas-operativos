@@ -523,7 +523,10 @@ void *receive_msg(int fd, int send_to) {
 					string_append(&pokemon->name, loc_rcv->nombre_pokemon);
 
 					pokemon->pos = list_create();
-					pokemon->pos = loc_rcv->posiciones;
+					for (int i = 0; i < list_size(loc_rcv->posiciones); i++) {
+						t_position* pos_rcv = list_get(loc_rcv->posiciones, i);
+						list_add(pokemon->pos, pos_rcv);
+					}
 
 					add_to_pokemon_to_catch(pokemon);
 					list_add(pokemons_localized, pokemon->name);
