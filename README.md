@@ -65,4 +65,12 @@ repo
       └─── makefile
 ```
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/git/tp-2020-1c-CDev20/shared-common
+### Pasos para el DEPLOY
+
+1) git clone `https://github.com/sisoputnfrba/tp-2020-1c-CDev20.git` 
+2) `cp deploy.sh /home/utnso`
+3) `cd /home/utnso && sudo ./deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy tp-2020-1c-CDev20`
+4) `cd /home/utnso/git/tp-2020-1c-CDev20`
+5) Correr cualquier proceso!!!
+
+JUST IN CASE: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/git/tp-2020-1c-CDev20/shared-common`
