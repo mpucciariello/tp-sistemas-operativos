@@ -322,7 +322,7 @@ int game_boy_console_read(t_dictionary* command_actions, char* args[], int argco
 	if (input == NULL)
 		return 0;
 
-	string_to_upper(input);
+	//string_to_upper(input);
 	int arguments_size = game_boy_get_arguments_size(input);
 
 	char** arguments = game_boy_get_arguments_from_input(input, arguments_size);
