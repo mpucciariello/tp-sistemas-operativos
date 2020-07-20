@@ -115,10 +115,12 @@ do
   echo -e "Building ${i}"
   cd $i
   make
-  sudo mv $PROJECTROOT/${REPONAME}/"common-library.conf" /etc/ld.so.conf.d/
-  sudo ldconfig
   cd $PROJECTROOT
 done
+
+echo -e "\n\n Setting LD_LIBRARY_PATH...\n\n"
+sudo mv $PROJECTROOT/${REPONAME}/"common-library.conf" /etc/ld.so.conf.d/
+sudo ldconfig
 
 echo -e "\n\nBuilding projects...\n\n"
 
