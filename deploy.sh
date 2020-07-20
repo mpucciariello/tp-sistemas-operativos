@@ -115,12 +115,12 @@ do
   echo -e "Building ${i}"
   cd $i
   make
+  echo -e "\n\n Setting LD_LIBRARY_PATH...\n\n"
+  # En caso de haber varias dependencias de librerias se debe sacar esta parte del ciclo y hacerlo al salir del mismo!
+  sudo cp $PROJECTROOT/${REPONAME}/"common-library.conf" /etc/ld.so.conf.d/
+  sudo ldconfig
   cd $PROJECTROOT
 done
-
-echo -e "\n\n Setting LD_LIBRARY_PATH...\n\n"
-sudo mv $PROJECTROOT/${REPONAME}/"common-library.conf" /etc/ld.so.conf.d/
-sudo ldconfig
 
 echo -e "\n\nBuilding projects...\n\n"
 
