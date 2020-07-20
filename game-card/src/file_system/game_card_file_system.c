@@ -64,6 +64,7 @@ int createFile(char* fullPath) {
 	}
 
 	free(completePath);
+	return 0;
 }
 
 void updatePokemonMetadata(char* fullPath, char* directory, char* size, char* blocks, char* open, char* op) {
@@ -535,7 +536,6 @@ int operateCatchPokemonFile(t_catch_pokemon* catchPokemon, char* completePath) {
 					free(metadataBlocks);
 				}
 				res = 1;
-				char* metadataBlocks = formatToMetadataBlocks(listBlocks);
 				game_card_logger_info("Operacion CATCH_POKEMON %s en la posicion (%d, %d) terminada correctamente", catchPokemon->nombre_pokemon, catchPokemon->pos_x, catchPokemon->pos_y);
 
 				free(stringToWrite);
@@ -571,19 +571,15 @@ pokemon_open_tad* new_pokemon_open_tad() {
     return pokemonOpenTad;
 }
 
-/***
- * Game card handler
- * /
-
-/*
- * 	Evalua si el ultimo caracter de str es chr.
+/**
+ * Evalua si el ultimo caracter de str es chr.
  */
 int lastchar(char* str, char chr){
 	if ( ( str[strlen(str)-1]  == chr) ) return 1;
 	return 0;
 }
 
-/*
+/**
  * 	DESC
  * 		Divide el path con formato de [RUTA] en: [RUTA_SUPERIOR] y [NOMBRE].
  * 		Ejemplo:
@@ -707,8 +703,7 @@ void writeBlocks(char* value, t_list* bloques) {
 
         char* take = string_substring(valorAGuardar, 0, limiteSuperior);
 
-        int write = fwrite(take,1,limiteSuperior,bloque);
-         limite -= string_length(take);
+        limite -= string_length(take);
 
         if(limite > 0) {
             valorAGuardar = string_substring_from(valorAGuardar, limiteSuperior);
@@ -725,7 +720,7 @@ void writeBlocks(char* value, t_list* bloques) {
 // Dado una lista de bloques t_list 1,2,3 se leen los contenidos de dichos bloques
 // y se retorna una lista con los contenidos leidos
 // t_list(int) => t_list (blockLine)
-// is_break determina si el contenido fue partido en otro bloque (si es que al grabar no entro todo el contenido y el \n esta en el bloque siguiente)
+// is_break determina si el contenido fue partido en otro bloque (si es que al grabar no entro el contenido y el \n esta en el bloque siguiente)
 t_list* readPokemonLines(t_list* blocks) {
 	t_list* retList = list_create();
 	size_t len = 0;
