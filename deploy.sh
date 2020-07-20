@@ -27,7 +27,6 @@ ${bold}DESCRIPTION${normal}
 
     ${bold}-p | --project${normal}      Adds a project to build from the repository.
 
-
 ${bold}COMPATIBILITY${normal}
     The project must have the following scructure:
       project1/
@@ -38,12 +37,9 @@ ${bold}COMPATIBILITY${normal}
        ╰─ makefile
 
 ${bold}EXAMPLE${normal}
-      ${bold}deploy.sh${normal} ${bold}-l${normal}=sisoputnfrba/ansisop-parser ${bold}-d${normal}=sockets ${bold}-p${normal}=consola ${bold}-p${normal}=kernel ${bold}-p${normal}=memoria ${underline}tp-2017-1C-exampleRepo${nounderline}
-
-  "
+      ${bold}deploy.sh${normal} ${bold}-l${normal}=sisoputnfrba/ansisop-parser ${bold}-d${normal}=sockets ${bold}-p${normal}=consola ${bold}-p${normal}=kernel ${bold}-p${normal}=memoria ${underline}tp-2017-1C-exampleRepo${nounderline}"
   exit
 fi
-
 
 length=$(($#-1))
 OPTIONS=${@:1:$length}
@@ -145,7 +141,5 @@ done
 echo -e "\n\n Creating team 2...\n\n"
 cp -R $PROJECTROOT/${REPONAME}/"team" $PROJECTROOT/${REPONAME}/"team2"
 cp $PROJECTROOT/${REPONAME}/"team"/"team2"/"team.config" $PROJECTROOT/${REPONAME}/"team2"
-
-echo -e 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/git/tp-2020-1c-CDev20/shared-common'
 
 echo -e "\n\nDeploy done!\n\n"
