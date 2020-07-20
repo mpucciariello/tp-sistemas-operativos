@@ -158,12 +158,8 @@ void *recv_game_card(int fd, int respond_to) {
 		case NEW_POKEMON: {
 			game_card_logger_info("NEW received");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(client_fd, protocol);
+			game_card_logger_info("Operacion NEW_POKEMON %s, Coordenada: (%d, %d, %d)", new_receive->nombre_pokemon, new_receive->pos_x, new_receive->pos_y, new_receive->cantidad);
 			game_card_logger_info("ID Correlacional: %d", new_receive->id_correlacional);
-			game_card_logger_info("Cantidad: %d", new_receive->cantidad);
-			game_card_logger_info("Nombre Pokemon: %s", new_receive->nombre_pokemon);
-			game_card_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
-			game_card_logger_info("Posicion X: %d", new_receive->pos_x);
-			game_card_logger_info("Posicion Y: %d", new_receive->pos_y);
 			usleep(100000);
 
 
@@ -197,9 +193,8 @@ void *recv_game_card(int fd, int respond_to) {
 		case GET_POKEMON: {
 			game_card_logger_info("GET received");
 			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd, protocol);
+			game_card_logger_info("Operacion GET_POKEMON %s", get_rcv->nombre_pokemon);
 			game_card_logger_info("ID correlacional: %d", get_rcv->id_correlacional);
-			game_card_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
-			game_card_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
 			usleep(50000);
 
 			// To broker
@@ -233,11 +228,8 @@ void *recv_game_card(int fd, int respond_to) {
 		case CATCH_POKEMON: {
 			game_card_logger_info("CATCH received");
 			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(client_fd, protocol);
+			game_card_logger_info("Operacion CATCH_POKEMON %s, Coordenada: (%d, %d)", catch_rcv->nombre_pokemon, catch_rcv->pos_x, catch_rcv->pos_y);
 			game_card_logger_info("ID correlacional: %d", catch_rcv->id_correlacional);
-			game_card_logger_info("Nombre Pokemon: %s", catch_rcv->nombre_pokemon);
-			game_card_logger_info("Largo nombre: %d",catch_rcv->tamanio_nombre);
-			game_card_logger_info("Posicion X: %d", catch_rcv->pos_x);
-			game_card_logger_info("Posicion Y: %d", catch_rcv->pos_y);
 			usleep(50000);
 
 
