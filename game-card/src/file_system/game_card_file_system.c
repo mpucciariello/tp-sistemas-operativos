@@ -64,6 +64,7 @@ int createFile(char* fullPath) {
 	}
 
 	free(completePath);
+	return 0;
 }
 
 void updatePokemonMetadata(char* fullPath, char* directory, char* size, char* blocks, char* open, char* op) {
@@ -535,7 +536,7 @@ int operateCatchPokemonFile(t_catch_pokemon* catchPokemon, char* completePath) {
 					free(metadataBlocks);
 				}
 				res = 1;
-				char* metadataBlocks = formatToMetadataBlocks(listBlocks);
+				//char* metadataBlocks = formatToMetadataBlocks(listBlocks);
 				game_card_logger_info("Operacion CATCH_POKEMON %s en la posicion (%d, %d) terminada correctamente", catchPokemon->nombre_pokemon, catchPokemon->pos_x, catchPokemon->pos_y);
 
 				free(stringToWrite);
@@ -707,8 +708,8 @@ void writeBlocks(char* value, t_list* bloques) {
 
         char* take = string_substring(valorAGuardar, 0, limiteSuperior);
 
-        int write = fwrite(take,1,limiteSuperior,bloque);
-         limite -= string_length(take);
+        fwrite(take,1,limiteSuperior,bloque);
+        limite -= string_length(take);
 
         if(limite > 0) {
             valorAGuardar = string_substring_from(valorAGuardar, limiteSuperior);
