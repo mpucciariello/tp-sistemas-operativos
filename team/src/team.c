@@ -108,12 +108,12 @@ void team_planner_remove_pokemon_from_catch(t_pokemon* pokemon) {
 }
 
 void send_message_catch(t_catch_pokemon* catch_send,t_entrenador_pokemon* entrenador) {
+	entrenador->status = false;
 	t_protocol catch_protocol = CATCH_POKEMON;
 	entrenador->state = BLOCK;
 
 	list_add(block_queue, entrenador);
 	team_logger_info("El entrenador %d pasó a la cola de BLOCK luego de enviar un mensaje CATCH.", entrenador->id);
-	team_planner_change_block_status_by_id_corr(false, catch_send->id_correlacional);
 
 	int i = send_message(catch_send, catch_protocol, NULL);
 	if (i == 0) {
@@ -162,7 +162,7 @@ bool tengo_en_pokemon_to_catch(char* tipo) {
 
 void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 	t_pokemon* pokemon = team_planner_pokemon_create(pokemon_name);
-	team_planner_change_block_status_by_trainer(true, entrenador);
+	entrenador->status = true;
 	list_add(entrenador->pokemons, pokemon);
 	team_logger_info("El entrenador %d atrapó un %s en la posición (%d, %d)!!",	entrenador->id, pokemon_name, entrenador->pokemon_a_atrapar->position->pos_x, entrenador->pokemon_a_atrapar->position->pos_y);
 	quitar_de_pokemones_pendientes(pokemon_name);
@@ -476,15 +476,16 @@ void *receive_msg(int fd, int send_to) {
 				t_catch_pokemon* catch_message = filter_msg_catch_by_id_caught(caught_rcv->id_correlacional);
 				t_entrenador_pokemon* entrenador = filter_trainer_by_id_caught(caught_rcv->id_correlacional);
 
-				quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
+				if(entrenador != NULL){
+					quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
 
-				if (caught_rcv->result == 1) {
-					team_planner_change_block_status_by_trainer(false, entrenador);
-					atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
-				} else {
-					team_planner_change_block_status_by_trainer(true, entrenador);
-					team_logger_info("El entrenador %d NO pudo atrapar un %s en la posición (%d, %d).", entrenador->id, catch_message->nombre_pokemon, catch_message->pos_x, catch_message->pos_y);
-					sem_post(&sem_entrenadores_disponibles);
+					if (caught_rcv->result == 1) {
+						atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
+					} else {
+						entrenador->status = true;
+						team_logger_info("El entrenador %d NO pudo atrapar un %s en la posición (%d, %d).", entrenador->id, catch_message->nombre_pokemon, catch_message->pos_x, catch_message->pos_y);
+						sem_post(&sem_entrenadores_disponibles);
+					}
 				}
 			}
 			break;

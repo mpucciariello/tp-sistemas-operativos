@@ -225,19 +225,6 @@ void team_planner_finish_trainner(t_entrenador_pokemon* entrenador) {
 	list_add(exit_queue, entrenador);
 }
 
-void team_planner_change_block_status_by_id_corr(bool status, uint32_t id_corr) {
-	
-	t_entrenador_pokemon* entrenador = team_planner_find_trainer_by_id_corr(id_corr);
-	if (entrenador != NULL) {
-		entrenador->state = BLOCK;
-		entrenador->status = status;
-	}
-}
-
-void team_planner_change_block_status_by_trainer(bool status, t_entrenador_pokemon* entrenador) {
-	entrenador->status = status;
-}
-
 t_entrenador_pokemon* team_planner_find_trainer_by_id_corr(uint32_t id) {
 	for (int j = 0; j < list_size(block_queue); j++) {
 		t_entrenador_pokemon* entrenador = list_get(block_queue, j);
@@ -530,7 +517,7 @@ void team_planner_solve_deadlock() {
 		entrenador_bloqueado->position->pos_y = entrenador_bloqueado->pokemon_a_atrapar->position->pos_y;
 
 		list_add(block_queue, entrenador_bloqueado);
-		team_planner_change_block_status_by_trainer(0, entrenador_bloqueado);
+		entrenador_bloqueado->status = false;
 
 		context_switch_qty++;
 
@@ -711,21 +698,15 @@ void team_planner_print_fullfill_target() {
 	}
 	int total_cpu = (int) list_fold(trainners, 0, (void*) add_burst_time);
 	team_logger_info("Cantidad de ciclos de CPU totales: %d.", total_cpu);
-	printf("Cantidad de ciclos de CPU totales: %d.", total_cpu);
 	team_logger_info("Cantidad de cambios de contexto realizados: %d.", context_switch_qty);
-	printf("Cantidad de cambios de contexto realizados: %d.", context_switch_qty);
 	team_logger_info("Cantidad de ciclos de CPU realizados por entrenador:");
-	printf("Cantidad de ciclos de CPU realizados por entrenador:");
-
 	void _list_burst_trainner(t_entrenador_pokemon *trainner) {
 		team_logger_info("Entrenador %d -> Ciclos de CPU realizados: %d", trainner->id, trainner->total_burst_time);
-		printf("Entrenador %d -> Ciclos de CPU realizados: %d", trainner->id, trainner->total_burst_time);
 	}
 	list_iterate(trainners, (void*) _list_burst_trainner);
 
 	list_destroy(trainners);
 	team_logger_info("Deadlocks producidos: %d  y resueltos: %d.", deadlocks_detected, deadlocks_resolved);
-	printf("Deadlocks producidos: %d  y resueltos: %d.", deadlocks_detected, deadlocks_resolved);
 }
 
 void team_planner_init() {
