@@ -36,50 +36,55 @@ void team_planner_algoritmo_cercania() {
 
 		t_list* entrenadores_disponibles = team_planner_create_ready_queue();
 
-		for (int i = 0; i < list_size(entrenadores_disponibles); i++) {
-			t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
-			for (int j = 0; j < list_size(pokemon_to_catch); j++) {
-				pthread_mutex_lock(&cola_pokemons_a_atrapar);
-				t_pokemon_received* pokemon_con_posiciones_aux = list_get(pokemon_to_catch, j);
-				pthread_mutex_unlock(&cola_pokemons_a_atrapar);
-				for (int k = 0; k < list_size(pokemon_con_posiciones_aux->pos); k++) {
-					t_position* posicion_aux = list_get(pokemon_con_posiciones_aux->pos, k);
+		if(!list_is_empty(entrenadores_disponibles)){
+			for (int i = 0; i < list_size(entrenadores_disponibles); i++) {
+				t_entrenador_pokemon* entrenador_aux = list_get(entrenadores_disponibles, i);
+				for (int j = 0; j < list_size(pokemon_to_catch); j++) {
+					pthread_mutex_lock(&cola_pokemons_a_atrapar);
+					t_pokemon_received* pokemon_con_posiciones_aux = list_get(pokemon_to_catch, j);
+					pthread_mutex_unlock(&cola_pokemons_a_atrapar);
+					for (int k = 0; k < list_size(pokemon_con_posiciones_aux->pos); k++) {
+						t_position* posicion_aux = list_get(pokemon_con_posiciones_aux->pos, k);
 
-					int aux_x = posicion_aux->pos_x - entrenador_aux->position->pos_x;
-					int aux_y = posicion_aux->pos_y - entrenador_aux->position->pos_y;
+						int aux_x = posicion_aux->pos_x - entrenador_aux->position->pos_x;
+						int aux_y = posicion_aux->pos_y - entrenador_aux->position->pos_y;
 
-					int closest_sum = fabs(aux_x) + fabs(aux_y);
+						int closest_sum = fabs(aux_x) + fabs(aux_y);
 
-					if (c == -1) {
-						min_steps = closest_sum;
-						pokemon = malloc(sizeof(t_pokemon));
-						pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
-						pokemon->position = malloc(sizeof(t_position));
-						pokemon->position->pos_x = posicion_aux->pos_x;
-						pokemon->position->pos_y = posicion_aux->pos_y;
-						entrenador = entrenador_aux;
-						c = 0;
-					}
+						if (c == -1) {
+							min_steps = closest_sum;
+							pokemon = malloc(sizeof(t_pokemon));
+							pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
+							pokemon->position = malloc(sizeof(t_position));
+							pokemon->position->pos_x = posicion_aux->pos_x;
+							pokemon->position->pos_y = posicion_aux->pos_y;
+							entrenador = entrenador_aux;
+							c = 0;
+						}
 
-					if (closest_sum < min_steps) {
-						min_steps = closest_sum;
-						pokemon = malloc(sizeof(t_pokemon));
-						pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
-						pokemon->position = malloc(sizeof(t_position));
-						pokemon->position->pos_x = posicion_aux->pos_x;
-						pokemon->position->pos_y = posicion_aux->pos_y;
-						entrenador = entrenador_aux;
+						if (closest_sum < min_steps) {
+							min_steps = closest_sum;
+							pokemon = malloc(sizeof(t_pokemon));
+							pokemon->name = string_duplicate(pokemon_con_posiciones_aux->name);
+							pokemon->position = malloc(sizeof(t_position));
+							pokemon->position->pos_x = posicion_aux->pos_x;
+							pokemon->position->pos_y = posicion_aux->pos_y;
+							entrenador = entrenador_aux;
+						}
 					}
 				}
 			}
 		}
-		entrenador->current_burst_time = 0;
-		entrenador->pokemon_a_atrapar = pokemon;
 
-		team_planner_add_to_ready_queue(entrenador);
-		team_planner_remove_pokemon_from_catch(pokemon);
-		list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
-		sem_post(&sem_trainers_in_ready_queue);
+		if(entrenador != NULL){
+			entrenador->current_burst_time = 0;
+			entrenador->pokemon_a_atrapar = pokemon;
+
+			team_planner_add_to_ready_queue(entrenador);
+			team_planner_remove_pokemon_from_catch(pokemon);
+			list_add(pokemones_pendientes, entrenador->pokemon_a_atrapar->name);
+			sem_post(&sem_trainers_in_ready_queue);
+		}
 	}
 }
 
@@ -799,7 +804,6 @@ void team_planner_destroy() {
 	sem_destroy(&sem_trainers_in_ready_queue);
 	sem_destroy(&sem_pokemons_to_get);
 	sem_destroy(&sem_planificador);
-	sem_destroy(&appeared_recibido);
 	pthread_mutex_destroy(&cola_pokemons_a_atrapar);
 	planner_destroy_quees();
 }
