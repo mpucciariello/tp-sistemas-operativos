@@ -25,6 +25,12 @@ typedef struct {
 } t_position;
 
 typedef struct {
+	uint32_t x;
+	uint32_t y;
+	uint32_t cant;
+} t_position_aux;
+
+typedef struct {
 
 } t_empty;
 

@@ -28,9 +28,9 @@
  * Bloques Handler
  * */
 typedef struct {
-	uint32_t cantidad;
 	uint32_t posX;
 	uint32_t posY;
+	uint32_t cantidad;
 } blockLine;
 
 int calcualarBloques(int tamanio);
