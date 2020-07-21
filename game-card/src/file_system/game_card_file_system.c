@@ -572,19 +572,15 @@ pokemon_open_tad* new_pokemon_open_tad() {
     return pokemonOpenTad;
 }
 
-/***
- * Game card handler
- * /
-
-/*
- * 	Evalua si el ultimo caracter de str es chr.
+/**
+ * Evalua si el ultimo caracter de str es chr.
  */
 int lastchar(char* str, char chr){
 	if ( ( str[strlen(str)-1]  == chr) ) return 1;
 	return 0;
 }
 
-/*
+/**
  * 	DESC
  * 		Divide el path con formato de [RUTA] en: [RUTA_SUPERIOR] y [NOMBRE].
  * 		Ejemplo:
@@ -726,7 +722,7 @@ void writeBlocks(char* value, t_list* bloques) {
 // Dado una lista de bloques t_list 1,2,3 se leen los contenidos de dichos bloques
 // y se retorna una lista con los contenidos leidos
 // t_list(int) => t_list (blockLine)
-// is_break determina si el contenido fue partido en otro bloque (si es que al grabar no entro todo el contenido y el \n esta en el bloque siguiente)
+// is_break determina si el contenido fue partido en otro bloque (si es que al grabar no entro el contenido y el \n esta en el bloque siguiente)
 t_list* readPokemonLines(t_list* blocks) {
 	t_list* retList = list_create();
 	size_t len = 0;

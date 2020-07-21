@@ -71,7 +71,7 @@ repo
 2) `cd tp-2020-1c-CDev20` 
 3) `cp deploy.sh /home/utnso`
 3) `cd /home/utnso && sudo ./deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy tp-2020-1c-CDev20`
-4) `cd /home/utnso/git/tp-2020-1c-CDev20`
-5) Correr cualquier proceso!!!
+4) `cd /home/utnso/git/tp-2020-1c-CDev20/el_proceso`
+5) Correr ./el_proceso !!!
 
 JUST IN CASE: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/git/tp-2020-1c-CDev20/shared-common`
