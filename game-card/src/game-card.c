@@ -297,10 +297,23 @@ void process_get_and_send_localized(void* arg) {
 	loc_snd->id_correlacional = get_rcv->id_correlacional;
 	loc_snd->nombre_pokemon = get_rcv->nombre_pokemon;
 	loc_snd->tamanio_nombre = strlen(loc_snd->nombre_pokemon) + 1;
-	loc_snd->cant_elem = list_size(response);
-	loc_snd->posiciones = response;
 
-	game_card_logger_info("Localized to BROKER %d", loc_snd->cant_elem);
+	t_list* positions_snd = list_create();
+
+	for (int i=0; i< list_size(response); ++i) {
+		t_position_aux* pos_aux = list_get(response, i);
+		for (int j=0; j < pos_aux->cant; ++j) {
+			t_position* pos = malloc(sizeof(t_position));
+			pos->pos_x = pos_aux->x;
+			pos->pos_y = pos_aux->y;
+
+			list_add(positions_snd, pos);
+		}
+	}
+
+	loc_snd->cant_elem = list_size(positions_snd);
+	loc_snd->posiciones = positions_snd;
+
 	t_protocol localized_protocol = LOCALIZED_POKEMON;
 
 	int client_fd = socket_connect_to_server(game_card_config->ip_broker,
