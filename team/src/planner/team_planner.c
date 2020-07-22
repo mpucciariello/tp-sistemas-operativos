@@ -7,8 +7,8 @@ int deadlocks_detected = 0, deadlocks_resolved = 0, context_switch_qty = 0;
 
 void team_planner_run_planification() {
 	while (true) {
-		sem_wait(&sem_planificador);
 		sem_wait(&sem_trainers_in_ready_queue);
+		sem_wait(&sem_planificador);
 
 		t_entrenador_pokemon* entrenador = team_planner_set_algorithm();
 
@@ -25,8 +25,8 @@ void team_planner_run_planification() {
 
 void team_planner_algoritmo_cercania() {
 	while (true) {
-		sem_wait(&sem_entrenadores_disponibles);
 		sem_wait(&sem_message_on_queue);
+		sem_wait(&sem_entrenadores_disponibles);
 
 		t_pokemon* pokemon;
 		t_entrenador_pokemon* entrenador = malloc(sizeof(t_entrenador_pokemon));
@@ -247,8 +247,6 @@ t_entrenador_pokemon* team_planner_find_trainer_by_id_corr(uint32_t id) {
 void team_planner_load_entrenadores() {
 	int i = 0;
 
-	total_targets_pokemons = list_create();
-	got_pokemons = list_create();
 	bool next_pokemon_null = false;
 	while (team_config->posiciones_entrenadores[i] != NULL) {
 		t_position* posicion = team_planner_extract_position(team_config->posiciones_entrenadores[i]);
@@ -317,6 +315,8 @@ void planner_init_quees() {
 	pokemons_localized = list_create();
 	get_id_corr = list_create();
 	exec_queue = list_create();
+	total_targets_pokemons = list_create();
+	got_pokemons = list_create();
 }
 
 int team_planner_get_least_estimate_index() {
@@ -360,6 +360,9 @@ float team_planner_calculate_exponential_mean(t_entrenador_pokemon* entrenador) 
 t_entrenador_pokemon* team_planner_exec_trainer(t_entrenador_pokemon* entrenador) {
 	entrenador->current_burst_time = 0;
 	entrenador->state = EXEC;
+	if(entrenador->se_movio){
+		entrenador->se_movio = false;
+	}
 
 	return entrenador;
 }
@@ -464,9 +467,9 @@ void team_planner_solve_deadlock() {
 	int a = 0;
 	int quantum = 0;
 
-	t_pokemon* pokemon_de_entrenador_bloqueado = malloc(sizeof(t_pokemon));
-	t_pokemon* pokemon_de_entrenador_bloqueante = malloc(sizeof(t_pokemon));
-	t_entrenador_pokemon* entrenador_bloqueado = malloc(sizeof(t_entrenador_pokemon));
+	t_pokemon* pokemon_de_entrenador_bloqueado;
+	t_pokemon* pokemon_de_entrenador_bloqueante;
+	t_entrenador_pokemon* entrenador_bloqueado;
 
 	while (list_size(block_queue) > 0) {
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
@@ -557,9 +560,6 @@ void team_planner_solve_deadlock() {
 	if (team_planner_all_finished()) {
 		team_logger_info("Finaliza el algoritmo de detección de interbloqueos. El TEAM se encuentra en condiciones de FINALIZAR!");
 		team_planner_print_fullfill_target();
-		free(pokemon_de_entrenador_bloqueado);
-		free(pokemon_de_entrenador_bloqueante);
-		free(entrenador_bloqueado);
 		team_planner_exit();
 		socket_close_conection(team_socket);
 		exit(0);
@@ -756,7 +756,7 @@ void team_planner_destroy_entrenador(t_entrenador_pokemon* entrenador) {
 			pthread_mutex_destroy(&entrenador->sem_move_trainers);
 		}
 
-		if (list_is_empty(entrenador->list_id_catch)) {
+		if (!list_is_empty(entrenador->list_id_catch)) {
 			list_destroy(entrenador->list_id_catch);
 		}
 	}
@@ -766,7 +766,6 @@ void planner_destroy_quees() {
 
 	list_destroy(message_catch_sended);
 	list_destroy(pokemones_pendientes);
-	list_destroy(real_targets_pokemons);
 	list_destroy(lista_auxiliar);
 	list_destroy(get_id_corr);
 	list_destroy(pokemons_localized);
@@ -805,5 +804,6 @@ void team_planner_destroy() {
 	sem_destroy(&sem_pokemons_to_get);
 	sem_destroy(&sem_planificador);
 	pthread_mutex_destroy(&cola_pokemons_a_atrapar);
+	pthread_mutex_destroy(&cola_exec);
 	planner_destroy_quees();
 }

@@ -105,24 +105,28 @@ void team_planner_remove_pokemon_from_catch(t_pokemon* pokemon) {
 }
 
 void send_message_catch(t_catch_pokemon* catch_send,t_entrenador_pokemon* entrenador) {
-	entrenador->status = false;
-	t_protocol catch_protocol = CATCH_POKEMON;
-	entrenador->state = BLOCK;
+	if(entrenador != NULL){
+		entrenador->status = false;
+		t_protocol catch_protocol = CATCH_POKEMON;
+		entrenador->state = BLOCK;
 
-	list_add(block_queue, entrenador);
-	team_logger_info("El entrenador %d pasó a la cola de BLOCK luego de enviar un mensaje CATCH.", entrenador->id);
+		list_add(block_queue, entrenador);
+		team_logger_info("El entrenador %d pasó a la cola de BLOCK luego de enviar un mensaje CATCH.", entrenador->id);
 
-	int i = send_message(catch_send, catch_protocol, NULL);
-	if (i == 0) {
-		list_add(message_catch_sended, catch_send);
-		list_add(entrenador->list_id_catch, (void*) catch_send->id_correlacional);
-	} else {
-		pthread_mutex_lock(&cola_exec);
-		list_remove(exec_queue, 0);
-		pthread_mutex_unlock(&cola_exec);
-		atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
+		int i = send_message(catch_send, catch_protocol, NULL);
+		if (i == 0) {
+			list_add(message_catch_sended, catch_send);
+			list_add(entrenador->list_id_catch, (void*) catch_send->id_correlacional);
+		} else {
+			pthread_mutex_lock(&cola_exec);
+			list_remove(exec_queue, 0);
+			pthread_mutex_unlock(&cola_exec);
+			if(catch_send->nombre_pokemon != NULL){
+				atrapar_pokemon(entrenador, catch_send->nombre_pokemon);
+			}
+		}
+		usleep(500000);
 	}
-	usleep(500000);
 }
 
 bool todavia_quedan_pokemones_restantes(char* tipo) {
@@ -267,7 +271,9 @@ void team_planner_check_RR_burst(t_entrenador_pokemon* entrenador) {
 		pthread_mutex_lock(&cola_exec);
 		list_remove(exec_queue, 0);
 		pthread_mutex_unlock(&cola_exec);
+		usleep(500);
 		sem_post(&sem_trainers_in_ready_queue);
+		usleep(500);
 		sem_post(&sem_planificador);
 		team_logger_info("El entrenador %d paso a la cola de READY ya que terminó su QUANTUM.", entrenador->id);
 		pthread_mutex_lock(&entrenador->sem_move_trainers);
@@ -284,7 +290,9 @@ void team_planner_check_SJF_CD_time(t_entrenador_pokemon* entrenador) {
 			list_remove(exec_queue, 0);
 			pthread_mutex_unlock(&cola_exec);
 			team_planner_add_to_ready_queue(entrenador);
+			usleep(500);
 			sem_post(&sem_trainers_in_ready_queue);
+			usleep(500);
 			sem_post(&sem_planificador);
 			team_logger_info("El entrenador %d pasó a la cola de READY ya que será DESALOJADO.", entrenador->id);
 			pthread_mutex_lock(&entrenador->sem_move_trainers);
@@ -318,8 +326,8 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 			entrenador->position->pos_x = entrenador->pokemon_a_atrapar->position->pos_x;
 			entrenador->position->pos_y = entrenador->pokemon_a_atrapar->position->pos_y;
 
-			team_planner_new_cpu_cicle(entrenador);
 			entrenador->se_movio = true;
+			team_planner_new_cpu_cicle(entrenador);
 		}
 
 		t_catch_pokemon* catch_send = malloc(sizeof(t_catch_pokemon));
@@ -334,7 +342,9 @@ void move_trainers_and_catch_pokemon(t_entrenador_pokemon* entrenador) {
 		entrenador->se_movio = false;
 		entrenador->previus_burst = steps + 1;
 		if(!list_is_empty(exec_queue)){
+			pthread_mutex_lock(&cola_exec);
 			list_remove(exec_queue, 0);
+			pthread_mutex_unlock(&cola_exec);
 		}
 		sem_post(&sem_planificador);
 	}
@@ -474,7 +484,9 @@ void *receive_msg(int fd, int send_to) {
 					quitar_de_pokemones_pendientes(catch_message->nombre_pokemon);
 
 					if (caught_rcv->result == 1) {
-						atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
+						if(catch_message!= NULL){
+							atrapar_pokemon(entrenador, catch_message->nombre_pokemon);
+						}
 					} else {
 						entrenador->status = true;
 						team_logger_info("El entrenador %d NO pudo atrapar un %s en la posición (%d, %d).", entrenador->id, catch_message->nombre_pokemon, catch_message->pos_x, catch_message->pos_y);
