@@ -630,11 +630,11 @@ void quitar_de_real_target(char* pokemon) {
 void add_to_pokemon_to_catch(t_pokemon_received* pokemon) {
 	pthread_mutex_lock(&cola_pokemons_a_atrapar);
 	list_add(pokemon_to_catch, pokemon);
-	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 
 	if (pokemon_not_pendant(pokemon->name)) {
 		sem_post(&sem_message_on_queue);
 	}
+	pthread_mutex_unlock(&cola_pokemons_a_atrapar);
 }
 
 bool trainer_is_in_deadlock_caught(t_entrenador_pokemon* entrenador) {
