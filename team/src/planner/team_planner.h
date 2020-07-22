@@ -59,8 +59,7 @@ sem_t sem_entrenadores_disponibles;
 sem_t sem_message_on_queue;
 sem_t sem_trainers_in_ready_queue;
 sem_t sem_pokemons_to_get;
-sem_t sem_planificador; 
-sem_t appeared_recibido;
+sem_t sem_planificador;
 
 pthread_t planificator;
 pthread_t algoritmo_cercania_entrenadores;
@@ -83,20 +82,16 @@ t_list* pokemons_localized;
 t_list* real_targets_pokemons;
 t_list* get_id_corr;
 
-bool appeared_recibidos;
-
 void team_planner_init();
 void team_planner_destroy();
 void team_planner_run_planification();
 void team_planner_algoritmo_cercania();
 void move_trainers_and_catch_pokemon();
-void team_planner_change_block_status_by_id_corr(bool, uint32_t);
 void team_planner_finish_trainner(t_entrenador_pokemon*);
 void team_planner_delete_from_bloqued_queue(t_entrenador_pokemon*, int);
 void team_planner_new_cpu_cicle(t_entrenador_pokemon*);
 void team_planner_add_to_ready_queue(t_entrenador_pokemon*);
 void team_planner_delete_from_new_queue(t_entrenador_pokemon*);
-void team_planner_change_block_status_by_trainer(bool, t_entrenador_pokemon*);
 void team_planner_entrenadores_listos();
 void team_planner_print_fullfill_target();
 void team_planner_solve_deadlock();
