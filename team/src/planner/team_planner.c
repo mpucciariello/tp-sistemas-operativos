@@ -499,6 +499,8 @@ void team_planner_solve_deadlock() {
 
 		int steps = fabs(aux_x) + fabs(aux_y);
 
+		context_switch_qty++;
+
 		for (int i = 0; i < steps; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
 			team_planner_new_cpu_cicle(entrenador_bloqueado);
@@ -527,13 +529,11 @@ void team_planner_solve_deadlock() {
 		list_add(block_queue, entrenador_bloqueado);
 		entrenador_bloqueado->status = false;
 
-		context_switch_qty++;
-
 		pokemon_de_entrenador_bloqueado = team_planner_ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
 
 		for (int i = 0; i < 5; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
-			team_planner_new_cpu_cicle(entrenador_bloqueado);
+			entrenador_bloqueado->total_burst_time++;
 		}
 
 		team_logger_info("Se añadió al entrenador %d a la cola de bloqueados luego de ejecutar un intercambio.", entrenador_bloqueado->id);
