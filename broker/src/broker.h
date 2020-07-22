@@ -99,6 +99,7 @@ int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *
 void aplicar_algoritmo_reemplazo_LRU();
 void aplicar_algoritmo_reemplazo_FIFO();
 void estado_memoria(t_list *list);
+void consolidate();
 _Bool is_buddy();
 void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n);
 int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_correlacional);

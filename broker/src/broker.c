@@ -36,11 +36,11 @@ static inline unsigned next_power_of_2(int size) {
 
 void signal_handler(int signum) {
 	if (signum == SIGUSR1) {
-		broker_logger_info("Signal SIGUSR1 received. Dumping memory contents into memdump.txt");
-		if(!is_buddy()){
+		broker_logger_info(
+				"Signal SIGUSR1 received. Dumping memory contents into memdump.txt");
+		if (!is_buddy()) {
 			dump_partition();
-		}
-		else{
+		} else {
 			dump();
 		}
 	}
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	pointer = 0;
-	id =  1;
+	id = 1;
 	broker_server_init();
 	broker_exit();
 
@@ -130,8 +130,8 @@ unsigned choose_better_child(struct buddy *self, int index, uint32_t size) {
 int buddy_alloc(struct buddy *self, uint32_t size) {
 	if (self == NULL || self->size < size) {
 		/* broker_logger_error(
-				"Data couldn't be stored. Reason: Insufficient memory");
-		*/
+		 "Data couldn't be stored. Reason: Insufficient memory");
+		 */
 		return -1;
 	}
 	size = next_power_of_2(size);
@@ -139,9 +139,9 @@ int buddy_alloc(struct buddy *self, uint32_t size) {
 	uint32_t index = 0;
 	while (self->longest[index] < size) {
 		/* broker_logger_error(
-				"Data couldn't be stored. Reason: External fragmentation");
-		broker_logger_info("Freeing memory...");
-		*/
+		 "Data couldn't be stored. Reason: External fragmentation");
+		 broker_logger_info("Freeing memory...");
+		 */
 		purge_msg();
 	}
 
@@ -217,14 +217,14 @@ int broker_load() {
 	broker_print_config();
 
 	// Create mutex for pointer
-	if(!is_buddy()){
-			t_nodo_memory *nodo_memory = malloc(sizeof(t_nodo_memory));
-			nodo_memory->pointer = 0;
-			nodo_memory->libre = true;
-			nodo_memory->size = broker_config->tamano_memoria;
-			nodo_memory->timestamp = (unsigned) time (NULL);
-			list_add(list_memory,nodo_memory);
-			pointer = 0;
+	if (!is_buddy()) {
+		t_nodo_memory *nodo_memory = malloc(sizeof(t_nodo_memory));
+		nodo_memory->pointer = 0;
+		nodo_memory->libre = true;
+		nodo_memory->size = broker_config->tamano_memoria;
+		nodo_memory->timestamp = (unsigned) time(NULL);
+		list_add(list_memory, nodo_memory);
+		pointer = 0;
 	}
 
 	if (pthread_mutex_init(&mpointer, NULL) != 0) {
@@ -301,9 +301,9 @@ void broker_server_init() {
 				(struct sockaddr *) &client_info, &addrlen)) != -1) {
 
 			/* broker_logger_info(
-					"Creando un hilo para atender una conexión en el socket %d",
-					accepted_fd);
-					*/
+			 "Creando un hilo para atender una conexión en el socket %d",
+			 accepted_fd);
+			 */
 			pthread_create(&tid, NULL, (void*) handle_connection,
 					(void*) &accepted_fd);
 			pthread_detach(tid);
@@ -345,7 +345,7 @@ static void *handle_connection(void *arg) {
 					"Received ACK for msg with ID %d Protocol %s from process %s",
 					ack_rcv->id_corr_msg, get_protocol_name(ack_rcv->queue),
 					ack_rcv->sender_name);
-			if(ack_rcv->id_corr_msg == 0){
+			if (ack_rcv->id_corr_msg == 0) {
 				break;
 			}
 			_Bool node_matches_received_queue(t_subscribe_message_node* node) {
@@ -362,8 +362,8 @@ static void *handle_connection(void *arg) {
 					(void*) node_matches_received_queue);
 
 			/* broker_logger_warn("ID %d Cola: %s", node_ack->id,
-					get_queue_name(node_ack->cola));
-			*/
+			 get_queue_name(node_ack->cola));
+			 */
 			t_subscribe_ack_node* node_subscriber = list_find(node_ack->list,
 					(void*) subscriber_listed_for_ack);
 			node_subscriber->ack = true;
@@ -374,20 +374,20 @@ static void *handle_connection(void *arg) {
 		}
 			// From GB
 		case NEW_POKEMON: {
-			
+
 			broker_logger_info("NEW RECEIVED");
 			t_new_pokemon *new_receive = utils_receive_and_deserialize(
 					client_fd, protocol);
 			new_receive->id_correlacional = generar_id();
 			/* broker_logger_info("ID Correlacional: %d",
-					new_receive->id_correlacional);
-			broker_logger_info("Cantidad: %d", new_receive->cantidad);
-			broker_logger_info("Nombre Pokemon: %s",
-					new_receive->nombre_pokemon);
-			broker_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
-			broker_logger_info("Posicion X: %d", new_receive->pos_x);
-			broker_logger_info("Posicion Y: %d", new_receive->pos_y);
-			*/
+			 new_receive->id_correlacional);
+			 broker_logger_info("Cantidad: %d", new_receive->cantidad);
+			 broker_logger_info("Nombre Pokemon: %s",
+			 new_receive->nombre_pokemon);
+			 broker_logger_info("Largo Nombre: %d", new_receive->tamanio_nombre);
+			 broker_logger_info("Posicion X: %d", new_receive->pos_x);
+			 broker_logger_info("Posicion Y: %d", new_receive->pos_y);
+			 */
 			usleep(100000);
 			t_message_to_void *message_void = convert_to_void(protocol,
 					new_receive);
@@ -395,13 +395,13 @@ static void *handle_connection(void *arg) {
 			int from = 0;
 			if (is_buddy()) {
 				from = save_on_memory(message_void);
-				save_node_list_memory(from, message_void->size_message, NEW_QUEUE,
+				save_node_list_memory(from, message_void->size_message,
+						NEW_QUEUE, new_receive->id_correlacional);
+			} else {
+				from = save_on_memory_pd(message_void, NEW_QUEUE,
 						new_receive->id_correlacional);
 			}
-			else {
-				from = save_on_memory_pd(message_void,NEW_QUEUE,new_receive->id_correlacional);
-			}
-			
+
 			// broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			new_snd->id_correlacional = new_receive->id_correlacional;
@@ -425,19 +425,19 @@ static void *handle_connection(void *arg) {
 
 			// From GB or GC
 		case APPEARED_POKEMON: {
-			
+
 			broker_logger_info("APPEARED RECEIVED");
 			t_appeared_pokemon *appeared_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			/* broker_logger_info("ID correlacional: %d",
-					appeared_rcv->id_correlacional);
-			broker_logger_info("Nombre Pokemon: %s",
-					appeared_rcv->nombre_pokemon);
-			broker_logger_info("Largo nombre: %d",
-					appeared_rcv->tamanio_nombre);
-			broker_logger_info("Posicion X: %d", appeared_rcv->pos_x);
-			broker_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
-			*/
+			 appeared_rcv->id_correlacional);
+			 broker_logger_info("Nombre Pokemon: %s",
+			 appeared_rcv->nombre_pokemon);
+			 broker_logger_info("Largo nombre: %d",
+			 appeared_rcv->tamanio_nombre);
+			 broker_logger_info("Posicion X: %d", appeared_rcv->pos_x);
+			 broker_logger_info("Posicion Y: %d", appeared_rcv->pos_y);
+			 */
 			t_message_to_void *message_void = convert_to_void(protocol,
 					appeared_rcv);
 			pthread_mutex_lock(&msave);
@@ -446,11 +446,11 @@ static void *handle_connection(void *arg) {
 				from = save_on_memory(message_void);
 				save_node_list_memory(from, message_void->size_message,
 						APPEARED_QUEUE, appeared_rcv->id_correlacional);
+			} else {
+				from = save_on_memory_pd(message_void, APPEARED_QUEUE,
+						appeared_rcv->id_correlacional);
 			}
-			else {
-				from = save_on_memory_pd(message_void,APPEARED_QUEUE,appeared_rcv->id_correlacional);
-			}
-			
+
 			// broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d", from);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
 					memory);
@@ -463,7 +463,8 @@ static void *handle_connection(void *arg) {
 			appeared_protocol = APPEARED_POKEMON;
 			broker_logger_info("APPEARED SENT");
 
-			create_message_ack(appeared_rcv->id_correlacional, appeared_queue, APPEARED_QUEUE);
+			create_message_ack(appeared_rcv->id_correlacional, appeared_queue,
+					APPEARED_QUEUE);
 
 			for (int i = 0; i < list_size(appeared_queue); i++) {
 				t_subscribe_nodo* node = list_get(appeared_queue, i);
@@ -483,12 +484,12 @@ static void *handle_connection(void *arg) {
 			t_get_pokemon *get_rcv = utils_receive_and_deserialize(client_fd,
 					protocol);
 			/*
-			broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
-			broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
-			
-			broker_logger_info("ID correlacional: %d",
-					get_rcv->id_correlacional);
-			*/
+			 broker_logger_info("Nombre Pokemon: %s", get_rcv->nombre_pokemon);
+			 broker_logger_info("Largo nombre: %d", get_rcv->tamanio_nombre);
+
+			 broker_logger_info("ID correlacional: %d",
+			 get_rcv->id_correlacional);
+			 */
 			get_rcv->id_correlacional = generar_id();
 			usleep(50000);
 
@@ -498,11 +499,11 @@ static void *handle_connection(void *arg) {
 			int from = 0;
 			if (is_buddy()) {
 				from = save_on_memory(message_void);
-				save_node_list_memory(from, message_void->size_message, GET_QUEUE,
-					get_rcv->id_correlacional);
-			}
-			else {
-				from = save_on_memory_pd(message_void,GET_QUEUE,get_rcv->id_correlacional);
+				save_node_list_memory(from, message_void->size_message,
+						GET_QUEUE, get_rcv->id_correlacional);
+			} else {
+				from = save_on_memory_pd(message_void, GET_QUEUE,
+						get_rcv->id_correlacional);
 			}
 			// broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
@@ -534,14 +535,14 @@ static void *handle_connection(void *arg) {
 			t_catch_pokemon *catch_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			/*
-			broker_logger_info("Nombre Pokemon: %s", catch_rcv->nombre_pokemon);
-			broker_logger_info("Largo nombre: %d", catch_rcv->tamanio_nombre);
-			broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
-			broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
-			
-			broker_logger_info("ID correlacional: %d",
-					catch_rcv->id_correlacional);
-			*/	
+			 broker_logger_info("Nombre Pokemon: %s", catch_rcv->nombre_pokemon);
+			 broker_logger_info("Largo nombre: %d", catch_rcv->tamanio_nombre);
+			 broker_logger_info("Posicion X: %d", catch_rcv->pos_x);
+			 broker_logger_info("Posicion Y: %d", catch_rcv->pos_y);
+
+			 broker_logger_info("ID correlacional: %d",
+			 catch_rcv->id_correlacional);
+			 */
 			catch_rcv->id_correlacional = generar_id();
 
 			usleep(50000);
@@ -550,13 +551,13 @@ static void *handle_connection(void *arg) {
 					catch_rcv);
 			pthread_mutex_lock(&msave);
 			int from = 0;
-			if (is_buddy()) {	
+			if (is_buddy()) {
 				from = save_on_memory(message_void);
-				save_node_list_memory(from, message_void->size_message, CATCH_QUEUE,
-					catch_rcv->id_correlacional);
-			}
-			else {
-				from = save_on_memory_pd(message_void,CATCH_QUEUE,catch_rcv->id_correlacional);
+				save_node_list_memory(from, message_void->size_message,
+						CATCH_QUEUE, catch_rcv->id_correlacional);
+			} else {
+				from = save_on_memory_pd(message_void, CATCH_QUEUE,
+						catch_rcv->id_correlacional);
 			}
 			// broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from,
@@ -590,21 +591,22 @@ static void *handle_connection(void *arg) {
 			t_localized_pokemon *loc_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			/*
-			broker_logger_info("ID correlacional: %d",
-					loc_rcv->id_correlacional);
-			broker_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
-			broker_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
-			broker_logger_info("Cant Elementos en lista: %d",
-					loc_rcv->cant_elem);
-			*/
+			 broker_logger_info("ID correlacional: %d",
+			 loc_rcv->id_correlacional);
+			 broker_logger_info("Nombre Pokemon: %s", loc_rcv->nombre_pokemon);
+			 broker_logger_info("Largo nombre: %d", loc_rcv->tamanio_nombre);
+			 broker_logger_info("Cant Elementos en lista: %d",
+			 loc_rcv->cant_elem);
+			 */
 
-			for (int el = 0; el < loc_rcv->cant_elem; el++) {
-				t_position* pos = malloc(sizeof(t_position));
-				pos = list_get(loc_rcv->posiciones, el);
-				/* broker_logger_info("Position is (%d, %d)", pos->pos_x,
-						pos->pos_y);
-				*/
-			}
+			/*
+			 for (int el = 0; el < loc_rcv->cant_elem; el++) {
+			 	 t_position* pos = malloc(sizeof(t_position));
+				 pos = list_get(loc_rcv->posiciones, el);
+				 broker_logger_info("Position is (%d, %d)", pos->pos_x, pos->pos_y);
+			 }
+			 */
+
 			t_message_to_void *message_void = convert_to_void(protocol,
 					loc_rcv);
 			pthread_mutex_lock(&msave);
@@ -613,13 +615,13 @@ static void *handle_connection(void *arg) {
 				from = save_on_memory(message_void);
 				save_node_list_memory(from, message_void->size_message,
 						LOCALIZED_QUEUE, loc_rcv->id_correlacional);
+			} else {
+				from = save_on_memory_pd(message_void, LOCALIZED_QUEUE,
+						loc_rcv->id_correlacional);
 			}
-			else {
-				from = save_on_memory_pd(message_void,LOCALIZED_QUEUE, loc_rcv->id_correlacional);
-			}
-			
+
 			// broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d", from);
-			
+
 			t_localized_pokemon* loc_snd = get_from_memory(protocol, from,
 					memory);
 
@@ -651,9 +653,6 @@ static void *handle_connection(void *arg) {
 			t_subscribe *sub_rcv = utils_receive_and_deserialize(client_fd,
 					protocol);
 			pthread_mutex_lock(&msave);
-			char * ip = string_duplicate(sub_rcv->ip);
-			// broker_logger_info("Puerto Recibido: %d", sub_rcv->puerto);
-			// broker_logger_info("IP Recibido: %s", ip);
 			sub_rcv->f_desc = client_fd;
 			search_queue(sub_rcv);
 			pthread_mutex_unlock(&msave);
@@ -667,9 +666,9 @@ static void *handle_connection(void *arg) {
 			t_caught_pokemon *caught_rcv = utils_receive_and_deserialize(
 					client_fd, protocol);
 			/* broker_logger_info("ID correlacional: %d",
-					caught_rcv->id_correlacional);
-			broker_logger_info("Resultado (0/1): %d", caught_rcv->result);
-			*/
+			 caught_rcv->id_correlacional);
+			 broker_logger_info("Resultado (0/1): %d", caught_rcv->result);
+			 */
 			usleep(50000);
 			t_message_to_void *message_void = convert_to_void(protocol,
 					caught_rcv);
@@ -678,10 +677,10 @@ static void *handle_connection(void *arg) {
 			if (is_buddy()) {
 				from = save_on_memory(message_void);
 				save_node_list_memory(from, message_void->size_message,
-					CAUGHT_QUEUE, caught_rcv->id_correlacional);
-			}
-			else {
-				from = save_on_memory_pd(message_void,CAUGHT_QUEUE, caught_rcv->id_correlacional);
+						CAUGHT_QUEUE, caught_rcv->id_correlacional);
+			} else {
+				from = save_on_memory_pd(message_void, CAUGHT_QUEUE,
+						caught_rcv->id_correlacional);
 			}
 			// broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d", from);
 
@@ -750,8 +749,7 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 			utils_serialize_and_send(sub->f_desc, noop_protocol, noop);
 			free(noop);
 			list_remove_by_condition(q, (void*) is_gb_subscriber);
-			broker_logger_info(
-					"Game boy subscription timed out");
+			broker_logger_info("Game boy subscription timed out");
 			return;
 		}
 		usleep((n / 2) * 100000);
@@ -760,12 +758,14 @@ void remove_after_n_secs(t_subscribe_nodo* sub, t_list* q, int n) {
 
 void add_to(t_list *list, t_subscribe* subscriber) {
 	void add_sub_to_msg(t_subscribe_nodo* sub_node) {
-		for(int k=0; k<list_size(list_msg_subscribers);k++){
-			t_subscribe_message_node* node_m = list_get(list_msg_subscribers, k);
-			for(int t=0; t<list_size(node_m->list);t++){
+		for (int k = 0; k < list_size(list_msg_subscribers); k++) {
+			t_subscribe_message_node* node_m = list_get(list_msg_subscribers,
+					k);
+			for (int t = 0; t < list_size(node_m->list); t++) {
 				t_subscribe_ack_node *node_ack = list_get(node_m->list, t);
-				if(string_equals_ignore_case(node_ack->subscribe->ip,
-						subscriber->ip)&&node_ack->subscribe->puerto == subscriber->puerto){
+				if (string_equals_ignore_case(node_ack->subscribe->ip,
+						subscriber->ip)
+						&& node_ack->subscribe->puerto == subscriber->puerto) {
 					return;
 				}
 			}
@@ -823,7 +823,8 @@ void search_queue(t_subscribe *subscriber) {
 
 	switch (subscriber->cola) {
 	case NEW_QUEUE: {
-		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to NEW queue ",
+		broker_logger_info(
+				"Proccess with IP: %s and port: %d has subscribed to NEW queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mnew);
 		add_to(new_queue, subscriber);
@@ -832,7 +833,8 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case CATCH_QUEUE: {
-		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to CATCH queue ",
+		broker_logger_info(
+				"Proccess with IP: %s and port: %d has subscribed to CATCH queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mcatch);
 		add_to(catch_queue, subscriber);
@@ -841,7 +843,8 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case CAUGHT_QUEUE: {
-		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to CAUGHT queue ",
+		broker_logger_info(
+				"Proccess with IP: %s and port: %d has subscribed to CAUGHT queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mcaught);
 		add_to(caught_queue, subscriber);
@@ -850,7 +853,8 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case GET_QUEUE: {
-		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to GET queue ",
+		broker_logger_info(
+				"Proccess with IP: %s and port: %d has subscribed to GET queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mget);
 		add_to(get_queue, subscriber);
@@ -859,7 +863,8 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case LOCALIZED_QUEUE: {
-		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to LOCALIZED queue ",
+		broker_logger_info(
+				"Proccess with IP: %s and port: %d has subscribed to LOCALIZED queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mloc);
 		add_to(localized_queue, subscriber);
@@ -868,7 +873,8 @@ void search_queue(t_subscribe *subscriber) {
 		break;
 	}
 	case APPEARED_QUEUE: {
-		broker_logger_info("Proccess with IP: %s and port: %d has subscribed to APPEARED queue ",
+		broker_logger_info(
+				"Proccess with IP: %s and port: %d has subscribed to APPEARED queue ",
 				subscriber->ip, subscriber->puerto);
 		pthread_mutex_lock(&mappeared);
 		add_to(appeared_queue, subscriber);
@@ -1079,14 +1085,14 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		offset += sizeof(uint32_t);
 		memcpy(&new_receive->cantidad, message + offset, sizeof(uint32_t));
 		/*
-		broker_logger_info("******************************************");
-		broker_logger_info("RECEIVED:");
-		broker_logger_info("Pokemon: %s", new_receive->nombre_pokemon);
-		broker_logger_info("Name length: %d", new_receive->tamanio_nombre);
-		broker_logger_info("X Axis position: %d", new_receive->pos_x);
-		broker_logger_info("Y Axis position: %d", new_receive->pos_y);
-		broker_logger_info("Quantity: %d", new_receive->cantidad);
-		*/
+		 broker_logger_info("******************************************");
+		 broker_logger_info("RECEIVED:");
+		 broker_logger_info("Pokemon: %s", new_receive->nombre_pokemon);
+		 broker_logger_info("Name length: %d", new_receive->tamanio_nombre);
+		 broker_logger_info("X Axis position: %d", new_receive->pos_x);
+		 broker_logger_info("Y Axis position: %d", new_receive->pos_y);
+		 broker_logger_info("Quantity: %d", new_receive->cantidad);
+		 */
 		return new_receive;
 
 	}
@@ -1113,13 +1119,13 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		memcpy(&appeared_rcv->pos_y, message + offset, sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 		/*
-		broker_logger_info("******************************************");
-		broker_logger_info("RECEIVED:");
-		broker_logger_info("Pokemon: %s", appeared_rcv->nombre_pokemon);
-		broker_logger_info("Name length: %d", appeared_rcv->tamanio_nombre);
-		broker_logger_info("X Axis position: %d", appeared_rcv->pos_x);
-		broker_logger_info("Y Axis position: %d", appeared_rcv->pos_y);
-		*/
+		 broker_logger_info("******************************************");
+		 broker_logger_info("RECEIVED:");
+		 broker_logger_info("Pokemon: %s", appeared_rcv->nombre_pokemon);
+		 broker_logger_info("Name length: %d", appeared_rcv->tamanio_nombre);
+		 broker_logger_info("X Axis position: %d", appeared_rcv->pos_x);
+		 broker_logger_info("Y Axis position: %d", appeared_rcv->pos_y);
+		 */
 		return appeared_rcv;
 	}
 		// From team
@@ -1134,11 +1140,11 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		memcpy(get_rcv->nombre_pokemon, message + offset,
 				get_rcv->tamanio_nombre);
 		/*
-		broker_logger_info("******************************************");
-		broker_logger_info("RECEIVED:");
-		broker_logger_info("Pokemon: %s", get_rcv->nombre_pokemon);
-		broker_logger_info("Name length: %d", get_rcv->tamanio_nombre);
-		*/
+		 broker_logger_info("******************************************");
+		 broker_logger_info("RECEIVED:");
+		 broker_logger_info("Pokemon: %s", get_rcv->nombre_pokemon);
+		 broker_logger_info("Name length: %d", get_rcv->tamanio_nombre);
+		 */
 		return get_rcv;
 	}
 
@@ -1157,13 +1163,13 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		offset += sizeof(uint32_t);
 		memcpy(&catch_rcv->pos_y, message + offset, sizeof(uint32_t));
 		/*
-		broker_logger_info("******************************************");
-		broker_logger_info("RECEIVED:");
-		broker_logger_info("Pokemon: %s", catch_rcv->nombre_pokemon);
-		broker_logger_info("Name length: %d", catch_rcv->tamanio_nombre);
-		broker_logger_info("X Position: %d", catch_rcv->pos_x);
-		broker_logger_info("Y Position: %d", catch_rcv->pos_y);
-		*/
+		 broker_logger_info("******************************************");
+		 broker_logger_info("RECEIVED:");
+		 broker_logger_info("Pokemon: %s", catch_rcv->nombre_pokemon);
+		 broker_logger_info("Name length: %d", catch_rcv->tamanio_nombre);
+		 broker_logger_info("X Position: %d", catch_rcv->pos_x);
+		 broker_logger_info("Y Position: %d", catch_rcv->pos_y);
+		 */
 		return catch_rcv;
 	}
 		// From GC
@@ -1182,12 +1188,12 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		offset += loc_rcv->tamanio_nombre;
 		memcpy(&loc_rcv->cant_elem, message + offset, sizeof(uint32_t));
 		/*
-		broker_logger_info("******************************************");
-		broker_logger_info("RECEIVED:");
-		broker_logger_info("Pokemon: %s", loc_rcv->nombre_pokemon);
-		broker_logger_info("Name length: %d", loc_rcv->tamanio_nombre);
-		broker_logger_info("Quantity: %d", loc_rcv->cant_elem);
-		*/
+		 broker_logger_info("******************************************");
+		 broker_logger_info("RECEIVED:");
+		 broker_logger_info("Pokemon: %s", loc_rcv->nombre_pokemon);
+		 broker_logger_info("Name length: %d", loc_rcv->tamanio_nombre);
+		 broker_logger_info("Quantity: %d", loc_rcv->cant_elem);
+		 */
 		for (int i = 0; i < loc_rcv->cant_elem; i++) {
 			offset += sizeof(uint32_t);
 			t_position* pos = malloc(sizeof(t_position));
@@ -1196,9 +1202,9 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 			memcpy(&pos->pos_y, message + offset, sizeof(uint32_t));
 			list_add(loc_rcv->posiciones, pos);
 			/*
-			broker_logger_info("X Axis Position: %d", pos->pos_x);
-			broker_logger_info("Y Axis Position: %d", pos->pos_y);
-			*/
+			 broker_logger_info("X Axis Position: %d", pos->pos_x);
+			 broker_logger_info("Y Axis Position: %d", pos->pos_y);
+			 */
 		}
 		return loc_rcv;
 	}
@@ -1208,15 +1214,15 @@ void *get_from_memory(t_protocol protocol, int posicion, void *message) {
 		t_caught_pokemon *caught_rcv = malloc(sizeof(t_caught_pokemon));
 		memcpy(&caught_rcv->result, message + offset, sizeof(uint32_t));
 		/*
-		broker_logger_info("******************************************");
-		broker_logger_info("RECEIVED:");
+		 broker_logger_info("******************************************");
+		 broker_logger_info("RECEIVED:");
 
-		if (caught_rcv->result) {
-			broker_logger_info("Result: Caught");
-		} else {
-			broker_logger_info("Result: Failed");
-		}
-		*/
+		 if (caught_rcv->result) {
+		 broker_logger_info("Result: Caught");
+		 } else {
+		 broker_logger_info("Result: Failed");
+		 }
+		 */
 		return caught_rcv;
 	}
 	}
@@ -1328,6 +1334,15 @@ char* get_queue_name(t_cola q) {
 	return out;
 }
 
+char* get_queue_name_short(t_cola q) {
+
+	char* out = string_duplicate("");
+
+	out = get_queue_name(q);
+
+	return string_substring_until(out, 3);
+}
+
 void purge_msg() {
 	pthread_mutex_lock(&mmem);
 	list_sort(list_memory, (void*) compare_timings);
@@ -1344,10 +1359,10 @@ void purge_msg() {
 	t_nodo_memory* node = (t_nodo_memory*) list_get(list_memory, 0);
 	broker_logger_warn(
 			"The message with ID %d from %s, located at position %d, last modified at instant T=%d will be removed",
-			node->id, get_queue_name(node->cola),
-			node->pointer,
+			node->id, get_queue_name(node->cola), node->pointer,
 			(int) (node->timestamp - base_time));
 
+	consolidate(node->pointer);
 	_Bool find_msg(t_subscribe_message_node* n) {
 		return string_equals_ignore_case(get_queue_name(n->cola),
 				get_queue_name(node->cola)) && n->id == node->id;
@@ -1360,75 +1375,77 @@ void purge_msg() {
 	pthread_mutex_unlock(&msubs);
 	buddy_free(buddy, node->pointer);
 	broker_logger_info("Message removed successfully");
-	broker_logger_info("Memory consolidated");
 }
 
-int save_on_memory_pd(t_message_to_void *message_void,t_cola cola,int id_correlacional) {
+int save_on_memory_pd(t_message_to_void *message_void, t_cola cola,
+		int id_correlacional) {
 	pthread_mutex_lock(&mpointer);
 
 	estado_memoria(list_memory);
 
 	int last = list_size(list_memory);
-	t_nodo_memory *last_node = list_get(list_memory,last-1);
+	t_nodo_memory *last_node = list_get(list_memory, last - 1);
 	pointer = last_node->pointer;
 	int from = pointer;
 	if (!is_buddy()) {
-		if (pointer + message_void->size_message > broker_config->tamano_memoria){
-			from = save_on_memory_partition(message_void,cola,id_correlacional);
-			memcpy(memory + from, message_void->message, message_void->size_message);
+		if (pointer + message_void->size_message
+				> broker_config->tamano_memoria) {
+			from = save_on_memory_partition(message_void, cola,
+					id_correlacional);
+			memcpy(memory + from, message_void->message,
+					message_void->size_message);
 			// broker_logger_info("Pointer %d",from);
 			pthread_mutex_unlock(&mpointer);
 
 			return from;
 		}
-		pointer +=  max(message_void->size_message,broker_config->tamano_minimo_particion);
+		pointer += max(message_void->size_message,
+				broker_config->tamano_minimo_particion);
 		save_node_list_memory(from, message_void->size_message, cola,
-												id_correlacional);
+				id_correlacional);
 
-
-		memcpy(memory + from, message_void->message, message_void->size_message);
+		memcpy(memory + from, message_void->message,
+				message_void->size_message);
 	}
 	pthread_mutex_unlock(&mpointer);
 	return from;
 }
 
-
-int save_on_memory_partition(t_message_to_void *message_void,t_cola cola,int id_correlacional){
-	int from ;
+int save_on_memory_partition(t_message_to_void *message_void, t_cola cola,
+		int id_correlacional) {
+	int from;
 	int flag = 1;
-	int done_compactacion =0;
 	int close_while = 0;
 	int fallas = 0;
-	while (1){
-					if(close_while == 1){
-						break;
-					}
-					if(fallas == broker_config->frecuencia_compactacion){
-						compactacion();
-						fallas = 0;
-					}
-					if(broker_config->algoritmo_particion_libre == FF){
-						// broker_logger_info("Aplicar algoritmo FIRST FIT");
-						from = libre_nodo_memoria_first(id_correlacional,cola,message_void);
-						}
-					else{
-							// broker_logger_info("Aplicar algoritmo BEST FIT");
-							from = libre_nodo_memoria_best(id_correlacional,cola,message_void);
-					}
-					if(from == -1){
-					    fallas ++;
-						flag = 2;//para entrar a compactacion
-						// broker_logger_info("No se pudo aplicar FF");
-						if(broker_config->algoritmo_reemplazo == FIFO){
-							aplicar_algoritmo_reemplazo_FIFO();
-						}
-						else{
-							aplicar_algoritmo_reemplazo_LRU();
-						}
-					}
-					else{
-						return from;
-					}
+	while (1) {
+		if (close_while == 1) {
+			break;
+		}
+		if (fallas == broker_config->frecuencia_compactacion) {
+			compactacion();
+			fallas = 0;
+		}
+		if (broker_config->algoritmo_particion_libre == FF) {
+			// broker_logger_info("Aplicar algoritmo FIRST FIT");
+			from = libre_nodo_memoria_first(id_correlacional, cola,
+					message_void);
+		} else {
+			// broker_logger_info("Aplicar algoritmo BEST FIT");
+			from = libre_nodo_memoria_best(id_correlacional, cola,
+					message_void);
+		}
+		if (from == -1) {
+			fallas++;
+			flag = 2;			//para entrar a compactacion
+			// broker_logger_info("No se pudo aplicar FF");
+			if (broker_config->algoritmo_reemplazo == FIFO) {
+				aplicar_algoritmo_reemplazo_FIFO();
+			} else {
+				aplicar_algoritmo_reemplazo_LRU();
+			}
+		} else {
+			return from;
+		}
 
 	}
 	return from;
@@ -1465,23 +1482,27 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 			return node->pointer == pointer;
 		}
 
-		t_nodo_memory * node_found =  list_find(list_memory,(void *)node_matches_received_queue);
-		if (node_found == NULL){
+		t_nodo_memory * node_found = list_find(list_memory,
+				(void *) node_matches_received_queue);
+		if (node_found == NULL) {
 			estado_memoria(list_memory);
-			broker_logger_warn("Message saved at position: %d",pointer);
+			broker_logger_warn("Message saved at position: %d", pointer);
 		}
 		int size = node_found->size;
 
-		int next_pointer = node_found->pointer + max (broker_config->tamano_minimo_particion,msg_size);
+		int next_pointer = node_found->pointer
+				+ max(broker_config->tamano_minimo_particion, msg_size);
 
-		node_found->size = max (broker_config->tamano_minimo_particion,msg_size);
-	    node_found->cola = cola;
+		node_found->size = max(broker_config->tamano_minimo_particion,
+				msg_size);
+		node_found->cola = cola;
 		node_found->id = id;
 		node_found->libre = false;
 		node_found->timestamp = (unsigned) time(NULL);
 
 		nodo_mem->cola = cola;
-		nodo_mem->size = size - max (broker_config->tamano_minimo_particion,msg_size);
+		nodo_mem->size = size
+				- max(broker_config->tamano_minimo_particion, msg_size);
 		nodo_mem->pointer = next_pointer;
 		nodo_mem->libre = true;
 		nodo_mem->id = id;
@@ -1491,10 +1512,11 @@ void save_node_list_memory(int pointer, int msg_size, t_cola cola, int id) {
 	else {
 		nodo_mem->pointer = pointer;
 		nodo_mem->size =
-			!is_buddy() ?
-					((msg_size < broker_config->tamano_minimo_particion) ?
-							broker_config->tamano_minimo_particion : msg_size) :
-					msg_size;
+				!is_buddy() ?
+						((msg_size < broker_config->tamano_minimo_particion) ?
+								broker_config->tamano_minimo_particion :
+								msg_size) :
+						msg_size;
 		nodo_mem->cola = cola;
 		nodo_mem->id = id;
 		nodo_mem->timestamp = time(NULL);
@@ -1514,13 +1536,13 @@ t_nodo_memory* find_node(t_nodo_memory* node) {
 		int id_nodo_mem = nodo_mem->id;
 		t_cola queue_nodo_mem = nodo_mem->cola;
 
-		if (!is_buddy()){
-			if (node->id == id_nodo_mem && node->cola == queue_nodo_mem && node->libre==false) {
+		if (!is_buddy()) {
+			if (node->id
+					== id_nodo_mem&& node->cola == queue_nodo_mem && node->libre==false) {
 				ret_pos = i;
 				break;
 			}
-		}
-		else{
+		} else {
 			if (node->id == id_nodo_mem && node->cola == queue_nodo_mem) {
 				ret_pos = i;
 				break;
@@ -1532,7 +1554,7 @@ t_nodo_memory* find_node(t_nodo_memory* node) {
 }
 
 _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
-	if(!is_buddy() && node->libre == true){
+	if (!is_buddy() && node->libre == true) {
 		return true;
 	}
 	_Bool node_is_match(t_subscribe_message_node* msg_ack) {
@@ -1552,7 +1574,7 @@ _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
 
 	t_subscribe_message_node* ack_msg_node = list_find(list_msg_subscribers,
 			(void*) node_is_match);
-	if(ack_msg_node == NULL){
+	if (ack_msg_node == NULL) {
 		// broker_logger_warn("Devolvio nulo el ack");
 		return false;
 	}
@@ -1566,7 +1588,7 @@ _Bool is_msg_ackd(t_nodo_memory* node, t_subscribe* sub) {
 
 	t_subscribe_nodo* s = malloc(sizeof(t_subscribe_nodo));
 
-	switch(sub->cola) {
+	switch (sub->cola) {
 
 	case NEW_QUEUE: {
 		s = list_find(new_queue, (void*) find_sub);
@@ -1621,7 +1643,7 @@ void send_all_messages(t_subscribe *subscriber) {
 	t_list* list_cpy = list_filter(list_memory, (void*) msg_match);
 	pthread_mutex_unlock(&mmem);
 	int cant = list_size(list_cpy);
-	if(cant == 1 && broker_config->estrategia_memoria == PD){
+	if (cant == 1 && broker_config->estrategia_memoria == PD) {
 		return;
 	}
 
@@ -1714,6 +1736,55 @@ void create_message_ack(int id, t_list *cola, t_cola unCola) {
 	}
 }
 
+void consolidate(int offset) {
+
+	int consolidate_with = 0;
+	int flag = 0;
+
+	_Bool elem_starts_at_offset(t_nodo_memory* node) {
+		return node->pointer == offset;
+	}
+
+	t_list* list_clone = list_duplicate(list_memory);
+	list_sort(list_clone, (void*) compare_memory_position);
+	broker_logger_error("Position to be removed %d", offset);
+
+	for (int counter = 0; counter < list_size(list_clone); counter++) {
+		flag = 0;
+		t_nodo_memory* node = list_get(list_clone, counter);
+		if (elem_starts_at_offset(node)) {
+			if (counter - 1 >= 0) {
+				t_nodo_memory* previous_elem = list_get(list_clone,
+						counter - 1);
+				if ((node->pointer
+						- (next_power_of_2(previous_elem->size)
+								+ previous_elem->pointer))
+						>= next_power_of_2(node->size)) {
+					consolidate_with = node->pointer - node->size;
+					flag = 1;
+					broker_logger_warn("Consolidated memory at positions %d and %d",
+							consolidate_with, offset);
+				}
+			}
+			if (flag == 0 && (counter != list_size(list_clone) -1)) {
+				t_nodo_memory* next_elem = list_get(list_clone, counter + 1);
+				if ((next_elem->pointer
+						- (node->pointer + next_power_of_2(node->size)))
+						>= next_power_of_2(node->size)) {
+					consolidate_with = node->pointer + node->size;
+					flag = 1;
+					broker_logger_warn("Consolidated memory at positions %d and %d",
+							offset, consolidate_with);
+				}
+			}
+
+			if (flag == 1) {
+				break;
+			}
+		}
+	}
+}
+
 void dump() {
 
 	int last_size = 0;
@@ -1744,6 +1815,7 @@ void dump() {
 
 		t_nodo_memory* node = list_get(list_clone, i);
 
+
 		// If first elem is free
 		if (i == 0 && node->pointer != 0) {
 			fprintf(f, "Particion %04d: %04d - %04d\t\t", i + 1, 0,
@@ -1751,15 +1823,14 @@ void dump() {
 			fprintf(f, "[L]\t\t");
 			fprintf(f, "Size: %04d B\n", node->pointer);
 			fprintf(f, "Particion %04d: %04d - %04d\t\t", i + 2, node->pointer,
-					next_power_of_2(node->pointer + (node->size)) - 1);
+					node->pointer + next_power_of_2(node->size) - 1);
 			fprintf(f, "[X]\t\t");
 			fprintf(f, "Total size: %04d B. Used: %04d B, Free: %04d B\t\t",
 					next_power_of_2(node->size), node->size,
 					next_power_of_2(node->size) - node->size);
 			fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
-			fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
+			fprintf(f, "Queue: %s\t\t", get_queue_name_short(node->cola));
 			fprintf(f, "ID: %04d\n", node->id);
-			last_pointer = next_power_of_2(node->pointer + node->size);
 			last_size = i + 2;
 		}
 
@@ -1771,14 +1842,14 @@ void dump() {
 				fprintf(f, "[L]\t\t");
 				fprintf(f, "Size: %04d B\n", node->pointer - last_pointer);
 				fprintf(f, "Particion %04d: %04d - %04d\t\t", last_size + 2,
-						node->pointer, next_power_of_2(node->size) - 1);
+						node->pointer, node->pointer + next_power_of_2(node->size) - 1);
 				fprintf(f, "[X]\t\t");
 				fprintf(f, "Total size: %04d B. Used: %04d B, Free: %04d B\t\t",
 						next_power_of_2(node->size), node->size,
 						next_power_of_2(node->size) - node->size);
 				fprintf(f, "LRU: %04d\t\t",
 						(int) (node->timestamp - base_time));
-				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
+				fprintf(f, "Queue: %s\t\t", get_queue_name_short(node->cola));
 				fprintf(f, "ID: %04d\n", node->id);
 				last_size += 2;
 			}
@@ -1786,27 +1857,28 @@ void dump() {
 			else {
 				fprintf(f, "Particion %04d: %04d - %04d\t\t", last_size + 1,
 						node->pointer,
-						next_power_of_2(node->pointer + (node->size)) - 1);
+						node->pointer + next_power_of_2(node->size) - 1);
 				fprintf(f, "[X]\t\t");
 				fprintf(f, "Total size: %04d B. Used: %04d B, Free: %04d B\t\t",
 						next_power_of_2(node->size), node->size,
 						next_power_of_2(node->size) - node->size);
 				fprintf(f, "LRU: %04d\t\t",
 						(int) (node->timestamp - base_time));
-				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
+				fprintf(f, "Queue: %s\t\t", get_queue_name_short(node->cola));
 				fprintf(f, "ID: %04d\n", node->id);
 				last_size += 1;
 			}
-			last_pointer = next_power_of_2(node->pointer + node->size);
 		}
+
+		last_pointer = node->pointer + next_power_of_2(node->size);
 
 		// if last block is empty
 		if ((i == (list_size(list_clone) - 1))
 				&& last_pointer != broker_config->tamano_memoria) {
-			fprintf(f, "Particion %d: %d - %d\t\t", last_size + 1, last_pointer,
+			fprintf(f, "Particion %04d: %04d - %04d\t\t", last_size + 1, last_pointer,
 					broker_config->tamano_memoria - 1);
 			fprintf(f, "[L]\t\t");
-			fprintf(f, "Size: %d B\n",
+			fprintf(f, "Size: %04d B\n",
 					broker_config->tamano_memoria - last_pointer);
 			last_size += 1;
 		}
@@ -1822,220 +1894,228 @@ int generar_id() {
 	return id;
 }
 
-
-int libre_nodo_memoria_best(int id_correlacional,t_cola cola,t_message_to_void *message){
+int libre_nodo_memoria_best(int id_correlacional, t_cola cola,
+		t_message_to_void *message) {
 	int size_free;
 	int pointer_busy;
 	t_list *new_list = list_create();
-
 
 	int position;
 	int size = 0;
 	int flag_first = 0;
 
+	for (int i = 0; i < list_size(list_memory); i++) {
+		t_nodo_memory* memory_node = list_get(list_memory, i);
+		if (memory_node->libre == true && max(message->size_message,
+				broker_config->tamano_minimo_particion) <= memory_node->size) {
 
-	for(int i=0;i<list_size(list_memory);i++){
-		t_nodo_memory* memory_node = list_get(list_memory,i);
-		if(memory_node->libre == true  && max(message->size_message,broker_config->tamano_minimo_particion) <= memory_node->size){
-
-			if(flag_first == 0){
+			if (flag_first == 0) {
 				position = i;
-				size = memory_node->size ;
+				size = memory_node->size;
 				flag_first = 1;
 			}
-			if (memory_node->size < size){
+			if (memory_node->size < size) {
 				position = i;
-				size=memory_node->size;
+				size = memory_node->size;
 			}
 		}
 	}
-	if(flag_first == 0){
+	if (flag_first == 0) {
 		return -1;
 	}
-	int i=0;
-	int flag =0;
-	if (flag_first == 0){
+	int i = 0;
+	int flag = 0;
+	if (flag_first == 0) {
 		return -1;
 	}
-	while(i<list_size(list_memory)){
-		t_nodo_memory* memory_node =list_get(list_memory,i);
-		if (i == position){
+	while (i < list_size(list_memory)) {
+		t_nodo_memory* memory_node = list_get(list_memory, i);
+		if (i == position) {
 			// broker_logger_warn("iniciando reemplazo");
 			flag = 1;
 			int puntero = memory_node->pointer;
 			memory_node->cola = cola;
 			memory_node->id = id_correlacional;
-			size_free = memory_node->size - max (message->size_message,broker_config->tamano_minimo_particion);
-			memory_node->size = max (message->size_message,broker_config->tamano_minimo_particion) ;
+			size_free = memory_node->size
+					- max(message->size_message,
+							broker_config->tamano_minimo_particion);
+			memory_node->size = max(message->size_message,
+					broker_config->tamano_minimo_particion);
 			pointer_busy = memory_node->pointer;
 			memory_node->libre = false;
 			memory_node->timestamp = (unsigned) time(NULL);
-			list_add(new_list,memory_node);
-			if(size_free != 0){
+			list_add(new_list, memory_node);
+			if (size_free != 0) {
 				t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
 				memory_next->cola = cola;
 				memory_next->id = 0;
 				memory_next->libre = true;
-				memory_next->pointer = puntero +message->size_message;
+				memory_next->pointer = puntero + message->size_message;
 				memory_next->size = size_free;
 				memory_next->timestamp = (unsigned) time(NULL);
-				list_add(new_list,memory_next);
+				list_add(new_list, memory_next);
 			}
 
-			for(int k=i+1; k<list_size(list_memory);k++){
-				t_nodo_memory* memory_fill =list_get(list_memory,k);
-				list_add(new_list,memory_fill);
+			for (int k = i + 1; k < list_size(list_memory); k++) {
+				t_nodo_memory* memory_fill = list_get(list_memory, k);
+				list_add(new_list, memory_fill);
 			}
-		break;
+			break;
 
-		}
-		else{
-			list_add(new_list,memory_node);
+		} else {
+			list_add(new_list, memory_node);
 		}
 		i++;
 	}
-	if(list_size (new_list) !=0 ){
-		 list_destroy(list_memory );
-		list_memory =  new_list;
+	if (list_size(new_list) != 0) {
+		list_destroy(list_memory);
+		list_memory = new_list;
 	}
-	if(flag == 0){
-			pointer_busy =  -1;
+	if (flag == 0) {
+		pointer_busy = -1;
 	}
-	list_memory = new_list ;
-    /*broker_logger_warn("terminado reemplazo");
-    broker_logger_warn("Estado memoria actual");
-	estado_memoria(list_memory);
-	broker_logger_warn("Terminado memoria actual");
-	*/
+	list_memory = new_list;
+	/*broker_logger_warn("terminado reemplazo");
+	 broker_logger_warn("Estado memoria actual");
+	 estado_memoria(list_memory);
+	 broker_logger_warn("Terminado memoria actual");
+	 */
 	return pointer_busy;
 }
 
-int libre_nodo_memoria_first(int id_correlacional,t_cola cola,t_message_to_void *message){
+int libre_nodo_memoria_first(int id_correlacional, t_cola cola,
+		t_message_to_void *message) {
 	estado_memoria(list_memory);
 	int size_free;
 	int pointer_busy;
 	t_list *new_list = list_create();
-	int flag =0 ;
-	int i=0;
-	while(i<list_size(list_memory)){
+	int flag = 0;
+	int i = 0;
+	while (i < list_size(list_memory)) {
 
-		t_nodo_memory* memory_node =list_get(list_memory,i);
-		if(memory_node->libre == true  &&  max(message->size_message,broker_config->tamano_minimo_particion) <= memory_node->size && flag == 0 ){
+		t_nodo_memory* memory_node = list_get(list_memory, i);
+		if (memory_node->libre == true && max(message->size_message,
+				broker_config->tamano_minimo_particion) <= memory_node->size
+				&& flag == 0) {
 			// broker_logger_warn("iniciando reemplazo");
 			//estado_memoria(list_memory);
 			flag = 1;
 			int puntero = memory_node->pointer;
 			memory_node->cola = cola;
 			memory_node->id = id_correlacional;
-			size_free = memory_node->size - max (message->size_message,broker_config->tamano_minimo_particion);
-			memory_node->size = max (message->size_message,broker_config->tamano_minimo_particion) ;
+			size_free = memory_node->size
+					- max(message->size_message,
+							broker_config->tamano_minimo_particion);
+			memory_node->size = max(message->size_message,
+					broker_config->tamano_minimo_particion);
 			pointer_busy = memory_node->pointer;
 			memory_node->libre = false;
-			memory_node->timestamp = (unsigned) time (NULL);
-			list_add(new_list,memory_node);
+			memory_node->timestamp = (unsigned) time(NULL);
+			list_add(new_list, memory_node);
 
-			if(size_free != 0){
+			if (size_free != 0) {
 				t_nodo_memory* memory_next = malloc(sizeof(t_nodo_memory));
 				memory_next->cola = cola;
 				memory_next->id = 0;
 				memory_next->libre = true;
-				memory_next->pointer = puntero +message->size_message;
+				memory_next->pointer = puntero + message->size_message;
 				memory_next->size = size_free;
-				memory_next->timestamp = (unsigned) time (NULL);
-				list_add(new_list,memory_next);
+				memory_next->timestamp = (unsigned) time(NULL);
+				list_add(new_list, memory_next);
 			}
 			t_nodo_memory* memory_fill;
-			for(int k=i+1; k<list_size(list_memory);k++){
-				memory_fill=list_get(list_memory,k);
-				list_add(new_list,memory_fill);
+			for (int k = i + 1; k < list_size(list_memory); k++) {
+				memory_fill = list_get(list_memory, k);
+				list_add(new_list, memory_fill);
 			}
 			//pointer = memory_fill->pointer;
 			break;
-		}
-		else{
-			list_add(new_list,memory_node);
+		} else {
+			list_add(new_list, memory_node);
 		}
 		i++;
 	}
 
-
 	//list_destroy(list_memory );
-	if(flag == 0){
-		pointer_busy =  -1;
+	if (flag == 0) {
+		pointer_busy = -1;
 	}
-	if(list_size (new_list) !=0 ){
-			list_destroy(list_memory);
-			list_memory =  new_list;
+	if (list_size(new_list) != 0) {
+		list_destroy(list_memory);
+		list_memory = new_list;
 	}
 	/*broker_logger_warn("terminado reemplazo");
-	broker_logger_warn("Estado actual");
-	estado_memoria(list_memory);
-	broker_logger_warn("Estado final");
-	*/
+	 broker_logger_warn("Estado actual");
+	 estado_memoria(list_memory);
+	 broker_logger_warn("Estado final");
+	 */
 	return pointer_busy;
 }
 
-void liberar_memoria(int id_correlacional,t_cola cola){
+void liberar_memoria(int id_correlacional, t_cola cola) {
 
-	for(int i=0;i<list_size(list_memory);i++){
-		t_nodo_memory* memory_node = list_get(list_memory,i);
-		if(memory_node->id == id_correlacional  && memory_node->cola == cola){
+	for (int i = 0; i < list_size(list_memory); i++) {
+		t_nodo_memory* memory_node = list_get(list_memory, i);
+		if (memory_node->id == id_correlacional && memory_node->cola == cola) {
 			memory_node->id = 0;
 			memory_node->libre = true;
 		}
 	}
 }
 
-void compactacion(){
+void compactacion() {
 	estado_memoria(list_memory);
-    //estado_memoria(list_memory);
+	//estado_memoria(list_memory);
 	// broker_logger_info("cantidad elementos previa a compactacion de lista %d",list_size(list_memory));
 	t_list *new_list = list_create();
 	broker_logger_info("Compaction started");
-	int flag= 0;
-	for(int i=0;i<list_size(list_memory);i++){
-		t_nodo_memory* memory_node_free = list_get(list_memory,i);
-		if(i == (list_size(list_memory)-1)){
-			list_add(new_list,memory_node_free);
+	int flag = 0;
+	for (int i = 0; i < list_size(list_memory); i++) {
+		t_nodo_memory* memory_node_free = list_get(list_memory, i);
+		if (i == (list_size(list_memory) - 1)) {
+			list_add(new_list, memory_node_free);
 			break;
 
 		}
-		if(memory_node_free->libre == false){
-			list_add(new_list,memory_node_free);
+		if (memory_node_free->libre == false) {
+			list_add(new_list, memory_node_free);
 		}
-		if(memory_node_free->libre == true ){
+		if (memory_node_free->libre == true) {
 
 			t_nodo_memory* memory_node_add;
 			t_nodo_memory* memory_node_next = NULL;
 			int last_pointer = memory_node_free->pointer;
-			if(i+1<list_size(list_memory)){
-				memory_node_next= list_get(list_memory,i+1);
+			if (i + 1 < list_size(list_memory)) {
+				memory_node_next = list_get(list_memory, i + 1);
 			}
-			if(memory_node_next != NULL && memory_node_next->libre==true){
-				memory_node_free->size =  memory_node_free->size + memory_node_next->size;
-				list_remove(list_memory,i+1);
-				broker_logger_info("The partition starting at position %d had been removed ", memory_node_next->pointer);
+			if (memory_node_next != NULL && memory_node_next->libre == true) {
+				memory_node_free->size = memory_node_free->size
+						+ memory_node_next->size;
+				list_remove(list_memory, i + 1);
+				broker_logger_info(
+						"The partition starting at position %d had been removed ",
+						memory_node_next->pointer);
 				i--;
 
-			}
-			else{
+			} else {
 				int offset = memory_node_free->pointer;
-				for(int k=i+1;k<list_size(list_memory);k++){
-					memory_node_add= list_get(list_memory,k);
-					memcpy(memory+offset,memory+memory_node_add->pointer,memory_node_add->size);
-					memory_node_add->pointer = offset ;
-					list_add(new_list,memory_node_add);
+				for (int k = i + 1; k < list_size(list_memory); k++) {
+					memory_node_add = list_get(list_memory, k);
+					memcpy(memory + offset, memory + memory_node_add->pointer,
+							memory_node_add->size);
+					memory_node_add->pointer = offset;
+					list_add(new_list, memory_node_add);
 					offset = offset + memory_node_add->size;
 					last_pointer = offset;
 				}
 				flag = 1;
 			}
 			memory_node_free->pointer = last_pointer;
-			list_add(new_list,memory_node_free);
-			list_memory =  new_list;
+			list_add(new_list, memory_node_free);
+			list_memory = new_list;
 			//list_destroy(new_list);
-			if(flag == 1){
-				i=-1;
+			if (flag == 1) {
+				i = -1;
 				new_list = list_create();
 			}
 			// broker_logger_warn("movido nodo de lugar");
@@ -2045,23 +2125,22 @@ void compactacion(){
 		}
 
 	}
-	if(list_size (new_list) ==0 ){
+	if (list_size(new_list) == 0) {
 		//pthread_mutex_lock(&mpointer);
 		t_nodo_memory *nodo_memory = malloc(sizeof(t_nodo_memory));
 		nodo_memory->pointer = 0;
 		nodo_memory->libre = true;
 		nodo_memory->size = broker_config->tamano_memoria;
-		nodo_memory->timestamp = (unsigned) time (NULL);
-		list_add(list_memory,nodo_memory);
+		nodo_memory->timestamp = (unsigned) time(NULL);
+		list_add(list_memory, nodo_memory);
 		pointer = 0;
 		//pthread_mutex_unlock(&mpointer);
 	}
 
-	if(list_size (new_list) !=0 ){
+	if (list_size(new_list) != 0) {
 		list_destroy(list_memory);
-		list_memory =  new_list;
+		list_memory = new_list;
 	}
-
 
 	//estado_memoria(list_memory);
 	broker_logger_info("Compaction finished");
@@ -2069,53 +2148,53 @@ void compactacion(){
 
 }
 
-void aplicar_algoritmo_reemplazo_FIFO(){
-	for (int i=0;i<list_size(list_memory);i++){
-		t_nodo_memory *nodo_memoria =list_get(list_memory,i);
-		if (nodo_memoria->libre == false){
-			nodo_memoria->libre =true;
+void aplicar_algoritmo_reemplazo_FIFO() {
+	for (int i = 0; i < list_size(list_memory); i++) {
+		t_nodo_memory *nodo_memoria = list_get(list_memory, i);
+		if (nodo_memoria->libre == false) {
+			nodo_memoria->libre = true;
 			break;
 		}
 	}
 }
 
-void aplicar_algoritmo_reemplazo_LRU(){
+void aplicar_algoritmo_reemplazo_LRU() {
 	estado_memoria(list_memory);
 	int flag = 0;
 	int position;
 	uint32_t less_time;
-	for (int i=0;i<list_size(list_memory);i++){
-		t_nodo_memory *nodo_memoria =list_get(list_memory,i);
-		if (nodo_memoria->libre == false){
-			if(flag == 0){
+	for (int i = 0; i < list_size(list_memory); i++) {
+		t_nodo_memory *nodo_memoria = list_get(list_memory, i);
+		if (nodo_memoria->libre == false) {
+			if (flag == 0) {
 				less_time = nodo_memoria->timestamp;
-				position =i;
-				flag =1;
+				position = i;
+				flag = 1;
 			}
-			if(nodo_memoria->timestamp < less_time){
+			if (nodo_memoria->timestamp < less_time) {
 				less_time = nodo_memoria->timestamp;
-				position =i;
+				position = i;
 			}
 		}
 	}
-	t_nodo_memory *nodo_memoria =list_get(list_memory,position);
+	t_nodo_memory *nodo_memoria = list_get(list_memory, position);
 	nodo_memoria->libre = true;
 }
 
-void estado_memoria(t_list *list){
+void estado_memoria(t_list *list) {
 	/*
-	broker_logger_warn("Estado Actual");
-	for (int i=0; i<list_size(list);i++){
-		t_nodo_memory *nodo_memoria =list_get(list,i);
-		broker_logger_info(" Posicion %d",i);
-		broker_logger_info(" Pointer %d",nodo_memoria->pointer);
-		broker_logger_info(" Cola %d",nodo_memoria->cola);
-		broker_logger_info(" estado %d",nodo_memoria->libre);
-		broker_logger_info(" size %d",nodo_memoria->size);
-		broker_logger_info(" time %d",nodo_memoria->timestamp);
-	}
-	broker_logger_warn("Estado Final");
-	*/
+	 broker_logger_warn("Estado Actual");
+	 for (int i=0; i<list_size(list);i++){
+	 t_nodo_memory *nodo_memoria =list_get(list,i);
+	 broker_logger_info(" Posicion %d",i);
+	 broker_logger_info(" Pointer %d",nodo_memoria->pointer);
+	 broker_logger_info(" Cola %d",nodo_memoria->cola);
+	 broker_logger_info(" estado %d",nodo_memoria->libre);
+	 broker_logger_info(" size %d",nodo_memoria->size);
+	 broker_logger_info(" time %d",nodo_memoria->timestamp);
+	 }
+	 broker_logger_warn("Estado Final");
+	 */
 }
 
 void dump_partition() {
@@ -2142,24 +2221,23 @@ void dump_partition() {
 
 	for (int i = 0; i < list_size(list_clone); ++i) {
 
-		    t_nodo_memory* node = list_get(list_clone, i);
-			fprintf(f, "Particion %04d: %04d - %04d\t\t",i ,node->pointer, node->pointer +  node->size -1);
-			if(node->libre == false){
-				fprintf(f, "[X]\t\t");
-			}
-			else{
-				fprintf(f, "[X]\t\t");
-			}
+		t_nodo_memory* node = list_get(list_clone, i);
+		fprintf(f, "Particion %04d: %04d - %04d\t\t", i, node->pointer,
+				node->pointer + node->size - 1);
+		if (node->libre == false) {
+			fprintf(f, "[X]\t\t");
+		} else {
+			fprintf(f, "[X]\t\t");
+		}
 
-			fprintf(f, "Size: %04d B \t\t", node->size);
-			if(node->libre == false){
-				fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
-				fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
-			}
-			else
-				fprintf(f, "Queue: %s\t\t", "LIBRE");
+		fprintf(f, "Size: %04d B \t\t", node->size);
+		if (node->libre == false) {
+			fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
+			fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
+		} else
+			fprintf(f, "Queue: %s\t\t", "LIBRE");
 
-			fprintf(f, "ID: %04d\n", node->id);
+		fprintf(f, "ID: %04d\n", node->id);
 
 	}
 	fclose(f);
@@ -2167,18 +2245,18 @@ void dump_partition() {
 
 }
 
-void estado_ack(t_list *list_msg_subscribers){
+void estado_ack(t_list *list_msg_subscribers) {
 	/*if (!is_buddy()) {
-		for(int i=0;i<list_size(list_msg_subscribers);i++){
-			t_subscribe_message_node *node = list_get(list_msg_subscribers,i);
-			broker_logger_info("Id msj %d",node->id);
-			broker_logger_info("cola del msj %s",get_queue_name(node->cola));
-			for(int k=0;k<list_size(node->list);k++){
-				t_subscribe_ack_node *node_ack = list_get(node->list,k);
-				broker_logger_info("Puerto %d",node_ack->subscribe->puerto);
-				broker_logger_info("IP %s",node_ack->subscribe->ip);
-			}
-		}
-	}
-	*/
+	 for(int i=0;i<list_size(list_msg_subscribers);i++){
+	 t_subscribe_message_node *node = list_get(list_msg_subscribers,i);
+	 broker_logger_info("Id msj %d",node->id);
+	 broker_logger_info("cola del msj %s",get_queue_name(node->cola));
+	 for(int k=0;k<list_size(node->list);k++){
+	 t_subscribe_ack_node *node_ack = list_get(node->list,k);
+	 broker_logger_info("Puerto %d",node_ack->subscribe->puerto);
+	 broker_logger_info("IP %s",node_ack->subscribe->ip);
+	 }
+	 }
+	 }
+	 */
 }
