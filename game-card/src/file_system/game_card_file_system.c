@@ -762,9 +762,9 @@ t_list* readPokemonLines(t_list* blocks) {
 		}
 
 		free(blockPath);
+		fclose(blockFile);
 	}
 
-	fclose(blockFile);
 	if (line) free(line);
 
 
@@ -776,7 +776,7 @@ t_list* readPokemonLines(t_list* blocks) {
 t_list* stringBlocksToList(char* blocks) {
 	t_list* retList = list_create();
 	// Solo esta usando un bloque
-	if (strlen(blocks) <= 3) {
+	if (strlen(blocks) == 3) {
 		char* blockStrWithoutBraces = string_substring(blocks, 1, 1);
 		list_add(retList, (void*)atoi(blockStrWithoutBraces));
 	} // Mas de un bloque siendo usado
