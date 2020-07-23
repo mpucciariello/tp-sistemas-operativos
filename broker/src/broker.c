@@ -1791,7 +1791,11 @@ void dump() {
 	int last_pointer = 0;
 
 	FILE *f = NULL;
-	f = fopen("memdump.txt", "a");
+	char* path_to_root = getenv("HOME");
+	char* dst_path = string_new();
+	string_append(&dst_path, path_to_root);
+	string_append(&dst_path, "/memdump.txt");
+	f = fopen(dst_path, "a");
 
 	if (f == NULL) {
 		broker_logger_error("Operation failed: Couldn't dump memory contents");
