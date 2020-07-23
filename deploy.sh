@@ -61,6 +61,9 @@ LIBRARIES=()
 DEPENDENCIES=()
 PROYECTS=()
 
+IP_BROKER=()
+IP_TEAM=()
+IP_GAMECARD=()
 cd $CWD
 mkdir git
 cd $CWD
@@ -90,6 +93,15 @@ do
         -p=*|--project=*)
           PROYECTS+=("${i#*=}")
         ;;
+        -ip_broker=*)
+          IP_BROKER+=("${i#*=}")
+        ;;
+        -ip_team=*)
+          IP_TEAM+=("${i#*=}")
+        ;;
+        -ip_gamecard=*)
+          IP_GAMECARD+=("${i#*=}")
+        ;;
         *)
         ;;
     esac
@@ -115,8 +127,8 @@ do
   echo -e "Building ${i}"
   cd $i
   make
-  echo -e "\n\n Setting LD_LIBRARY_PATH...\n\n"
   # En caso de haber varias dependencias de librerias se debe sacar esta parte del ciclo y hacerlo al salir del mismo!
+  echo -e "\n\n Setting LD_LIBRARY_PATH...\n\n"
   sudo cp $PROJECTROOT/${REPONAME}/"common-library.conf" /etc/ld.so.conf.d/
   sudo ldconfig
   cd $PROJECTROOT
@@ -129,6 +141,25 @@ for i in "${PROYECTS[@]}"
 do
   cd $i
   make
+  echo -e "\n\n Updating IPs ...\n\n"
+  if [ -z "$IP_BROKER" ]
+    then
+    echo -e "\n\n IP BROKER will remain \n\n"
+  else
+    sed -i -e "s/\(IP_BROKER=\).*/\1$IP_BROKER/" $i.config
+  fi
+  if [ -z "$IP_TEAM" ]
+    then
+    echo -e "\n\n IP TEAM will remain \n\n"
+  else
+    sed -i -e "s/\(IP_TEAM=\).*/\1$IP_TEAM/" $i.config
+  fi
+  if [ -z "$IP_GAMECARD" ]
+    then
+    echo -e "\n\n IP GAMECARD will remain \n\n"
+  else 
+    sed -i -e "s/\(IP_GAMECARD=\).*/\1$IP_GAMECARD/" $i.config
+  fi
   cd $PROJECTROOT/${REPONAME}
 done
 
@@ -143,5 +174,20 @@ done
 echo -e "\n\n Creating team 2...\n\n"
 cp -R $PROJECTROOT/${REPONAME}/"team" $PROJECTROOT/${REPONAME}/"team2"
 cp $PROJECTROOT/${REPONAME}/"team"/"team2"/"team.config" $PROJECTROOT/${REPONAME}/"team2"
+
+echo -e "\n\n Updating IPs in team2  ...\n\n"
+cd $PROJECTROOT/${REPONAME}/"team2"
+if [ -z "$IP_BROKER" ]
+  then
+  echo -e "\n\n IP BROKER will remain in team2 \n\n"
+else
+  sed -i -e "s/\(IP_BROKER=\).*/\1$IP_BROKER/" team.config
+fi
+if [ -z "$IP_TEAM" ]
+then
+  echo -e "\n\n IP TEAM will remain in team2 \n\n"
+else
+  sed -i -e "s/\(IP_TEAM=\).*/\1$IP_TEAM/" team.config
+fi
 
 echo -e "\n\nDeploy done!\n\n"
