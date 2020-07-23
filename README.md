@@ -44,12 +44,13 @@ Al ejecutar el script, se deben pasar los siguientes parametros:
 * -l | --lib: Agrega una dependencia externa para compilar e instalar. (Se especifica user y nombre del repositorio en github)
 * -d | --dependency: Agrega una dependencia interna del proyecto para compilar e instalar. (Forman parte del repositorio a deployar y se especifica una ruta dentro del repositorio a donde reside la dependencia).
 * -p | --proyect: Agrega un proyecto a compilar del repositorio. (Al igual que las dependencias se puede pasar una ruta a los proyectos).
+* -ip_proceso: Modifica la IP en lso archivos de configuracion de cada proceso al momento de probar en entornos distribuidos. Si no se agrega por parametro la IP del proceso se mantendra la que posee en el archivo sin modificar.
 
 Para ver informacion de como usarlo, ejecutar con la opcion -h (help) `./deploy.sh -h`
 
 ### Ejemplo
 
-`sudo ./deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy tp-2020-1c-CDev20`
+`sudo ./deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy -ip_broker=10.222.123.2 -ip_gamecard=10.222.123.3 -ip_team=10.222.123.4 tp-2020-1c-CDev20`
 
 ### Requerimientos
 
@@ -70,7 +71,7 @@ repo
 1) git clone `https://github.com/sisoputnfrba/tp-2020-1c-CDev20.git` 
 2) `cd tp-2020-1c-CDev20` 
 3) `cp deploy.sh /home/utnso`
-3) `cd /home/utnso && sudo ./deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy tp-2020-1c-CDev20`
+3) `cd /home/utnso && sudo ./deploy.sh -d=shared-common -p=broker -p=game-card -p=team -p=game-boy -ip_broker=10.222.123.2 -ip_gamecard=10.222.123.3 -ip_team=10.222.123.4 tp-2020-1c-CDev20`
 4) `cd /home/utnso/git/tp-2020-1c-CDev20/el_proceso`
 5) Correr ./el_proceso !!!
 
