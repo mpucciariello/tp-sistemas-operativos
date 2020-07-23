@@ -25,8 +25,8 @@ void read_config(t_config* config_file)
 	game_card_config->punto_montaje_tallgrass = string_duplicate(config_get_string_value(config_file, "PUNTO_MONTAJE_TALLGRASS"));
 	game_card_config->ip_broker = string_duplicate(config_get_string_value(config_file, "IP_BROKER"));
 	game_card_config->puerto_broker = config_get_int_value(config_file, "PUERTO_BROKER");
-	game_card_config->ip_game_card = string_duplicate(config_get_string_value(config_file, "IP_GAME_CARD"));
-	game_card_config->puerto_game_card = config_get_int_value(config_file, "PUERTO_GAME_CARD");
+	game_card_config->ip_game_card = string_duplicate(config_get_string_value(config_file, "IP_GAMECARD"));
+	game_card_config->puerto_game_card = config_get_int_value(config_file, "PUERTO_GAMECARD");
 
 }
 
@@ -37,6 +37,6 @@ void print_config()
 	game_card_logger_info("PUNTO_MONTAJE_TALLGRASS: %s", game_card_config->punto_montaje_tallgrass);
 	game_card_logger_info("IP_BROKER: %s", game_card_config->ip_broker);
 	game_card_logger_info("PUERTO_BROKER: %d", game_card_config->puerto_broker);
-	game_card_logger_info("IP_GAME_CARD: %s", game_card_config->ip_game_card);
-	game_card_logger_info("PUERTO_GAME_CARD: %d", game_card_config->puerto_game_card);
+	game_card_logger_info("IP_GAMECARD: %s", game_card_config->ip_game_card);
+	game_card_logger_info("PUERTO_GAMECARD: %d", game_card_config->puerto_game_card);
 }
