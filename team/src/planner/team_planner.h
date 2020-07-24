@@ -42,12 +42,6 @@ typedef struct {
 	bool se_movio;
 } t_entrenador_pokemon;
 
-typedef enum {
-	UNKNOWN,
-	FREE,
-	BLOCKED
-} t_pokemon_state;
-
 typedef struct {
 	char* name;
 	t_list* pos;

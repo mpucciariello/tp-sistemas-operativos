@@ -166,7 +166,6 @@ void atrapar_pokemon(t_entrenador_pokemon* entrenador, char* pokemon_name) {
 	entrenador->status = true;
 	list_add(entrenador->pokemons, pokemon);
 	team_logger_info("El entrenador %d atrapó un %s en la posición (%d, %d)!!",	entrenador->id, pokemon_name, entrenador->pokemon_a_atrapar->position->pos_x, entrenador->pokemon_a_atrapar->position->pos_y);
-	quitar_de_pokemones_pendientes(pokemon_name);
 	quitar_de_real_target(pokemon_name);
 
 	if (team_planner_trainer_completed_with_success(entrenador)) {
