@@ -471,7 +471,7 @@ void team_planner_solve_deadlock() {
 	t_pokemon* pokemon_de_entrenador_bloqueante;
 	t_entrenador_pokemon* entrenador_bloqueado;
 
-	while (list_size(block_queue) > 0) {
+	while (!list_is_empty(block_queue)) {
 		quantum = 0;
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
 
@@ -505,7 +505,7 @@ void team_planner_solve_deadlock() {
 			sleep(team_config->retardo_ciclo_cpu);
 			team_planner_new_cpu_cicle(entrenador_bloqueado);
 
-			if(team_config->algoritmo_planificacion == RR && team_config->algoritmo_planificacion != FIFO && team_config->algoritmo_planificacion != SJF_CD && team_config->algoritmo_planificacion != SJF_SD){
+			if(team_config->algoritmo_planificacion == RR && !team_config->algoritmo_planificacion == FIFO && !team_config->algoritmo_planificacion == SJF_CD && !team_config->algoritmo_planificacion == SJF_SD){
 				if(quantum == team_config->quantum){
 					quantum = 0;
 					team_logger_info("El entrenador %d pasó a la cola de READY ya que terminó su QUANTUM.", entrenador_bloqueado->id);
@@ -517,6 +517,7 @@ void team_planner_solve_deadlock() {
 				}
 			}
 		}
+		quantum = 0;
 
 		team_logger_info("El entrenador %d se movió de (%d, %d) a (%d, %d)", entrenador_bloqueado->id,
 																			 entrenador_bloqueado->position->pos_x,
