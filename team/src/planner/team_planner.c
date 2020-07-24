@@ -465,13 +465,14 @@ void team_planner_solve_deadlock() {
 
 	team_logger_info("Se iniciará la detección y resolución de DEADLOCKS!");
 	int a = 0;
-	int quantum = 0;
+	int quantum;
 
 	t_pokemon* pokemon_de_entrenador_bloqueado;
 	t_pokemon* pokemon_de_entrenador_bloqueante;
 	t_entrenador_pokemon* entrenador_bloqueado;
 
 	while (list_size(block_queue) > 0) {
+		quantum = 0;
 		t_entrenador_pokemon* entrenador_bloqueante = list_get(block_queue, a);
 
 		pokemon_de_entrenador_bloqueante = team_planner_ver_a_quien_no_necesita(entrenador_bloqueante, entrenador_bloqueante->pokemons);
@@ -484,7 +485,8 @@ void team_planner_solve_deadlock() {
 		entrenador_bloqueado->pokemon_a_atrapar->position->pos_x = entrenador_bloqueante->position->pos_x;
 		entrenador_bloqueado->pokemon_a_atrapar->position->pos_y = entrenador_bloqueante->position->pos_y;
 
-		deadlocks_detected++;	
+		deadlocks_detected++;
+		context_switch_qty++;
 
 		team_logger_info("Se detectó un DEADLOCK. El entrenador %d está bloqueando al entrenador %d.", entrenador_bloqueante->id, entrenador_bloqueado->id);
 
@@ -499,21 +501,20 @@ void team_planner_solve_deadlock() {
 
 		int steps = fabs(aux_x) + fabs(aux_y);
 
-		context_switch_qty++;
-
 		for (int i = 0; i < steps; i++) {
 			sleep(team_config->retardo_ciclo_cpu);
 			team_planner_new_cpu_cicle(entrenador_bloqueado);
 
-			if(team_config->algoritmo_planificacion == RR){
+			if(team_config->algoritmo_planificacion == RR && team_config->algoritmo_planificacion != FIFO && team_config->algoritmo_planificacion != SJF_CD && team_config->algoritmo_planificacion != SJF_SD){
 				if(quantum == team_config->quantum){
 					quantum = 0;
 					team_logger_info("El entrenador %d pasó a la cola de READY ya que terminó su QUANTUM.", entrenador_bloqueado->id);
 					usleep(500);
 					context_switch_qty++;
 					team_logger_info("El entrenador %d pasará a estado EXEC para realizar el INTERCAMBIO con el entrenador bloqueante %d!", entrenador_bloqueado-> id, entrenador_bloqueante->id);
+				}else{
+					quantum++;
 				}
-				quantum++;
 			}
 		}
 
@@ -531,7 +532,7 @@ void team_planner_solve_deadlock() {
 
 		pokemon_de_entrenador_bloqueado = team_planner_ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
 
-		for (int i = 0; i < 5; i++) {
+		for (int u = 0; u < 5; u++) {
 			sleep(team_config->retardo_ciclo_cpu);
 			entrenador_bloqueado->total_burst_time++;
 		}
