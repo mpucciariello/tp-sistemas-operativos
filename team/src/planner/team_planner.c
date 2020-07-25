@@ -502,20 +502,20 @@ void team_planner_solve_deadlock() {
 		int steps = fabs(aux_x) + fabs(aux_y);
 
 		for (int i = 0; i < steps; i++) {
-			sleep(team_config->retardo_ciclo_cpu);
-			team_planner_new_cpu_cicle(entrenador_bloqueado);
+			entrenador_bloqueado->total_burst_time++;
 
-			if(team_config->algoritmo_planificacion == RR && !team_config->algoritmo_planificacion == FIFO && !team_config->algoritmo_planificacion == SJF_CD && !team_config->algoritmo_planificacion == SJF_SD){
+			if(team_config->algoritmo_planificacion == RR){
+				quantum++;
+
 				if(quantum == team_config->quantum){
 					quantum = 0;
 					team_logger_info("El entrenador %d pasó a la cola de READY ya que terminó su QUANTUM.", entrenador_bloqueado->id);
 					usleep(500);
 					context_switch_qty++;
 					team_logger_info("El entrenador %d pasará a estado EXEC para realizar el INTERCAMBIO con el entrenador bloqueante %d!", entrenador_bloqueado-> id, entrenador_bloqueante->id);
-				}else{
-					quantum++;
 				}
 			}
+			sleep(team_config->retardo_ciclo_cpu);
 		}
 		quantum = 0;
 
@@ -534,8 +534,8 @@ void team_planner_solve_deadlock() {
 		pokemon_de_entrenador_bloqueado = team_planner_ver_a_quien_no_necesita(entrenador_bloqueado, entrenador_bloqueado->pokemons); ///LO TRAE VACIO
 
 		for (int u = 0; u < 5; u++) {
-			sleep(team_config->retardo_ciclo_cpu);
 			entrenador_bloqueado->total_burst_time++;
+			sleep(team_config->retardo_ciclo_cpu);
 		}
 
 		team_logger_info("Se añadió al entrenador %d a la cola de bloqueados luego de ejecutar un intercambio.", entrenador_bloqueado->id);
