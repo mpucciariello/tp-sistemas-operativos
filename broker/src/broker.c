@@ -402,7 +402,7 @@ static void *handle_connection(void *arg) {
 						new_receive->id_correlacional);
 			}
 
-			// broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR NEW_POKEMON: %d", from);
 			t_new_pokemon* new_snd = get_from_memory(protocol, from, memory);
 			new_snd->id_correlacional = new_receive->id_correlacional;
 			create_message_ack(new_snd->id_correlacional, new_queue, NEW_QUEUE);
@@ -451,7 +451,7 @@ static void *handle_connection(void *arg) {
 						appeared_rcv->id_correlacional);
 			}
 
-			// broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR APPEARED_POKEMON: %d", from);
 			t_appeared_pokemon* appeared_snd = get_from_memory(protocol, from,
 					memory);
 			create_message_ack(appeared_rcv->id_correlacional, appeared_queue,
@@ -505,7 +505,7 @@ static void *handle_connection(void *arg) {
 				from = save_on_memory_pd(message_void, GET_QUEUE,
 						get_rcv->id_correlacional);
 			}
-			// broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR GET_POKEMON: %d", from);
 			t_get_pokemon* get_snd = get_from_memory(protocol, from, memory);
 			get_snd->id_correlacional = get_rcv->id_correlacional;
 
@@ -559,7 +559,7 @@ static void *handle_connection(void *arg) {
 				from = save_on_memory_pd(message_void, CATCH_QUEUE,
 						catch_rcv->id_correlacional);
 			}
-			// broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR CATCH_POKEMON: %d", from);
 			t_catch_pokemon* catch_send = get_from_memory(protocol, from,
 					memory);
 			catch_send->id_correlacional = catch_rcv->id_correlacional;
@@ -620,7 +620,7 @@ static void *handle_connection(void *arg) {
 						loc_rcv->id_correlacional);
 			}
 
-			// broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR LOCALIZED_POKEMON: %d", from);
 
 			t_localized_pokemon* loc_snd = get_from_memory(protocol, from,
 					memory);
@@ -682,7 +682,7 @@ static void *handle_connection(void *arg) {
 				from = save_on_memory_pd(message_void, CAUGHT_QUEUE,
 						caught_rcv->id_correlacional);
 			}
-			// broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d", from);
+			broker_logger_info("STARTING POSITION FOR CAUGHT_POKEMON: %d", from);
 
 			t_caught_pokemon* caught_snd = get_from_memory(protocol, from,
 					memory);
@@ -2204,7 +2204,11 @@ void estado_memoria(t_list *list) {
 void dump_partition() {
 
 	FILE *f = NULL;
-	f = fopen("memdump.txt", "a");
+	char* path_to_root = getenv("HOME");
+	char* dst_path = string_new();
+	string_append(&dst_path, path_to_root);
+	string_append(&dst_path, "/memdump.txt");
+	f = fopen(dst_path, "a");
 
 	if (f == NULL) {
 		broker_logger_error("Operation failed: Couldn't dump memory contents");
@@ -2231,18 +2235,17 @@ void dump_partition() {
 		if (node->libre == false) {
 			fprintf(f, "[X]\t\t");
 		} else {
-			fprintf(f, "[X]\t\t");
+			fprintf(f, "[L]\t\t");
 		}
 
 		fprintf(f, "Size: %04d B \t\t", node->size);
 		if (node->libre == false) {
 			fprintf(f, "LRU: %04d\t\t", (int) (node->timestamp - base_time));
 			fprintf(f, "Queue: %s\t\t", get_queue_name(node->cola));
-		} else
+			fprintf(f, "ID: %04d\n", node->id);
+		} else {
 			fprintf(f, "Queue: %s\t\t", "LIBRE");
-
-		fprintf(f, "ID: %04d\n", node->id);
-
+		}
 	}
 	fclose(f);
 	return;
