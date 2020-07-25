@@ -6,6 +6,6 @@
 
 ./game-boy BROKER CATCH_POKEMON Onyx 4 5
 
-./game-boy SUBSCRIBE NEW_POKEMON 10
+./game-boy SUBSCRIBE NEW_QUEUE 10
 
 ./game-boy BROKER CATCH_POKEMON Charmander 4 5
